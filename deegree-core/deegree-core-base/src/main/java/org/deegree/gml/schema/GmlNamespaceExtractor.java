@@ -37,11 +37,13 @@ package org.deegree.gml.schema;
 
 import static org.apache.xerces.xs.XSConstants.SCOPE_GLOBAL;
 import static org.apache.xerces.xs.XSWildcard.NSCONSTRAINT_LIST;
+import static org.deegree.commons.xml.CommonNamespaces.XSINS;
 
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 
 import javax.xml.namespace.QName;
 
@@ -57,12 +59,12 @@ import org.apache.xerces.xs.XSTerm;
 import org.apache.xerces.xs.XSTypeDefinition;
 import org.apache.xerces.xs.XSWildcard;
 import org.deegree.commons.tom.gml.GMLObjectType;
+import org.deegree.commons.tom.gml.property.PropertyType;
 import org.deegree.feature.types.AppSchema;
 import org.deegree.feature.types.FeatureType;
 
 /**
- * Provides methods to determine the namespaces of attributes and elements that may occur in the contents of
- * {@link GMLObjectType}s.
+ * Provides methods to determine the namespaces of attributes and elements that may occur in of {@link GMLObjectType}s.
  * 
  * @author <a href="mailto:schneider@occamlabs.de">Markus Schneider</a>
  * @author last edited by: $Author: schneider $
@@ -71,30 +73,64 @@ import org.deegree.feature.types.FeatureType;
  */
 public class GmlNamespaceExtractor {
 
-    private final GMLSchemaInfoSet schema;
+    private final AppSchema schema;
 
+    private final GMLSchemaInfoSet infoSet;
+
+    /**
+     * Creates a new {@link GmlNamespaceExtractor} for the given schema.
+     * 
+     * @param schema
+     *            application schema, must not be <code>null</code>
+     */
     public GmlNamespaceExtractor( AppSchema schema ) {
-        this.schema = schema.getGMLSchema();
+        this.schema = schema;
+        infoSet = schema.getGMLSchema();
     }
 
-    public Set<String> getNamespaces( FeatureType ft ) {
-        if ( ft.getSchema() != null && ft.getSchema().getGMLSchema() != null ) {
+    /**
+     * Determines the namespaces for the given {@link FeatureType}.
+     * 
+     * @param ft
+     *            feature type, must not be <code>null</code> and belong to the application schema used for construction
+     * @return namespaces that may occur for elements and attributes, never <code>null</code>, but not necessarily
+     *         complete (wildcard elements may allow child elements from any namespace)
+     */
+    public Set<String> extractNamespaces( FeatureType ft ) {
+        if ( ft.getSchema() != schema ) {
+            throw new IllegalArgumentException( "Feature type is not part of application schema." );
+        }
+        if ( infoSet != null ) {
             GMLSchemaInfoSet gmlSchema = ft.getSchema().getGMLSchema();
             XSElementDeclaration elDecl = gmlSchema.getElementDecl( ft.getName() );
-            return getNamespaces( elDecl );
+            return extractNamespacesFullSchemaInfoset( elDecl );
         }
-        return null;
+        return extractNamespacesFromPropertyDeclarations( ft );
     }
 
-    public Set<String> getNamespaces( XSElementDeclaration elDecl ) {
-        Set<String> namespaces = new LinkedHashSet<String>();
-        Set<QName> elDecls = new HashSet<QName>();
-        addNamespacesWithSubstitutions( elDecl, namespaces, elDecls );
+    private Set<String> extractNamespacesFromPropertyDeclarations( FeatureType ft ) {
+        Set<String> namespaces = new TreeSet<String>();
+        namespaces.add( ft.getName().getNamespaceURI() );
+        for ( PropertyType pt : ft.getPropertyDeclarations() ) {
+            namespaces.add( pt.getName().getNamespaceURI() );
+        }
         return namespaces;
     }
 
+    private Set<String> extractNamespacesFullSchemaInfoset( XSElementDeclaration elDecl ) {
+        Set<String> namespaces = new TreeSet<String>();
+        Set<QName> elDecls = new HashSet<QName>();
+        addNamespacesWithSubstitutions( elDecl, namespaces, elDecls );
+        addImplicitNamespaces( namespaces );
+        return namespaces;
+    }
+
+    private void addImplicitNamespaces( Set<String> namespaces ) {
+        namespaces.add( XSINS );
+    }
+
     private void addNamespacesWithSubstitutions( XSElementDeclaration elDecl, Set<String> namespaces, Set<QName> elDecls ) {
-        List<XSElementDeclaration> substitutions = schema.getSubstitutions( elDecl, null, true, true );
+        List<XSElementDeclaration> substitutions = infoSet.getSubstitutions( elDecl, null, true, true );
         for ( XSElementDeclaration substitution : substitutions ) {
             addNamespaces( substitution, namespaces, elDecls );
         }
@@ -106,7 +142,9 @@ public class GmlNamespaceExtractor {
         if ( elDecl.getScope() == SCOPE_GLOBAL && elDecls.contains( elName ) ) {
             return;
         }
-        namespaces.add( elName.getNamespaceURI() );
+        if ( elName.getNamespaceURI() != null ) {
+            namespaces.add( elName.getNamespaceURI() );
+        }
         elDecls.add( elName );
         XSTypeDefinition typeDef = elDecl.getTypeDefinition();
         if ( typeDef instanceof XSComplexTypeDefinition ) {
@@ -117,8 +155,10 @@ public class GmlNamespaceExtractor {
     private void addNamespaces( XSComplexTypeDefinition typeDef, Set<String> namespaces, Set<QName> elDecls ) {
         XSObjectList attributeUses = typeDef.getAttributeUses();
         for ( int i = 0; i < attributeUses.getLength(); i++ ) {
-            XSAttributeDeclaration attr = ((XSAttributeUse) attributeUses.get( i )).getAttrDeclaration();
-            namespaces.add( attr.getNamespace() );
+            XSAttributeDeclaration attr = ( (XSAttributeUse) attributeUses.get( i ) ).getAttrDeclaration();
+            if ( attr.getNamespace() != null ) {
+                namespaces.add( attr.getNamespace() );
+            }
         }
         XSParticle particle = typeDef.getParticle();
         if ( particle != null ) {
@@ -144,8 +184,6 @@ public class GmlNamespaceExtractor {
                     String ns = (String) nsConstraints.get( i );
                     namespaces.add( ns );
                 }
-            } else {
-                System.out.println( "HUHU: wildcard" );   
             }
         } else {
             throw new IllegalArgumentException( "Unexpected XSTerm subtype: " + term );

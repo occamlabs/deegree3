@@ -35,13 +35,14 @@
  ----------------------------------------------------------------------------*/
 package org.deegree.gml.schema;
 
+import static org.junit.Assert.assertEquals;
+
 import java.util.Set;
 
 import javax.xml.namespace.QName;
 
 import org.deegree.feature.types.AppSchema;
 import org.deegree.feature.types.FeatureType;
-import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -54,22 +55,18 @@ import org.junit.Test;
  */
 public class GmlNamespaceExtractorTest {
 
-    private GmlNamespaceExtractor extractor;
-
     @Test
-    public void testGetNamespacesInspireAddress()
+    public void testExtractNamespacesFullInfoset()
                             throws ClassCastException, ClassNotFoundException, InstantiationException,
                             IllegalAccessException {
-       
+
         String schemaURL = this.getClass().getResource( "../inspire/schema/Addresses.xsd" ).toString();
         GMLAppSchemaReader adapter = new GMLAppSchemaReader( null, null, schemaURL );
         AppSchema schema = adapter.extractAppSchema();
         FeatureType ft = schema.getFeatureType( QName.valueOf( "{urn:x-inspire:specification:gmlas:Addresses:3.0}Address" ) );
-        
-        GmlNamespaceExtractor extractor = new GmlNamespaceExtractor( schema );        
-        Set<String> namespaces = extractor.getNamespaces( ft );
-        for ( String ns : namespaces ) {
-            System.out.println( ns );
-        }
+
+        GmlNamespaceExtractor extractor = new GmlNamespaceExtractor( schema );
+        Set<String> namespaces = extractor.extractNamespaces( ft );
+        assertEquals( 6, namespaces.size() );
     }
 }
