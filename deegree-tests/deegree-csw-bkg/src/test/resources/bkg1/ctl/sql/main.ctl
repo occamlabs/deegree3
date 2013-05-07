@@ -29,7 +29,7 @@
     <code>
 
           <!-- ***** Hard-wired the URL ***** -->
-      <xsl:variable name="csw.capabilities.url" select="'${cswUrl}?service=CSW&amp;request=GetCapabilities'"/>
+      <xsl:variable name="csw.capabilities.url" select="'${cswUrlSql}?service=CSW&amp;request=GetCapabilities'"/>
 
       <message>Capabilities request/URL used: <xsl:value-of select="$csw.capabilities.url" /></message>
 

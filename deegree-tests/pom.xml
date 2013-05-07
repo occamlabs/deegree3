@@ -84,6 +84,7 @@
     <!-- workspace tests must run first! -->
     <module>deegree-workspace-tests</module>
     <module>deegree-compliance-tests</module>
+    <module>deegree-csw-bkg</module>
     <module>deegree-wms-similarity-tests</module>
     <module>deegree-wms-tiling-tests</module>
     <module>deegree-wms-remoteows-tests</module>

@@ -37,7 +37,7 @@ import org.junit.runners.Parameterized.Parameters;
  * @version $Revision$, $Date$
  */
 @RunWith(Parameterized.class)
-public class CSWBKG1IT {
+public class CswBkg1MemoryIT {
 
     private String testLabel = "CSW_BKG1";
 
@@ -45,7 +45,7 @@ public class CSWBKG1IT {
 
     private final boolean isCSWAvailable;
     
-    public CSWBKG1IT( String testLabel, String resultSnippet, boolean isCSWAvailable) {
+    public CswBkg1MemoryIT( String testLabel, String resultSnippet, boolean isCSWAvailable) {
         this.testLabel = testLabel;
         this.resultSnippet = resultSnippet;
         this.isCSWAvailable = isCSWAvailable;
@@ -61,7 +61,7 @@ public class CSWBKG1IT {
             return resultSnippets;
         }
 
-        URL url = CSWBKG1IT.class.getResource( "/bkg1/ctl/" );
+        URL url = CswBkg1MemoryIT.class.getResource( "/bkg1/ctl/memory/" );
         String file = new File( url.toURI() ).getAbsolutePath();
         System.out.println( "file: " + file );
 
@@ -83,10 +83,10 @@ public class CSWBKG1IT {
     }
 
     private static boolean isCSWAvailable() {
-        String url = System.getProperty( "cswUrl" );
+        String url = System.getProperty( "cswUrlMemory" );
         System.out.println("Check if CSW to test with URL '" + url + "' is available!");
         try {
-            InputStream postBody = CSWBKG1IT.class.getResourceAsStream( "testGetRecordsRequest.xml" );
+            InputStream postBody = CswBkg1MemoryIT.class.getResourceAsStream( "testGetRecordsRequest.xml" );
             XMLAdapter resp = HttpUtils.post( HttpUtils.XML, url, postBody, null );
             NamespaceBindings nsContext = CommonNamespaces.getNamespaceContext();
             nsContext.addNamespace( CSW_202_PREFIX, CSWConstants.CSW_202_NS );
