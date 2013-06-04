@@ -27,7 +27,11 @@
 ----------------------------------------------------------------------------*/
 package org.deegree.crs.spi.deegree;
 
+import static org.deegree.workspace.WorkspaceUtils.getSyntheticLocationFromUrl;
+
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.deegree.crs.CrsProvider;
 import org.deegree.crs.CrsProviderProvider;
@@ -61,6 +65,15 @@ public class DeegreeCrsProviderProvider extends CrsProviderProvider {
     @Override
     public URL getSchema() {
         return CONFIG_SCHEMA;
+    }
+
+    @Override
+    public List<ResourceMetadata<CrsProvider>> getAdditionalResources( Workspace workspace ) {
+        URL url = DeegreeCrsProviderProvider.class.getResource( "default.xml" );
+        ResourceLocation<CrsProvider> location = getSyntheticLocationFromUrl( CrsProviderProvider.class, "default", url );
+        List<ResourceMetadata<CrsProvider>> list = new ArrayList<ResourceMetadata<CrsProvider>>();
+        list.add( new DeegreeCrsProviderMetadata( workspace, location, this ) );
+        return super.getAdditionalResources( workspace );
     }
 
 }

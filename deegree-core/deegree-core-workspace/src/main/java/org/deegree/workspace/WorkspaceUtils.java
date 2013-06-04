@@ -146,6 +146,29 @@ public class WorkspaceUtils {
     }
 
     /**
+     * Creates a synthetic resource location from an URL.
+     * 
+     * @param providerClass
+     *            may not be <code>null</code>
+     * @param id
+     *            may not be <code>null</code>
+     * @param content
+     *            may not be <code>null</code>
+     * @return the synthetic resource location
+     * @throws ResourceInitException
+     *             if something went wrong
+     */
+    public static <T extends Resource> ResourceLocation<T> getSyntheticLocationFromUrl( Class<? extends ResourceProvider<T>> providerClass,
+                                                                                        String id, URL content ) {
+        ResourceIdentifier<T> identifier = new DefaultResourceIdentifier<T>( providerClass, id );
+        try {
+            return new IncorporealResourceLocation<T>( IOUtils.toByteArray( content ), identifier );
+        } catch ( Exception e ) {
+            throw new ResourceInitException( "Unable to load URL " + content + ": " + e.getLocalizedMessage(), e );
+        }
+    }
+
+    /**
      * Adds and completely initializes a synthetic resource from file.
      * 
      * @param workspace
@@ -185,16 +208,11 @@ public class WorkspaceUtils {
     public static <T extends Resource> T activateFromUrl( Workspace workspace,
                                                           Class<? extends ResourceProvider<T>> providerClass,
                                                           String id, URL content ) {
-        IncorporealResourceLocation<? extends Resource> loc;
-        ResourceIdentifier<T> identifier = new DefaultResourceIdentifier<T>( providerClass, id );
-        try {
-            loc = new IncorporealResourceLocation<T>( IOUtils.toByteArray( content ), identifier );
-            workspace.add( loc );
-            workspace.prepare( identifier );
-            return workspace.init( identifier, null );
-        } catch ( Exception e ) {
-            throw new ResourceInitException( "Unable to load URL " + content + ": " + e.getLocalizedMessage(), e );
-        }
+        ResourceLocation<T> loc = getSyntheticLocationFromUrl( providerClass, id, content );
+        ResourceIdentifier<T> identifier = loc.getIdentifier();
+        workspace.add( loc );
+        workspace.prepare( identifier );
+        return workspace.init( identifier, null );
     }
 
 }
