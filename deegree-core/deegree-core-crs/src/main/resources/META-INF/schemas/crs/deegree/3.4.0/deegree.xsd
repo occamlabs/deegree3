@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns="http://www.w3.org/2001/XMLSchema" xmlns:str="http://www.deegree.org/crs/deegree"
+  targetNamespace="http://www.deegree.org/crs/deegree"
+  elementFormDefault="qualified" xmlns:jaxb="http://java.sun.com/xml/ns/jaxb"
+  jaxb:version="2.1">
+
+  <annotation>
+    <appinfo>
+      <jaxb:schemaBindings>
+        <jaxb:package name="org.deegree.crs.spi.deegree.jaxb" />
+      </jaxb:schemaBindings>
+    </appinfo>
+  </annotation>
+
+  <complexType name="_AbstractStore" abstract="true">
+    <annotation>
+      <documentation>The abstract root is used for the definition of the
+        transformation type
+      </documentation>
+    </annotation>
+    <attribute name="transformationType" default="HELMERT"
+      type="str:TransformationType" />
+  </complexType>
+  <simpleType name="TransformationType">
+    <restriction base="string">
+      <enumeration value="HELMERT" />
+      <enumeration value="NTV2" />
+    </restriction>
+  </simpleType>
+
+  <element name="DeegreeCRSStore">
+    <annotation>
+      <documentation>
+        CRSStore handling the CRS in the deegree3 format.
+      </documentation>
+      <appinfo>
+        <jaxb:class name="DeegreeCRSStoreConfig" />
+      </appinfo>
+    </annotation>
+    <complexType>
+      <complexContent>
+        <extension base="str:_AbstractStore">
+          <sequence>
+            <element name="File" type="string" />
+          </sequence>
+        </extension>
+      </complexContent>
+    </complexType>
+  </element>
+
+</schema>
