@@ -173,7 +173,7 @@ public abstract class DDLCreator {
         return ddls;
     }
 
-    private String getPkConstraintName( TableName ftTable ) {
+    protected String getPkConstraintName( TableName ftTable ) {
         String s = null;
         String table = ftTable.getTable();
         if ( table.endsWith( "\"" ) ) {
@@ -243,6 +243,6 @@ public abstract class DDLCreator {
             return new OracleDDLCreator( appSchema, dialect );
         }
         }
-        throw new IllegalArgumentException( "Nod DDLCreator for DB type '" + dialect.getDBType() + "' available." );
+        throw new IllegalArgumentException( "No DDLCreator for DB type '" + dialect.getDBType() + "' available." );
     }
 }

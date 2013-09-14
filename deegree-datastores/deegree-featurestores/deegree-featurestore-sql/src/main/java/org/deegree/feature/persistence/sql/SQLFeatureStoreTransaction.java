@@ -84,6 +84,7 @@ import org.deegree.feature.persistence.sql.id.FIDMapping;
 import org.deegree.feature.persistence.sql.id.IdAnalysis;
 import org.deegree.feature.persistence.sql.insert.FeatureRow;
 import org.deegree.feature.persistence.sql.insert.InsertRowManager;
+import org.deegree.feature.persistence.sql.insert.PreparedStatementPoolingConnection;
 import org.deegree.feature.persistence.sql.rules.CompoundMapping;
 import org.deegree.feature.persistence.sql.rules.FeatureMapping;
 import org.deegree.feature.persistence.sql.rules.GeometryMapping;
@@ -350,7 +351,6 @@ public class SQLFeatureStoreTransaction implements FeatureStoreTransaction {
                 sql.append( "=?" );
             }
             stmt = conn.prepareStatement( sql.toString() );
-
             int i = 1;
             for ( String fidKernel : analysis.getIdKernels() ) {
                 PrimitiveType pt = new PrimitiveType( fidMapping.getColumns().get( i - 1 ).second );
@@ -643,29 +643,38 @@ public class SQLFeatureStoreTransaction implements FeatureStoreTransaction {
             } else {
                 // pure relational mode
                 List<FeatureRow> idAssignments = new ArrayList<FeatureRow>();
-                InsertRowManager insertManager = new InsertRowManager( fs, conn, mode );
-                for ( Feature feature : features ) {
-                    FeatureTypeMapping ftMapping = fs.getMapping( feature.getName() );
-                    if ( ftMapping == null ) {
-                        throw new FeatureStoreException( "Cannot insert feature of type '" + feature.getName()
-                                                         + "'. No mapping defined and BLOB mode is off." );
+                PreparedStatementPoolingConnection poolingConn = null;
+                try {
+                    poolingConn = new PreparedStatementPoolingConnection( conn );
+                    InsertRowManager insertManager = new InsertRowManager( fs, poolingConn, mode );
+                    for ( Feature feature : features ) {
+                        FeatureTypeMapping ftMapping = fs.getMapping( feature.getName() );
+                        if ( ftMapping == null ) {
+                            throw new FeatureStoreException( "Cannot insert feature of type '" + feature.getName()
+                                                             + "'. No mapping defined and BLOB mode is off." );
+                        }
+                        idAssignments.add( insertManager.insertFeature( feature, ftMapping ) );
+                        Pair<TableName, GeometryMapping> mapping = ftMapping.getDefaultGeometryMapping();
+                        if ( mapping != null ) {
+                            ICRS storageSrs = mapping.second.getCRS();
+                            bboxTracker.insert( feature, storageSrs );
+                        }
                     }
-                    idAssignments.add( insertManager.insertFeature( feature, ftMapping ) );
-                    Pair<TableName, GeometryMapping> mapping = ftMapping.getDefaultGeometryMapping();
-                    if ( mapping != null ) {
-                        ICRS storageSrs = mapping.second.getCRS();
-                        bboxTracker.insert( feature, storageSrs );
+                    if ( insertManager.getDelayedRows() != 0 ) {
+                        String msg = "After insertion, "
+                                     + insertManager.getDelayedRows()
+                                     + " delayed rows left uninserted. Probably a cyclic key constraint blocks insertion.";
+                        throw new RuntimeException( msg );
                     }
-                }
-                if ( insertManager.getDelayedRows() != 0 ) {
-                    String msg = "After insertion, " + insertManager.getDelayedRows()
-                                 + " delayed rows left uninserted. Probably a cyclic key constraint blocks insertion.";
-                    throw new RuntimeException( msg );
-                }
-                // TODO why is this necessary?
-                fids.clear();
-                for ( FeatureRow assignment : idAssignments ) {
-                    fids.add( assignment.getNewId() );
+                    // TODO why is this necessary?
+                    fids.clear();
+                    for ( FeatureRow assignment : idAssignments ) {
+                        fids.add( assignment.getNewId() );
+                    }
+                } finally {
+                    if ( poolingConn != null ) {
+                        poolingConn.close();
+                    }
                 }
             }
         } catch ( Throwable t ) {
