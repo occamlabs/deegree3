@@ -1,0 +1,7 @@
+<GetFeature version="2.0.0" service="WFS" xmlns="http://www.opengis.net/wfs/2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd">
+  <StoredQuery id="http://inspire.ec.europa.eu/operation/download/GetSpatialDataSet">
+    <Parameter name="CRS">urn:ogc:def:crs:EPSG::4258</Parameter>
+    <Parameter name="DataSetIdCode">Address</Parameter>
+  </StoredQuery>
+</GetFeature>
