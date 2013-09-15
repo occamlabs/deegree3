@@ -1,25 +1,26 @@
 <deegreeServicesMetadata xmlns="http://www.deegree.org/services/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  configVersion="3.0.0"
-  xsi:schemaLocation="http://www.deegree.org/services/metadata http://schemas.deegree.org/services/metadata/3.0.0/metadata.xsd">
+  configVersion="3.2.0"
+  xsi:schemaLocation="http://www.deegree.org/services/metadata http://schemas.deegree.org/services/metadata/3.2.0/metadata.xsd">
+
   <ServiceIdentification>
-    <Title>deegree inspireNode</Title>
-    <Abstract>INSPIRE View and Download Services for the deployment of INSPIRE Data Themes</Abstract>
+    <Title>INSPIRE View Service</Title>
+    <Abstract>View Service for INSPIRE Annex I layers</Abstract>
   </ServiceIdentification>
+
   <ServiceProvider>
-    <ProviderName>lat/lon GmbH</ProviderName>
-    <ProviderSite>http://www.lat-lon.de</ProviderSite>
+    <ProviderName>Occam Labs</ProviderName>
+    <ProviderSite>http://www.occamlabs.de</ProviderSite>
     <ServiceContact>
       <IndividualName>Markus Schneider</IndividualName>
       <PositionName>deegree TMC</PositionName>
-      <Phone>0228/18496-0</Phone>
-      <Facsimile>0228/18496-29</Facsimile>
-      <ElectronicMailAddress>info@lat-lon.de
-      </ElectronicMailAddress>
+      <Phone>+49 228 123456789</Phone>
+      <Facsimile>+49 228 123456788</Facsimile>
+      <ElectronicMailAddress>info@occamlabs.de</ElectronicMailAddress>
       <Address>
-        <DeliveryPoint>Aennchenstr. 19</DeliveryPoint>
+        <DeliveryPoint>Godesberger Allee 139</DeliveryPoint>
         <City>Bonn</City>
         <AdministrativeArea>NRW</AdministrativeArea>
-        <PostalCode>53177</PostalCode>
+        <PostalCode>53175</PostalCode>
         <Country>Germany</Country>
       </Address>
       <OnlineResource>http://www.deegree.org</OnlineResource>
@@ -28,4 +29,26 @@
       <Role>PointOfContact</Role>
     </ServiceContact>
   </ServiceProvider>
+
+  <!--DatasetMetadata>
+    <MetadataUrlTemplate>http://discovery.eu/csw?service=CSW&amp;request=GetRecordById&amp;version=2.0.2&amp;id=${metadataSetId}&amp;outputSchema=http://www.isotc211.org/2005/gmd&amp;elementSetName=full</MetadataUrlTemplate>
+  </DatasetMetadata-->
+
+  <ExtendedCapabilities xmlns:inspire_vs="http://inspire.ec.europa.eu/schemas/inspire_vs/1.0" xmlns:inspire_common="http://inspire.ec.europa.eu/schemas/common/1.0">
+    <inspire_vs:ExtendedCapabilities xsi:schemaLocation="http://inspire.ec.europa.eu/schemas/common/1.0 http://inspire.ec.europa.eu/schemas/common/1.0/common.xsd   http://inspire.ec.europa.eu/schemas/inspire_vs/1.0 http://inspire.ec.europa.eu/schemas/inspire_vs/1.0/inspire_vs.xsd">
+      <inspire_common:MetadataUrl>
+        <inspire_common:URL>http://www.nationaalgeoregister.nl/geonetwork/srv/nl/csw?Service=CSW&amp;Request=GetRecordById&amp;Version=2.0.2&amp;id=fileIdentfierMetadataVoorServicesDocument&amp;outputSchema=http://www.isotc211.org/2005/gmd&amp;elementSetName=full</inspire_common:URL>
+        <inspire_common:MediaType>application/vnd.iso.19139+xml</inspire_common:MediaType>
+      </inspire_common:MetadataUrl>
+      <inspire_common:SupportedLanguages>
+        <inspire_common:DefaultLanguage>
+          <inspire_common:Language>dut</inspire_common:Language>
+        </inspire_common:DefaultLanguage>
+      </inspire_common:SupportedLanguages>
+      <inspire_common:ResponseLanguage>
+        <inspire_common:Language>dut</inspire_common:Language>
+      </inspire_common:ResponseLanguage>
+    </inspire_vs:ExtendedCapabilities>
+  </ExtendedCapabilities>
+
 </deegreeServicesMetadata>
