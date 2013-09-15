@@ -1,0 +1,20 @@
+<StoredQueryDefinition id="http://inspire.ec.europa.eu/operation/download/GetSpatialDataSet"
+  xmlns="http://www.opengis.net/wfs/2.0" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <Title>GetSpatialDataSet</Title>
+  <Abstract>Returns an INSPIRE dataset</Abstract>
+  <Parameter name="CRS" type="xs:string">
+    <Abstract>Coordinate reference system identifier</Abstract>
+  </Parameter>
+  <Parameter name="DataSetIdCode" type="xs:string">
+    <Abstract>Identifier of the dataset</Abstract>
+  </Parameter>
+  <Parameter name="DataSetIdNamespace" type="xs:string">
+    <Abstract>Namespace of the dataset</Abstract>
+  </Parameter>
+  <Parameter name="Language" type="xs:string">
+    <Abstract>Response language</Abstract>
+  </Parameter>
+  <QueryExpressionText returnFeatureTypes="ad:Address" language="urn:ogc:def:queryLanguage:OGC-:WFSQueryExpression">
+    <Query typeNames="${DataSetIdCode}" srsName="${CRS}"/>
+  </QueryExpressionText>
+</StoredQueryDefinition>
