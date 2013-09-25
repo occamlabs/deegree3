@@ -27,23 +27,9 @@
   <build>
     <plugins>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <configuration>
-          <source>1.7</source>
-          <target>1.7</target>
-          <encoding>UTF-8</encoding>
-          <compilerArgument>-Alog4j.outputdir=${project.basedir}/target/classes/META-INF/deegree/log4j/</compilerArgument>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-release-plugin</artifactId>
-      </plugin>
-      <plugin>
         <groupId>org.jvnet.jaxb2.maven2</groupId>
         <artifactId>maven-jaxb2-plugin</artifactId>
-      </plugin>      
+      </plugin>
     </plugins>
   </build>
 
@@ -55,9 +41,9 @@
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.geotools</groupId>
-        <artifactId>gt-imageio-ext-gdal</artifactId>
-        <version>9.5</version>
+        <groupId>it.geosolutions.imageio-ext</groupId>
+        <artifactId>imageio-ext-gdal-bindings</artifactId>
+        <version>1.10.1</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -68,13 +54,8 @@
       <artifactId>deegree-tilestore-commons</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.geotools</groupId>
-      <artifactId>gt-imageio-ext-gdal</artifactId>
-    </dependency>
-    <dependency>
       <groupId>it.geosolutions.imageio-ext</groupId>
       <artifactId>imageio-ext-gdal-bindings</artifactId>
-      <version>1.10.1</version>
-    </dependency>    
+    </dependency>
   </dependencies>
 </project>

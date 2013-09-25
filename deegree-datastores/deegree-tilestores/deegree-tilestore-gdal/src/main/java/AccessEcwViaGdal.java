@@ -17,6 +17,8 @@ import java.awt.image.SampleModel;
 import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.imageio.ImageIO;
 
@@ -53,7 +55,6 @@ public class AccessEcwViaGdal {
         // System.out.println( " - size: " + band.getXSize() + " x " + band.getYSize() );
         // }
 
-        long before = System.currentTimeMillis();
         Dataset dataset = gdal.OpenShared( "/mnt/storage/geodata/ecw/Ortho10_2012_01.ecw" );
 
         String wkt4326 = readFileToString( new File( AccessEcwViaGdal.class.getResource( "/epsg4326.wkt" ).toURI() ) );
@@ -91,52 +92,53 @@ public class AccessEcwViaGdal {
         Envelope env4326 = new DefaultEnvelope( min, max );
         System.out.println( env4326 );
 
-        Dataset dataset4326 = gdal.AutoCreateWarpedVRT( dataset, wkt28992, wkt4326 );
-        System.out.println( getEnvelope( dataset ) );
-        System.out.println( dataset.getRasterXSize() + "," + dataset.getRasterYSize() );
-        System.out.println( getEnvelope( dataset4326 ) );
-        System.out.println( dataset4326.getRasterXSize() + "," + dataset4326.getRasterYSize() );
-        System.out.println( dataset4326.GetRasterBand( 1 ).GetOverviewCount() );
+//        Dataset dataset4326 = gdal.AutoCreateWarpedVRT( dataset, wkt28992, wkt4326 );
+//        System.out.println( getEnvelope( dataset ) );
+//        System.out.println( dataset.getRasterXSize() + "," + dataset.getRasterYSize() );
+//        System.out.println( getEnvelope( dataset4326 ) );
+//        System.out.println( dataset4326.getRasterXSize() + "," + dataset4326.getRasterYSize() );
+//        System.out.println( dataset4326.GetRasterBand( 1 ).GetOverviewCount() );
 
         int xSizeSrc = dataset.getRasterXSize();
         int ySizeSrc = dataset.getRasterYSize();
         BufferedImage region = null;
         for ( int i = 0; i < 10; i++ ) {
             // region = extractRegion( dataset, 0, 0, 650000, 205000, 6500, 2050 );
-            region = extractRegion( dataset4326, 0, 0, 671548, 127594, 1600, 1200 );
+            region = extractRegion( dataset, 0, 0, 65000, 205000, 1600, 1200 );
         }
 
-        // List<Thread> threads = new ArrayList<Thread>();
-        // for ( int i = 0; i < 8; i++ ) {
-        // final int threadNo = i + 1;
-        //
-        // Thread thread = new Thread( new Runnable() {
-        // @Override
-        // public void run() {
-        // for ( int i = 0; i < 20; i++ ) {
-        // Dataset dataset = gdal.Open( "/mnt/storage/geodata/ecw/Ortho10_2012_01.ecw", GA_ReadOnly );
-        // try {
-        // extractRandomRegionAndSaveImage( dataset, i, threadNo );
-        // } catch ( IOException e ) {
-        // e.printStackTrace();
-        // }
-        // dataset.delete();
-        // }
-        // }
-        // } );
-        // thread.start();
-        // threads.add( thread );
-        // }
-        // for ( Thread thread : threads ) {
-        // thread.join();
-        // }
+        long before = System.currentTimeMillis();
+        List<Thread> threads = new ArrayList<Thread>();
+        for ( int i = 0; i < 1; i++ ) {
+            final int threadNo = i + 1;
+            Thread thread = new Thread( new Runnable() {
+                @Override
+                public void run() {
+                    for ( int i = 0; i < 100; i++ ) {
+                        Dataset dataset = gdal.OpenShared( "/mnt/storage/geodata/ecw/Ortho10_2012_01.ecw" );
+//                        try {
+//                            extractRandomRegionAndSaveImage( dataset, i, threadNo );
+//                        } catch ( IOException e ) {
+//                            e.printStackTrace();
+//                        }
+                        dataset.delete();
+                    }
+                }
+            } );
+            thread.start();
+            threads.add( thread );
+        }
+        for ( Thread thread : threads ) {
+            thread.join();
+        }
+        System.out.println("HUHU");
         long after = System.currentTimeMillis();
         System.out.println( "total: " + ( after - before ) + " [ms]" );
-        dataset4326.delete();
-        dataset.delete();
-
-        File outputfile = new File( "/tmp/output.jpg" );
-        ImageIO.write( region, "jpg", outputfile );
+////        dataset4326.delete();
+//        dataset.delete();
+//
+//        File outputfile = new File( "/tmp/output.jpg" );
+//        ImageIO.write( region, "jpg", outputfile );
     }
 
     private static void extractRandomRegionAndSaveImage( Dataset dataset, int run, int threadNo )
@@ -163,7 +165,7 @@ public class AccessEcwViaGdal {
             byte[] bandBytes = bands[i];
             band.ReadRaster( (int) xPos, (int) yPos, pixelsX, pixelsY, pixelsX, pixelsY, GDT_Byte, bandBytes, 0, 0 );
         }
-        saveAsJpegImage( bands, pixelsX, pixelsY, run, threadNo );
+//        saveAsJpegImage( bands, pixelsX, pixelsY, run, threadNo );
         long after = System.currentTimeMillis();
         // System.out.println( threadNo + "/" + run + ": " + ( after - before ) + " [ms]" );
     }

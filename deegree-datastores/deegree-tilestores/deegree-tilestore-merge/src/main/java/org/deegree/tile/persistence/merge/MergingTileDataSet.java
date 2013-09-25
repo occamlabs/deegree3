@@ -24,7 +24,6 @@ public class MergingTileDataSet implements TileDataSet {
     public MergingTileDataSet( List<TileDataSet> tileDataSets, TileMatrixSet tileMatrixSet ) {
         this.tileDataSets = tileDataSets;
         this.tileMatrixSet = tileMatrixSet;
-
         tileMatrices = new HashMap<String, TileMatrix>();
         for ( TileMatrix tileMatrix : tileMatrixSet.getTileMatrices() ) {
             tileMatrices.put( tileMatrix.getIdentifier(), tileMatrix );
@@ -38,13 +37,10 @@ public class MergingTileDataSet implements TileDataSet {
 
     @Override
     public TileDataLevel getTileDataLevel( String identifier ) {
-
         ArrayList<TileDataLevel> tileDataLevels = new ArrayList<TileDataLevel>();
-
         for ( TileDataSet tileDataSet : tileDataSets ) {
             tileDataLevels.add( tileDataSet.getTileDataLevel( identifier ) );
         }
-
         return new MergingTileDataLevel( tileDataLevels, tileMatrices.get( identifier ) );
     }
 
@@ -76,26 +72,30 @@ public class MergingTileDataSet implements TileDataSet {
         for ( TileDataSet tileDataSet : tileDataSets ) {
             iterators.add( tileDataSet.getTiles( envelope, resolution ) );
         }
-
         return new Iterator<Tile>() {
-
             @Override
             public boolean hasNext() {
                 for ( Iterator<Tile> iterator : iterators ) {
                     return iterator.hasNext();
                 }
-
                 return false;
             }
 
             @Override
             public Tile next() {
                 ArrayList<Tile> tiles = new ArrayList<Tile>();
-
                 for ( Iterator<Tile> iterator : iterators ) {
-                    tiles.add( iterator.next() );
+                    Tile tile = iterator.next();
+                    if ( tile != null ) {
+                        tiles.add( tile );
+                    }
                 }
-
+                if (tiles.isEmpty()) {
+                    return null;                    
+                }
+                if (tiles.size() == 1) {
+                    return tiles.get( 0 );
+                }
                 return new MergingTile( tiles );
             }
 

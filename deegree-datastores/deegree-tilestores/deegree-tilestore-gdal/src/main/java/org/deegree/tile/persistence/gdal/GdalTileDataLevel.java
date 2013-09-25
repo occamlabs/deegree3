@@ -75,6 +75,8 @@ class GdalTileDataLevel implements TileDataLevel {
 
     private double unitsPerPixelY;
 
+    private GdalDatasetFactory datasetFactory;
+
     /**
      * Creates a new {@link GdalTileDataLevel} instance.
      * 
@@ -90,8 +92,8 @@ class GdalTileDataLevel implements TileDataLevel {
      */
     GdalTileDataLevel( TileMatrix matrix, File file, int xMin, int yMin, int xMax, int yMax ) throws Exception {
         this.metadata = matrix;
-        GdalDatasetFactory fac = new GdalDatasetFactory( file );
-        gdalDatasetPool = new GenericObjectPool<Dataset>( fac );
+        datasetFactory = new GdalDatasetFactory( file );
+        gdalDatasetPool = new GenericObjectPool<Dataset>( datasetFactory );
         this.xMin = xMin;
         this.yMin = yMin;
         this.xMax = xMax;
@@ -147,9 +149,7 @@ class GdalTileDataLevel implements TileDataLevel {
 
     @Override
     public Tile getTile( long x, long y ) {
-        // System.out.println(metadata.getIdentifier());
-        // System.out.println(metadata.getNumTilesX());
-        if ( !isWithinLimits(x,y) ) {
+        if ( !isWithinLimits( x, y ) ) {
             return null;
         }
         double tileWidth = metadata.getTileWidth();
@@ -175,10 +175,10 @@ class GdalTileDataLevel implements TileDataLevel {
         return new GdalTile( tileEnvelope, datasetEnvelope, (int) metadata.getTilePixelsX(),
                              (int) metadata.getTilePixelsY(), gdalDatasetPool, datasetMinX, datasetMinY,
                              datasetPixelsX, datasetPixelsY, x, y, metadata.getResolution(), unitsPerPixelX,
-                             unitsPerPixelY, tileEnvelope2 );
+                             unitsPerPixelY, tileEnvelope2, datasetFactory );
     }
 
     private boolean isWithinLimits( long x, long y ) {
-        return x >= xMin && x <= xMax && y >= yMin && y <= yMax; 
+        return x >= xMin && x <= xMax && y >= yMin && y <= yMax;
     }
 }

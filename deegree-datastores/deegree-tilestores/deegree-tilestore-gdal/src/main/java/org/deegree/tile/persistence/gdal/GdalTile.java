@@ -30,9 +30,6 @@ package org.deegree.tile.persistence.gdal;
 import static java.awt.image.DataBuffer.TYPE_BYTE;
 import static org.gdal.gdalconst.gdalconstConstants.GDT_Byte;
 
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.Graphics;
 import java.awt.color.ColorSpace;
 import java.awt.image.BandedSampleModel;
 import java.awt.image.BufferedImage;
@@ -102,6 +99,8 @@ class GdalTile implements Tile {
 
     private Envelope tileEnvelope2;
 
+    private final GdalDatasetFactory fac;
+
     /**
      * Creates a new {@link GdalTile} instance.
      * 
@@ -115,11 +114,12 @@ class GdalTile implements Tile {
      *            height of the tile in pixels
      * @param gdalDatasetPool
      *            pool of GDAL Datasets, never <code>null</code>
-     * @param tileEnvelope2 
+     * @param tileEnvelope2
      */
     GdalTile( Envelope tileEnvelope, Envelope datasetEnvelope, int pixelsX, int pixelsY,
               GenericObjectPool<Dataset> gdalDatasetPool, int datasetMinX, int datasetMinY, int datasetPixelsX,
-              int datasetPixelsY, long x, long y, double unitsPerPixel, double unitsPerPixelX, double unitsPerPixelY, Envelope tileEnvelope2 ) {
+              int datasetPixelsY, long x, long y, double unitsPerPixel, double unitsPerPixelX, double unitsPerPixelY,
+              Envelope tileEnvelope2, GdalDatasetFactory fac ) {
         this.tileEnvelope = tileEnvelope;
         this.tileEnvelope2 = tileEnvelope2;
         this.datasetEnvelope = datasetEnvelope;
@@ -136,6 +136,7 @@ class GdalTile implements Tile {
         this.unitsPerPixelX = unitsPerPixelX;
         this.unitsPerPixelY = unitsPerPixelY;
         readWindow = determineReadWindow();
+        this.fac = fac;
     }
 
     private Envelope determineReadWindow() {
@@ -165,7 +166,7 @@ class GdalTile implements Tile {
                             throws TileIOException {
         Dataset dataset = null;
         try {
-            dataset = gdalDatasetPool.borrowObject();
+            dataset = fac.makeObject();
             BufferedImage img = extractTile( dataset );
             return img;
         } catch ( Exception e ) {
@@ -173,7 +174,8 @@ class GdalTile implements Tile {
             throw new TileIOException( "Error retrieving image: " + e.getMessage(), e );
         } finally {
             try {
-                gdalDatasetPool.returnObject( dataset );
+                fac.destroyObject( dataset );
+//                gdalDatasetPool.returnObject( dataset );
             } catch ( Exception e ) {
                 // ignore closing error
             }
@@ -200,12 +202,12 @@ class GdalTile implements Tile {
             img = readTileWindowAndBlitIntoTile( dataset, numBands );
         }
 
-//        Graphics g = img.getGraphics();
-//        g.setColor( Color.BLACK );
-//        g.drawRect( 0, 0, pixelsX - 1, pixelsY - 1 );
-//        Font font = new Font( Font.SANS_SERIF, Font.BOLD, 20 );
-//        g.setFont( font );
-//        g.drawString( "(" + x + "," + y + ")", 30, 30 );
+        // Graphics g = img.getGraphics();
+        // g.setColor( Color.BLACK );
+        // g.drawRect( 0, 0, pixelsX - 1, pixelsY - 1 );
+        // Font font = new Font( Font.SANS_SERIF, Font.BOLD, 20 );
+        // g.setFont( font );
+        // g.drawString( "(" + x + "," + y + ")", 30, 30 );
         return img;
     }
 
@@ -218,8 +220,10 @@ class GdalTile implements Tile {
         int offsetY = (int) Math.round( worldMaxY / unitsPerPixelY );
         int xSize = (int) Math.round( readWindow.getSpan0() / unitsPerPixelX );
         int ySize = (int) Math.round( readWindow.getSpan1() / unitsPerPixelY );
-        int targetOffsetX = (int) Math.round( (readWindow.getMin().get0() - tileEnvelope.getMin().get0()) / unitsPerPixel );
-        int targetOffsetY = (int) Math.round( (tileEnvelope.getMax().get1() - readWindow.getMax().get1()) / unitsPerPixel );
+        int targetOffsetX = (int) Math.round( ( readWindow.getMin().get0() - tileEnvelope.getMin().get0() )
+                                              / unitsPerPixel );
+        int targetOffsetY = (int) Math.round( ( tileEnvelope.getMax().get1() - readWindow.getMax().get1() )
+                                              / unitsPerPixel );
         int targetSizeX = (int) Math.round( readWindow.getSpan0() / unitsPerPixel );
         int targetSizeY = (int) Math.round( readWindow.getSpan1() / unitsPerPixel );
         byte[][] windowData = readTileWindow( dataset, numBands, offsetX, offsetY, xSize, ySize, targetSizeX,
@@ -243,7 +247,7 @@ class GdalTile implements Tile {
                     try {
                         dst[targetX + targetY * pixelsX] = src[x + y * windowSizeX];
                     } catch ( Exception e ) {
-                        System.out.println(targetX + ", " + targetY);
+                        System.out.println( targetX + ", " + targetY );
                     }
                 }
             }
@@ -257,9 +261,9 @@ class GdalTile implements Tile {
         for ( int i = 0; i < numBands; i++ ) {
             Band band = dataset.GetRasterBand( i + 1 );
             byte[] bandBytes = bands[i];
-            synchronized ( this.getClass() ) {
-                band.ReadRaster( offsetX, offsetY, xSize, ySize, targetSizeX, targetSizeY, GDT_Byte, bandBytes, 0, 0 );
-            }
+            // synchronized ( this.getClass() ) {
+            band.ReadRaster( offsetX, offsetY, xSize, ySize, targetSizeX, targetSizeY, GDT_Byte, bandBytes, 0, 0 );
+            // )
         }
         return bands;
     }
@@ -271,10 +275,10 @@ class GdalTile implements Tile {
         for ( int i = 0; i < numBands; i++ ) {
             Band band = dataset.GetRasterBand( i + 1 );
             byte[] bandBytes = bands[i];
-            synchronized ( this.getClass() ) {
-                band.ReadRaster( datasetMinX, datasetMinY, datasetPixelsX, datasetPixelsY, pixelsX, pixelsY, GDT_Byte,
-                                 bandBytes, 0, 0 );
-            }
+            // synchronized ( this.getClass() ) {
+            band.ReadRaster( datasetMinX, datasetMinY, datasetPixelsX, datasetPixelsY, pixelsX, pixelsY, GDT_Byte,
+                             bandBytes, 0, 0 );
+            // }
         }
         img = toImage( bands, pixelsX, pixelsY );
         return img;

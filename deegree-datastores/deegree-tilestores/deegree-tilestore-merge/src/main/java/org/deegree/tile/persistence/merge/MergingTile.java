@@ -34,20 +34,15 @@ public class MergingTile implements Tile {
     public BufferedImage getAsImage()
                             throws TileIOException {
         LOG.debug( "Merging tiles" );
-
         Iterator<Tile> itr = tiles.iterator();
-
         Tile firstTile = itr.next();
         BufferedImage firstImage = firstTile.getAsImage();
-
         BufferedImage mergedImage = new BufferedImage( firstImage.getWidth(), firstImage.getHeight(),
                                                        BufferedImage.TYPE_3BYTE_BGR );
         Graphics g = mergedImage.getGraphics();
         g.setColor( WHITE );
         g.fillRect( 0, 0, firstImage.getWidth(), firstImage.getHeight() );
-
         g.drawImage( firstImage, 0, 0, null );
-
         int count = 1;
         while ( itr.hasNext() ) {
             Tile nextTile = itr.next();
@@ -57,28 +52,21 @@ public class MergingTile implements Tile {
 
             count++;
         }
-
         LOG.debug( "Number of tiles merged: " + count );
-
         return mergedImage;
     }
 
     @Override
     public InputStream getAsStream()
                             throws TileIOException {
-
         LOG.debug( "Writing image" );
-
         ByteArrayOutputStream output = new ByteArrayOutputStream();
-
         try {
             ImageIO.write( getAsImage(), "jpeg", output );
         } catch ( IOException e ) {
             throw new TileIOException( e );
         }
-
         LOG.debug( "Output size: " + output.size() );
-
         return new ByteArrayInputStream( output.toByteArray() );
     }
 
