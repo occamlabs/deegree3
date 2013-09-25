@@ -149,6 +149,9 @@ class GdalTileDataLevel implements TileDataLevel {
     public Tile getTile( long x, long y ) {
         // System.out.println(metadata.getIdentifier());
         // System.out.println(metadata.getNumTilesX());
+        if ( !isWithinLimits(x,y) ) {
+            return null;
+        }
         double tileWidth = metadata.getTileWidth();
         double tileHeight = metadata.getTileHeight();
         Envelope matrixEnvelope = metadata.getSpatialMetadata().getEnvelope();
@@ -173,5 +176,9 @@ class GdalTileDataLevel implements TileDataLevel {
                              (int) metadata.getTilePixelsY(), gdalDatasetPool, datasetMinX, datasetMinY,
                              datasetPixelsX, datasetPixelsY, x, y, metadata.getResolution(), unitsPerPixelX,
                              unitsPerPixelY, tileEnvelope2 );
+    }
+
+    private boolean isWithinLimits( long x, long y ) {
+        return x >= xMin && x <= xMax && y >= yMin && y <= yMax; 
     }
 }

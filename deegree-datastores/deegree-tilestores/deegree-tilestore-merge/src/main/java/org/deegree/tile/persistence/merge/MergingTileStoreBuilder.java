@@ -11,6 +11,7 @@ import org.deegree.tile.TileDataSet;
 import org.deegree.tile.TileMatrixSet;
 import org.deegree.tile.persistence.TileStore;
 import org.deegree.tile.persistence.TileStoreProvider;
+import org.deegree.tile.persistence.merge.jaxb.MergingTileStore.TileStoreId;
 import org.deegree.workspace.ResourceBuilder;
 import org.deegree.workspace.ResourceInitException;
 import org.deegree.workspace.ResourceMetadata;
@@ -29,7 +30,6 @@ public class MergingTileStoreBuilder implements ResourceBuilder<TileStore> {
 
     public MergingTileStoreBuilder( org.deegree.tile.persistence.merge.jaxb.MergingTileStore cfg,
                                     ResourceMetadata<TileStore> metadata, Workspace workspace ) {
-
         this.cfg = cfg;
         this.metadata = metadata;
         this.workspace = workspace;
@@ -41,7 +41,8 @@ public class MergingTileStoreBuilder implements ResourceBuilder<TileStore> {
         Map<String, TileMatrixSet> matrixSets = new HashMap<String, TileMatrixSet>();
         Map<String, List<TileStore>> tileStores = new HashMap<String, List<TileStore>>();
 
-        for ( String tsid : cfg.getTileStoreId() ) {
+        for ( TileStoreId tsId : cfg.getTileStoreId() ) {
+            String tsid = tsId.getValue();
             LOG.debug( "Processing TileStore: " + tsid );
 
             TileStore tileStore = workspace.getResource( TileStoreProvider.class, tsid );

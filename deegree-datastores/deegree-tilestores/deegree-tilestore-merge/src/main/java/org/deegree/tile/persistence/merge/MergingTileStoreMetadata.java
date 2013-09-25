@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.deegree.tile.persistence.TileStore;
 import org.deegree.tile.persistence.TileStoreProvider;
+import org.deegree.tile.persistence.merge.jaxb.MergingTileStore.TileStoreId;
 import org.deegree.workspace.ResourceBuilder;
 import org.deegree.workspace.ResourceInitException;
 import org.deegree.workspace.ResourceLocation;
@@ -17,8 +18,8 @@ import org.deegree.workspace.standard.DefaultResourceIdentifier;
 import org.slf4j.Logger;
 
 public class MergingTileStoreMetadata extends AbstractResourceMetadata<TileStore> {
-    
-    private static final Logger LOG = getLogger(MergingTileStoreMetadata.class);
+
+    private static final Logger LOG = getLogger( MergingTileStoreMetadata.class );
 
     public MergingTileStoreMetadata( Workspace workspace, ResourceLocation<TileStore> location,
                                      AbstractResourceProvider<TileStore> provider ) {
@@ -33,11 +34,10 @@ public class MergingTileStoreMetadata extends AbstractResourceMetadata<TileStore
                                                                                          provider.getSchema(),
                                                                                          location.getAsStream(),
                                                                                          workspace );
-            List<String> tsids = cfg.getTileStoreId();
-            for ( String tsid : tsids ) {
-                LOG.debug("Adding dependency on TileStore: " + tsid);
-                
-                dependencies.add( new DefaultResourceIdentifier<TileStore>( TileStoreProvider.class, tsid ) );
+            List<TileStoreId> tsids = cfg.getTileStoreId();
+            for ( TileStoreId tsid : tsids ) {
+                LOG.debug( "Adding dependency on TileStore: " + tsid.getValue() );
+                dependencies.add( new DefaultResourceIdentifier<TileStore>( TileStoreProvider.class, tsid.getValue() ) );
             }
 
             return new MergingTileStoreBuilder( cfg, this, workspace );

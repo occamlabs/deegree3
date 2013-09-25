@@ -1,5 +1,6 @@
 package org.deegree.tile.persistence.merge;
 
+import static java.awt.Color.WHITE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.awt.Graphics;
@@ -42,6 +43,8 @@ public class MergingTile implements Tile {
         BufferedImage mergedImage = new BufferedImage( firstImage.getWidth(), firstImage.getHeight(),
                                                        BufferedImage.TYPE_3BYTE_BGR );
         Graphics g = mergedImage.getGraphics();
+        g.setColor( WHITE );
+        g.fillRect( 0, 0, firstImage.getWidth(), firstImage.getHeight() );
 
         g.drawImage( firstImage, 0, 0, null );
 

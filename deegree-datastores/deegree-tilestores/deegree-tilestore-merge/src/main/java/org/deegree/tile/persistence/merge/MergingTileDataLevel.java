@@ -10,6 +10,7 @@ import org.deegree.tile.TileMatrix;
 public class MergingTileDataLevel implements TileDataLevel {
 
     private final List<TileDataLevel> tileDataLevels;
+
     private final TileMatrix tileMatrix;
 
     public MergingTileDataLevel( List<TileDataLevel> tileDataLevels, TileMatrix tileMatrix ) {
@@ -24,12 +25,19 @@ public class MergingTileDataLevel implements TileDataLevel {
 
     @Override
     public Tile getTile( long x, long y ) {
-        List<Tile> tiles = new ArrayList<Tile>();
-
+        List<Tile> tiles = new ArrayList<Tile>( tileDataLevels.size() );
         for ( TileDataLevel tileDataLevel : tileDataLevels ) {
-            tiles.add( tileDataLevel.getTile( x, y ) );
+            Tile tile = tileDataLevel.getTile( x, y );
+            if ( tile != null ) {
+                tiles.add( tile );
+            }
         }
-
+        if ( tiles.isEmpty() ) {
+            return null;
+        }
+        if ( tiles.size() == 1 ) {
+            return tiles.get( 0 );
+        }
         return new MergingTile( tiles );
     }
 }

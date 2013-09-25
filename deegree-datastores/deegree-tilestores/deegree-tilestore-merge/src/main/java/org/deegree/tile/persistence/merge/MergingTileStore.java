@@ -53,11 +53,9 @@ public class MergingTileStore implements TileStore {
     @Override
     public Tile getTile( String tileDataSet, String tileDataLevel, int x, int y ) {
         List<Tile> tiles = new ArrayList<Tile>();
-
         for ( TileStore tileStore : tileStores.get( tileDataSet ) ) {
             tiles.add( tileStore.getTile( tileDataSet, tileDataLevel, x, y ) );
         }
-
         return new MergingTile( tiles );
     }
 
