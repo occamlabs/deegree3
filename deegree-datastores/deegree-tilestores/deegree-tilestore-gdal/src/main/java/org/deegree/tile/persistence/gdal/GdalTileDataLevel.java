@@ -29,10 +29,8 @@ package org.deegree.tile.persistence.gdal;
 
 import java.io.File;
 
-import org.apache.commons.pool.impl.GenericObjectPool;
 import org.deegree.cs.coordinatesystems.ICRS;
 import org.deegree.geometry.Envelope;
-import org.deegree.geometry.GeometryFactory;
 import org.deegree.geometry.primitive.Point;
 import org.deegree.geometry.standard.DefaultEnvelope;
 import org.deegree.geometry.standard.primitive.DefaultPoint;
@@ -41,6 +39,7 @@ import org.deegree.tile.TileDataLevel;
 import org.deegree.tile.TileMatrix;
 import org.gdal.gdal.Band;
 import org.gdal.gdal.Dataset;
+import org.gdal.gdal.gdal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,9 +56,7 @@ class GdalTileDataLevel implements TileDataLevel {
 
     private final TileMatrix metadata;
 
-    private final GeometryFactory fac = new GeometryFactory();
-
-    private final GenericObjectPool<Dataset> gdalDatasetPool;
+    private final File file;
 
     private final int xMin;
 
@@ -74,8 +71,6 @@ class GdalTileDataLevel implements TileDataLevel {
     private double unitsPerPixelX;
 
     private double unitsPerPixelY;
-
-    private GdalDatasetFactory datasetFactory;
 
     /**
      * Creates a new {@link GdalTileDataLevel} instance.
@@ -92,13 +87,12 @@ class GdalTileDataLevel implements TileDataLevel {
      */
     GdalTileDataLevel( TileMatrix matrix, File file, int xMin, int yMin, int xMax, int yMax ) throws Exception {
         this.metadata = matrix;
-        datasetFactory = new GdalDatasetFactory( file );
-        gdalDatasetPool = new GenericObjectPool<Dataset>( datasetFactory );
+        this.file = file;
         this.xMin = xMin;
         this.yMin = yMin;
         this.xMax = xMax;
         this.yMax = yMax;
-        Dataset dataset = gdalDatasetPool.borrowObject();
+        Dataset dataset = gdal.OpenShared( file.toString() );
         try {
             Band firstBand = dataset.GetRasterBand( 1 );
             datasetEnvelope = getEnvelope( dataset );
@@ -113,7 +107,7 @@ class GdalTileDataLevel implements TileDataLevel {
             LOG.info( "- units per pixel (y): " + unitsPerPixelY );
             LOG.info( "- units per pixel (by matrix): " + matrix.getResolution() );
         } finally {
-            gdalDatasetPool.returnObject( dataset );
+            dataset.delete();
         }
     }
 
@@ -173,9 +167,9 @@ class GdalTileDataLevel implements TileDataLevel {
         int datasetPixelsX = (int) ( tileWidth / unitsPerPixelX );
         int datasetPixelsY = (int) ( tileHeight / unitsPerPixelY );
         return new GdalTile( tileEnvelope, datasetEnvelope, (int) metadata.getTilePixelsX(),
-                             (int) metadata.getTilePixelsY(), gdalDatasetPool, datasetMinX, datasetMinY,
-                             datasetPixelsX, datasetPixelsY, x, y, metadata.getResolution(), unitsPerPixelX,
-                             unitsPerPixelY, tileEnvelope2, datasetFactory );
+                             (int) metadata.getTilePixelsY(), file, datasetMinX, datasetMinY, datasetPixelsX,
+                             datasetPixelsY, x, y, metadata.getResolution(), unitsPerPixelX, unitsPerPixelY,
+                             tileEnvelope2 );
     }
 
     private boolean isWithinLimits( long x, long y ) {

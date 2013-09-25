@@ -42,12 +42,12 @@ import java.awt.image.SampleModel;
 import java.awt.image.WritableRaster;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
 import javax.imageio.ImageIO;
 
-import org.apache.commons.pool.impl.GenericObjectPool;
 import org.deegree.feature.FeatureCollection;
 import org.deegree.geometry.Envelope;
 import org.deegree.geometry.primitive.Point;
@@ -57,6 +57,7 @@ import org.deegree.tile.Tile;
 import org.deegree.tile.TileIOException;
 import org.gdal.gdal.Band;
 import org.gdal.gdal.Dataset;
+import org.gdal.gdal.gdal;
 
 /**
  * {@link Tile} backed by a GDAL <code>Dataset</code>.
@@ -77,7 +78,7 @@ class GdalTile implements Tile {
 
     private final int pixelsX, pixelsY;
 
-    private final GenericObjectPool<Dataset> gdalDatasetPool;
+    private final File gdalFile;
 
     private final int datasetPixelsY;
 
@@ -99,8 +100,6 @@ class GdalTile implements Tile {
 
     private Envelope tileEnvelope2;
 
-    private final GdalDatasetFactory fac;
-
     /**
      * Creates a new {@link GdalTile} instance.
      * 
@@ -116,16 +115,15 @@ class GdalTile implements Tile {
      *            pool of GDAL Datasets, never <code>null</code>
      * @param tileEnvelope2
      */
-    GdalTile( Envelope tileEnvelope, Envelope datasetEnvelope, int pixelsX, int pixelsY,
-              GenericObjectPool<Dataset> gdalDatasetPool, int datasetMinX, int datasetMinY, int datasetPixelsX,
-              int datasetPixelsY, long x, long y, double unitsPerPixel, double unitsPerPixelX, double unitsPerPixelY,
-              Envelope tileEnvelope2, GdalDatasetFactory fac ) {
+    GdalTile( Envelope tileEnvelope, Envelope datasetEnvelope, int pixelsX, int pixelsY, File gdalFile,
+              int datasetMinX, int datasetMinY, int datasetPixelsX, int datasetPixelsY, long x, long y,
+              double unitsPerPixel, double unitsPerPixelX, double unitsPerPixelY, Envelope tileEnvelope2 ) {
         this.tileEnvelope = tileEnvelope;
         this.tileEnvelope2 = tileEnvelope2;
         this.datasetEnvelope = datasetEnvelope;
         this.pixelsX = pixelsX;
         this.pixelsY = pixelsY;
-        this.gdalDatasetPool = gdalDatasetPool;
+        this.gdalFile = gdalFile;
         this.datasetMinX = datasetMinX;
         this.datasetMinY = datasetMinY;
         this.datasetPixelsX = datasetPixelsX;
@@ -136,7 +134,6 @@ class GdalTile implements Tile {
         this.unitsPerPixelX = unitsPerPixelX;
         this.unitsPerPixelY = unitsPerPixelY;
         readWindow = determineReadWindow();
-        this.fac = fac;
     }
 
     private Envelope determineReadWindow() {
@@ -166,7 +163,7 @@ class GdalTile implements Tile {
                             throws TileIOException {
         Dataset dataset = null;
         try {
-            dataset = fac.makeObject();
+            dataset = gdal.OpenShared( gdalFile.toString() );
             BufferedImage img = extractTile( dataset );
             return img;
         } catch ( Exception e ) {
@@ -174,8 +171,7 @@ class GdalTile implements Tile {
             throw new TileIOException( "Error retrieving image: " + e.getMessage(), e );
         } finally {
             try {
-                fac.destroyObject( dataset );
-//                gdalDatasetPool.returnObject( dataset );
+                dataset.delete();
             } catch ( Exception e ) {
                 // ignore closing error
             }
@@ -261,9 +257,7 @@ class GdalTile implements Tile {
         for ( int i = 0; i < numBands; i++ ) {
             Band band = dataset.GetRasterBand( i + 1 );
             byte[] bandBytes = bands[i];
-            // synchronized ( this.getClass() ) {
             band.ReadRaster( offsetX, offsetY, xSize, ySize, targetSizeX, targetSizeY, GDT_Byte, bandBytes, 0, 0 );
-            // )
         }
         return bands;
     }
@@ -275,10 +269,8 @@ class GdalTile implements Tile {
         for ( int i = 0; i < numBands; i++ ) {
             Band band = dataset.GetRasterBand( i + 1 );
             byte[] bandBytes = bands[i];
-            // synchronized ( this.getClass() ) {
             band.ReadRaster( datasetMinX, datasetMinY, datasetPixelsX, datasetPixelsY, pixelsX, pixelsY, GDT_Byte,
                              bandBytes, 0, 0 );
-            // }
         }
         img = toImage( bands, pixelsX, pixelsY );
         return img;
