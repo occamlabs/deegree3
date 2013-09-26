@@ -217,11 +217,11 @@ class GdalTile implements Tile {
         int xSize = (int) Math.round( readWindow.getSpan0() / unitsPerPixelX );
         int ySize = (int) Math.round( readWindow.getSpan1() / unitsPerPixelY );
         int targetOffsetX = (int) Math.round( ( readWindow.getMin().get0() - tileEnvelope.getMin().get0() )
-                                              / unitsPerPixel );
+                                              / unitsPerPixel - 0.5);
         int targetOffsetY = (int) Math.round( ( tileEnvelope.getMax().get1() - readWindow.getMax().get1() )
-                                              / unitsPerPixel );
-        int targetSizeX = (int) Math.round( readWindow.getSpan0() / unitsPerPixel );
-        int targetSizeY = (int) Math.round( readWindow.getSpan1() / unitsPerPixel );
+                                              / unitsPerPixel - 0.5);
+        int targetSizeX = (int) Math.round( readWindow.getSpan0() / unitsPerPixel + 0.5);
+        int targetSizeY = (int) Math.round( readWindow.getSpan1() / unitsPerPixel + 0.5);
         byte[][] windowData = readTileWindow( dataset, numBands, offsetX, offsetY, xSize, ySize, targetSizeX,
                                               targetSizeY );
         byte[][] tileData = createTileFromWindow( windowData, targetSizeX, targetSizeY, targetOffsetX, targetOffsetY );
