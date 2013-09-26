@@ -162,10 +162,10 @@ class GdalTileDataLevel implements TileDataLevel {
         Envelope tileEnvelope2 = new DefaultEnvelope( null, crs, null, min, max );
         double relX = minX - datasetEnvelope.getMin().get0();
         double relY = datasetEnvelope.getMax().get1() - maxY;
-        int datasetMinX = (int) ( relX / unitsPerPixelX );
-        int datasetMinY = (int) ( relY / unitsPerPixelY );
-        int datasetPixelsX = (int) ( tileWidth / unitsPerPixelX );
-        int datasetPixelsY = (int) ( tileHeight / unitsPerPixelY );
+        int datasetMinX = (int) Math.round( relX / (double) unitsPerPixelX - 0.5 );
+        int datasetMinY = (int) Math.round( relY / (double) unitsPerPixelY - 0.5 );
+        int datasetPixelsX = (int) Math.round( tileWidth / unitsPerPixelX + 0.5 );
+        int datasetPixelsY = (int) Math.round( tileHeight / unitsPerPixelY + 0.5 );
         return new GdalTile( tileEnvelope, datasetEnvelope, (int) metadata.getTilePixelsX(),
                              (int) metadata.getTilePixelsY(), file, datasetMinX, datasetMinY, datasetPixelsX,
                              datasetPixelsY, x, y, metadata.getResolution(), unitsPerPixelX, unitsPerPixelY,
