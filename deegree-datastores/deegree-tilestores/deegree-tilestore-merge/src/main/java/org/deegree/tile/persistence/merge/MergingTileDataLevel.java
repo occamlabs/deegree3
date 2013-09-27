@@ -34,10 +34,14 @@ public class MergingTileDataLevel implements TileDataLevel {
         }
         if ( tiles.isEmpty() ) {
             return null;
-        }
+        }        
+        /* disabled: is causing problems when 
+         * returned tile has an alpha channel.
+         * Saving a BufferedImage with alpha as
+         * jpeg is not possible on OpenJDK.
         if ( tiles.size() == 1 ) {
             return tiles.get( 0 );
-        }
+        }*/
         return new MergingTile( tiles );
     }
 }

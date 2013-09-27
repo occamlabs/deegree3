@@ -185,6 +185,9 @@ class GdalTile implements Tile {
                             throws IOException {
 
         int numBands = dataset.GetRasterCount();
+        if(numBands == 4 && imageFormat.contains("jpeg")) {
+            numBands = 3;
+        }
 
         BufferedImage img = null;
         boolean isTileCompletelyInsideDataset = isTileCompletelyInsideDataset( dataset );
