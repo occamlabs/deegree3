@@ -80,7 +80,7 @@ class GdalTileDataSetBuilder {
     TileDataSet buildTileDataSet( GdalTileStoreJaxb.TileDataSet cfg, ResourceLocation<TileStore> location,
                                   Envelope gdalEnvelope ) {
         String filename = cfg.getFile();
-        String format = cfg.getImageFormat();
+        String imageFormat = cfg.getImageFormat();
         String tmsId = cfg.getTileMatrixSetId();
         File file = location.resolveToFile( filename );
         TileMatrixSet tms = workspace.getResource( TileMatrixSetProvider.class, tmsId );
@@ -97,13 +97,13 @@ class GdalTileDataSetBuilder {
             int xMax = (int) Math.floor( ( datasetToMatrixOffsetX + gdalEnvelope.getSpan0() ) / tm.getTileWidth() );
             int yMax = (int) Math.floor( ( datasetToMatrixOffsetY + gdalEnvelope.getSpan1() ) / tm.getTileHeight() );
             try {
-                levels.add( new GdalTileDataLevel( tm, file, xMin, yMin, xMax, yMax ) );
+                levels.add( new GdalTileDataLevel( tm, file, xMin, yMin, xMax, yMax, imageFormat ) );
             } catch ( Exception e ) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
             }
         }
-        return new DefaultTileDataSet( levels, tms, format );
+        return new DefaultTileDataSet( levels, tms, imageFormat );
     }
 
 }

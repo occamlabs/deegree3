@@ -99,6 +99,8 @@ class GdalTile implements Tile {
     private double unitsPerPixelY;
 
     private Envelope tileEnvelope2;
+    
+    private String imageFormat;
 
     /**
      * Creates a new {@link GdalTile} instance.
@@ -117,7 +119,7 @@ class GdalTile implements Tile {
      */
     GdalTile( Envelope tileEnvelope, Envelope datasetEnvelope, int pixelsX, int pixelsY, File gdalFile,
               int datasetMinX, int datasetMinY, int datasetPixelsX, int datasetPixelsY, long x, long y,
-              double unitsPerPixel, double unitsPerPixelX, double unitsPerPixelY, Envelope tileEnvelope2 ) {
+              double unitsPerPixel, double unitsPerPixelX, double unitsPerPixelY, Envelope tileEnvelope2, String imageFormat ) {
         this.tileEnvelope = tileEnvelope;
         this.tileEnvelope2 = tileEnvelope2;
         this.datasetEnvelope = datasetEnvelope;
@@ -133,6 +135,7 @@ class GdalTile implements Tile {
         this.unitsPerPixel = unitsPerPixel;
         this.unitsPerPixelX = unitsPerPixelX;
         this.unitsPerPixelY = unitsPerPixelY;
+        this.imageFormat = imageFormat;
         readWindow = determineReadWindow();
     }
 
@@ -302,7 +305,14 @@ class GdalTile implements Tile {
                             throws TileIOException {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         try {
-            ImageIO.write( getAsImage(), "png", bos );
+            String formatName;
+            if(imageFormat.startsWith("image/")) {
+                formatName = imageFormat.substring(6);
+            } else {
+                formatName = imageFormat;
+            }
+            
+            ImageIO.write( getAsImage(), formatName, bos );
         } catch ( IOException e ) {
             throw new TileIOException( "Error retrieving image: " + e.getMessage(), e );
         }

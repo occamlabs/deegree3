@@ -71,6 +71,8 @@ class GdalTileDataLevel implements TileDataLevel {
     private double unitsPerPixelX;
 
     private double unitsPerPixelY;
+    
+    private String imageFormat;
 
     /**
      * Creates a new {@link GdalTileDataLevel} instance.
@@ -85,13 +87,14 @@ class GdalTileDataLevel implements TileDataLevel {
      * @param tilesY
      * @throws Exception
      */
-    GdalTileDataLevel( TileMatrix matrix, File file, int xMin, int yMin, int xMax, int yMax ) throws Exception {
+    GdalTileDataLevel( TileMatrix matrix, File file, int xMin, int yMin, int xMax, int yMax, String imageFormat ) throws Exception {
         this.metadata = matrix;
         this.file = file;
         this.xMin = xMin;
         this.yMin = yMin;
         this.xMax = xMax;
         this.yMax = yMax;
+        this.imageFormat = imageFormat;
         Dataset dataset = gdal.OpenShared( file.toString() );
         try {
             Band firstBand = dataset.GetRasterBand( 1 );
@@ -169,7 +172,7 @@ class GdalTileDataLevel implements TileDataLevel {
         return new GdalTile( tileEnvelope, datasetEnvelope, (int) metadata.getTilePixelsX(),
                              (int) metadata.getTilePixelsY(), file, datasetMinX, datasetMinY, datasetPixelsX,
                              datasetPixelsY, x, y, metadata.getResolution(), unitsPerPixelX, unitsPerPixelY,
-                             tileEnvelope2 );
+                             tileEnvelope2, imageFormat );
     }
 
     private boolean isWithinLimits( long x, long y ) {
