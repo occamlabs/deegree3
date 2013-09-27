@@ -181,11 +181,7 @@ class GdalTile implements Tile {
     private BufferedImage extractTile( Dataset dataset )
                             throws IOException {
 
-        int numBands = 4;
-        Band firstBand = dataset.GetRasterBand( 1 );
-        // if ( overviewIndex != 0 ) {
-        // firstBand = firstBand.GetOverview( overviewIndex );
-        // }
+        int numBands = dataset.GetRasterCount();
 
         BufferedImage img = null;
         boolean isTileCompletelyInsideDataset = isTileCompletelyInsideDataset( dataset );
@@ -217,11 +213,11 @@ class GdalTile implements Tile {
         int xSize = (int) Math.round( readWindow.getSpan0() / unitsPerPixelX );
         int ySize = (int) Math.round( readWindow.getSpan1() / unitsPerPixelY );
         int targetOffsetX = (int) Math.round( ( readWindow.getMin().get0() - tileEnvelope.getMin().get0() )
-                                              / unitsPerPixel - 0.5);
+                                              / unitsPerPixel - 0.5 );
         int targetOffsetY = (int) Math.round( ( tileEnvelope.getMax().get1() - readWindow.getMax().get1() )
-                                              / unitsPerPixel - 0.5);
-        int targetSizeX = (int) Math.round( readWindow.getSpan0() / unitsPerPixel + 0.5);
-        int targetSizeY = (int) Math.round( readWindow.getSpan1() / unitsPerPixel + 0.5);
+                                              / unitsPerPixel - 0.5 );
+        int targetSizeX = (int) Math.round( readWindow.getSpan0() / unitsPerPixel + 0.5 );
+        int targetSizeY = (int) Math.round( readWindow.getSpan1() / unitsPerPixel + 0.5 );
         byte[][] windowData = readTileWindow( dataset, numBands, offsetX, offsetY, xSize, ySize, targetSizeX,
                                               targetSizeY );
         byte[][] tileData = createTileFromWindow( windowData, targetSizeX, targetSizeY, targetOffsetX, targetOffsetY );
@@ -287,8 +283,17 @@ class GdalTile implements Tile {
         DataBuffer imgBuffer = new DataBufferByte( bands, numBytes );
         SampleModel sampleModel = new BandedSampleModel( TYPE_BYTE, xSize, ySize, bands.length );
         WritableRaster raster = Raster.createWritableRaster( sampleModel, imgBuffer, null );
-        ColorSpace cs = ColorSpace.getInstance( ColorSpace.CS_sRGB );
-        ColorModel cm = new ComponentColorModel( cs, true, false, ColorModel.TRANSLUCENT, TYPE_BYTE );
+        ColorSpace cs = ColorSpace.getInstance( ColorSpace.CS_sRGB );        
+        
+        ColorModel cm;        
+        if( bands.length == 3 ) {
+            cm = new ComponentColorModel( cs, false, false, ColorModel.OPAQUE, TYPE_BYTE );
+        } else if( bands.length == 4 ) {
+            cm = new ComponentColorModel( cs, true, false, ColorModel.TRANSLUCENT, TYPE_BYTE );
+        } else {
+            throw new IllegalArgumentException( "Unsupported number of bands: " + bands.length );
+        }
+        
         return new BufferedImage( cm, raster, false, null );
     }
 
