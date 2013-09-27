@@ -1,10 +1,6 @@
 package org.deegree.tile.persistence.gdal;
 
 import static java.util.Collections.singletonList;
-import static org.slf4j.LoggerFactory.getLogger;
-
-import java.util.HashMap;
-import java.util.Map;
 
 import org.deegree.cs.coordinatesystems.ICRS;
 import org.deegree.cs.exceptions.UnknownCRSException;
@@ -15,36 +11,8 @@ import org.deegree.geometry.primitive.Point;
 import org.deegree.geometry.standard.DefaultEnvelope;
 import org.deegree.geometry.standard.primitive.DefaultPoint;
 import org.gdal.gdal.Dataset;
-import org.gdal.gdal.gdal;
-import org.slf4j.Logger;
 
 public class GdalUtils {
-
-    private static final Logger LOG = getLogger( GdalUtils.class );
-
-    private static final ThreadLocal<Map<String, Dataset>> localDatasets = new ThreadLocal<Map<String, Dataset>>() {
-
-        @Override
-        protected Map<String, Dataset> initialValue() {
-            return new HashMap<String, Dataset>();
-        }
-    };
-
-    public static Dataset getDataset( String gdalFile ) {
-        final Map<String, Dataset> datasets = localDatasets.get();
-
-        if ( datasets.containsKey( gdalFile ) ) {
-            LOG.debug( "Reusing dataset for {}", gdalFile );
-
-            return datasets.get( gdalFile );
-        } else {
-            LOG.debug( "Opening {}", gdalFile );
-
-            final Dataset dataset = gdal.OpenShared( gdalFile );
-            datasets.put( gdalFile, dataset );
-            return dataset;
-        }
-    }
 
     public static SpatialMetadata getEnvelopeAndCrs( Dataset gdalDataset, String configuredCrs )
                             throws UnknownCRSException {

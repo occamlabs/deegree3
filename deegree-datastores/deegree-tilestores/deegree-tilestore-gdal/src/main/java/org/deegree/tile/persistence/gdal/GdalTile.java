@@ -161,14 +161,21 @@ class GdalTile implements Tile {
     @Override
     public BufferedImage getAsImage()
                             throws TileIOException {
+        Dataset dataset = null;
         try {
-            Dataset dataset = GdalUtils.getDataset( gdalFile.toString() );
+            dataset = gdal.OpenShared( gdalFile.toString() );
             BufferedImage img = extractTile( dataset );
             return img;
         } catch ( Exception e ) {
             e.printStackTrace();
             throw new TileIOException( "Error retrieving image: " + e.getMessage(), e );
-        } 
+        } finally {
+            try {
+                dataset.delete();
+            } catch ( Exception e ) {
+                // ignore closing error
+            }
+        }
     }
 
     private BufferedImage extractTile( Dataset dataset )
