@@ -57,7 +57,6 @@ import org.deegree.tile.Tile;
 import org.deegree.tile.TileIOException;
 import org.gdal.gdal.Band;
 import org.gdal.gdal.Dataset;
-import org.gdal.gdal.gdal;
 
 /**
  * {@link Tile} backed by a GDAL <code>Dataset</code>.
@@ -99,7 +98,7 @@ class GdalTile implements Tile {
     private double unitsPerPixelY;
 
     private Envelope tileEnvelope2;
-    
+
     private String imageFormat;
 
     /**
@@ -119,7 +118,8 @@ class GdalTile implements Tile {
      */
     GdalTile( Envelope tileEnvelope, Envelope datasetEnvelope, int pixelsX, int pixelsY, File gdalFile,
               int datasetMinX, int datasetMinY, int datasetPixelsX, int datasetPixelsY, long x, long y,
-              double unitsPerPixel, double unitsPerPixelX, double unitsPerPixelY, Envelope tileEnvelope2, String imageFormat ) {
+              double unitsPerPixel, double unitsPerPixelX, double unitsPerPixelY, Envelope tileEnvelope2,
+              String imageFormat ) {
         this.tileEnvelope = tileEnvelope;
         this.tileEnvelope2 = tileEnvelope2;
         this.datasetEnvelope = datasetEnvelope;
@@ -164,20 +164,13 @@ class GdalTile implements Tile {
     @Override
     public BufferedImage getAsImage()
                             throws TileIOException {
-        Dataset dataset = null;
         try {
-            dataset = gdal.OpenShared( gdalFile.toString() );
+            Dataset dataset = GdalDatasetPerThreadPool.getInstance().getDataset( gdalFile );
             BufferedImage img = extractTile( dataset );
             return img;
         } catch ( Exception e ) {
             e.printStackTrace();
             throw new TileIOException( "Error retrieving image: " + e.getMessage(), e );
-        } finally {
-            try {
-                dataset.delete();
-            } catch ( Exception e ) {
-                // ignore closing error
-            }
         }
     }
 
@@ -185,7 +178,7 @@ class GdalTile implements Tile {
                             throws IOException {
 
         int numBands = dataset.GetRasterCount();
-        if(numBands == 4 && imageFormat.contains("jpeg")) {
+        if ( numBands == 4 && imageFormat.contains( "jpeg" ) ) {
             numBands = 3;
         }
 
@@ -289,17 +282,17 @@ class GdalTile implements Tile {
         DataBuffer imgBuffer = new DataBufferByte( bands, numBytes );
         SampleModel sampleModel = new BandedSampleModel( TYPE_BYTE, xSize, ySize, bands.length );
         WritableRaster raster = Raster.createWritableRaster( sampleModel, imgBuffer, null );
-        ColorSpace cs = ColorSpace.getInstance( ColorSpace.CS_sRGB );        
-        
-        ColorModel cm;        
-        if( bands.length == 3 ) {
+        ColorSpace cs = ColorSpace.getInstance( ColorSpace.CS_sRGB );
+
+        ColorModel cm;
+        if ( bands.length == 3 ) {
             cm = new ComponentColorModel( cs, false, false, ColorModel.OPAQUE, TYPE_BYTE );
-        } else if( bands.length == 4 ) {
+        } else if ( bands.length == 4 ) {
             cm = new ComponentColorModel( cs, true, false, ColorModel.TRANSLUCENT, TYPE_BYTE );
         } else {
             throw new IllegalArgumentException( "Unsupported number of bands: " + bands.length );
         }
-        
+
         return new BufferedImage( cm, raster, false, null );
     }
 
@@ -309,12 +302,12 @@ class GdalTile implements Tile {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         try {
             String formatName;
-            if(imageFormat.startsWith("image/")) {
-                formatName = imageFormat.substring(6);
+            if ( imageFormat.startsWith( "image/" ) ) {
+                formatName = imageFormat.substring( 6 );
             } else {
                 formatName = imageFormat;
             }
-            
+
             ImageIO.write( getAsImage(), formatName, bos );
         } catch ( IOException e ) {
             throw new TileIOException( "Error retrieving image: " + e.getMessage(), e );
