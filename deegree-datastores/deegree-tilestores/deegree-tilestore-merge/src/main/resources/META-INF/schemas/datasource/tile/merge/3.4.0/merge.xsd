@@ -1,8 +1,6 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.w3.org/2001/XMLSchema"
   targetNamespace="http://www.deegree.org/datasource/tile/merge" elementFormDefault="qualified" xmlns:jaxb="http://java.sun.com/xml/ns/jaxb"
   jaxb:version="2.1">
-
   <annotation>
     <appinfo>
       <jaxb:schemaBindings>
@@ -10,22 +8,13 @@
       </jaxb:schemaBindings>
     </appinfo>
   </annotation>
-
   <element name="MergingTileStore">
     <complexType>
       <sequence>
-        <element name="TileStoreId" maxOccurs="unbounded">
-          <complexType>
-            <simpleContent>
-              <extension base="string">
-                <attribute name="dataSetId" type="string" />
-              </extension>
-            </simpleContent>
-          </complexType>
-        </element>
+        <element name="TileMatrixSetId" type="string" />
+        <element name="TileStoreId" maxOccurs="unbounded" type="string" />
       </sequence>
       <attribute name="configVersion" use="required" fixed="3.4.0" />
     </complexType>
   </element>
-
 </schema>
