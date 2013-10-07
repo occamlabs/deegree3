@@ -33,6 +33,7 @@ import static org.deegree.layer.config.ConfigUtils.parseDimensions;
 import static org.deegree.layer.config.ConfigUtils.parseStyles;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -42,6 +43,7 @@ import org.deegree.commons.ows.metadata.Description;
 import org.deegree.commons.utils.DoublePair;
 import org.deegree.commons.utils.Pair;
 import org.deegree.cs.coordinatesystems.ICRS;
+import org.deegree.cs.exceptions.UnknownCRSException;
 import org.deegree.geometry.metadata.SpatialMetadata;
 import org.deegree.layer.Layer;
 import org.deegree.layer.config.ConfigUtils;
@@ -52,6 +54,7 @@ import org.deegree.layer.persistence.base.jaxb.ScaleDenominatorsType;
 import org.deegree.layer.persistence.gdal.jaxb.GDALLayerType;
 import org.deegree.layer.persistence.gdal.jaxb.GDALLayers;
 import org.deegree.style.se.unevaluated.Style;
+import org.deegree.tile.GdalDataset;
 import org.deegree.workspace.ResourceBuilder;
 import org.deegree.workspace.ResourceMetadata;
 import org.deegree.workspace.Workspace;
@@ -86,16 +89,27 @@ class GdalLayerStoreBuilder implements ResourceBuilder<LayerStore> {
                                                                           gdalLayerCfg.getStyleRef() );
             md.setStyles( p.first );
             md.setLegendStyles( p.second );
-            List<File> resolvedFiles = resolveFiles( gdalLayerCfg.getFile() );
-            Layer layer = new GdalLayer( md, resolvedFiles );
+            List<GdalDataset> datasets = buildDatasets( gdalLayerCfg.getFile() );
+            Layer layer = new GdalLayer( md, datasets );
             layerNameToLayer.put( gdalLayerCfg.getName(), layer );
         }
         return new MultipleLayerStore( layerNameToLayer, metadata );
     }
 
-    private List<File> resolveFiles( List<String> file ) {
-        // TODO Auto-generated method stub
-        return null;
+    private List<GdalDataset> buildDatasets( List<String> files ) {
+        List<GdalDataset> datasets = new ArrayList<GdalDataset>( files.size() );
+        for ( String file : files ) {
+            try {
+                datasets.add( new GdalDataset( new File( file ) ) );
+            } catch ( UnknownCRSException e ) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            } catch ( IOException e ) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+        return datasets;
     }
 
     private LayerMetadata buildLayerMetadata( GDALLayerType lay ) {

@@ -27,7 +27,6 @@
 ----------------------------------------------------------------------------*/
 package org.deegree.layer.persistence.gdal;
 
-import java.io.File;
 import java.util.List;
 
 import org.deegree.commons.ows.exception.OWSException;
@@ -36,6 +35,7 @@ import org.deegree.layer.AbstractLayer;
 import org.deegree.layer.Layer;
 import org.deegree.layer.LayerQuery;
 import org.deegree.layer.metadata.LayerMetadata;
+import org.deegree.tile.GdalDataset;
 
 /**
  * {@link Layer} implementation for layers backed by GDAL datasets.
@@ -46,25 +46,25 @@ import org.deegree.layer.metadata.LayerMetadata;
  */
 class GdalLayer extends AbstractLayer {
 
-    private final List<File> files;
+    private final List<GdalDataset> datasets;
 
-    GdalLayer( LayerMetadata md, List<File> files ) {
+    GdalLayer( LayerMetadata md, List<GdalDataset> datasets ) {
         super( md );
-        this.files = files;
+        this.datasets = datasets;
     }
 
     @Override
     public GdalLayerData mapQuery( LayerQuery query, List<String> headers )
                             throws OWSException {
         Envelope bbox = query.getEnvelope();
-        return new GdalLayerData( files, bbox, query.getWidth(), query.getHeight() );
+        return new GdalLayerData( datasets, bbox, query.getWidth(), query.getHeight() );
     }
 
     @Override
     public GdalLayerData infoQuery( LayerQuery query, List<String> headers )
                             throws OWSException {
         Envelope bbox = query.calcClickBox( query.getRenderingOptions().getFeatureInfoRadius( getMetadata().getName() ) );
-        return new GdalLayerData( files, bbox, query.getWidth(), query.getHeight() );
+        return new GdalLayerData( datasets, bbox, query.getWidth(), query.getHeight() );
     }
 
 }

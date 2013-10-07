@@ -27,17 +27,18 @@
 ----------------------------------------------------------------------------*/
 package org.deegree.layer.persistence.gdal;
 
-import static java.awt.image.BufferedImage.TYPE_INT_RGB;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.awt.Graphics;
 import java.awt.image.BufferedImage;
-import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
 import org.deegree.feature.FeatureCollection;
 import org.deegree.geometry.Envelope;
 import org.deegree.layer.LayerData;
 import org.deegree.rendering.r2d.context.RenderContext;
+import org.deegree.tile.GdalDataset;
 import org.slf4j.Logger;
 
 /**
@@ -51,7 +52,7 @@ class GdalLayerData implements LayerData {
 
     private static final Logger LOG = getLogger( GdalLayerData.class );
 
-    private final List<File> files;
+    private final List<GdalDataset> datasets;
 
     private final Envelope bbox;
 
@@ -59,8 +60,8 @@ class GdalLayerData implements LayerData {
 
     private final int height;
 
-    GdalLayerData( List<File> files, Envelope bbox, int width, int height ) {
-        this.files = files;
+    GdalLayerData( List<GdalDataset> datasets, Envelope bbox, int width, int height ) {
+        this.datasets = datasets;
         this.bbox = bbox;
         this.width = width;
         this.height = height;
@@ -69,16 +70,38 @@ class GdalLayerData implements LayerData {
     @Override
     public void render( RenderContext context ) {
         try {
+            long before = System.currentTimeMillis();
             BufferedImage img = extractRegionFromGdalFiles();
+            long elapsed = System.currentTimeMillis() - before;
+            System.out.println("extract: " + elapsed + " [ms]");
             context.paintImage( img );
+            elapsed = System.currentTimeMillis() - before;
+            System.out.println("paint: " + elapsed + " [ms]");
         } catch ( Throwable e ) {
             LOG.trace( "Stack trace:", e );
             LOG.error( "Unable to render raster: {}", e.getLocalizedMessage() );
         }
     }
 
-    private BufferedImage extractRegionFromGdalFiles() {
-        BufferedImage img = new BufferedImage( width, height, TYPE_INT_RGB );
+    private BufferedImage extractRegionFromGdalFiles()
+                            throws IOException {
+        if ( datasets.size() == 1 ) {
+            GdalDataset dataset = datasets.get( 0 );
+            return dataset.extractRegion( bbox, width, height, false );
+        }
+        Graphics g = null;
+        BufferedImage img = null;
+        for ( GdalDataset dataset : datasets ) {
+            if ( img == null ) {
+                img = dataset.extractRegion( bbox, width, height, false );
+                g = img.getGraphics();
+                g.dispose();
+            } else {
+                BufferedImage img2 = dataset.extractRegion( bbox, width, height, false );
+                g.drawImage( img2, 0, 0, null );
+                g.dispose();
+            }
+        }
         return img;
     }
 
