@@ -27,28 +27,24 @@
 ----------------------------------------------------------------------------*/
 package org.deegree.tile.persistence.gdal;
 
-import java.io.File;
-
 import org.deegree.cs.coordinatesystems.ICRS;
 import org.deegree.geometry.Envelope;
 import org.deegree.geometry.primitive.Point;
 import org.deegree.geometry.standard.DefaultEnvelope;
 import org.deegree.geometry.standard.primitive.DefaultPoint;
+import org.deegree.tile.GdalDataset;
 import org.deegree.tile.Tile;
 import org.deegree.tile.TileDataLevel;
 import org.deegree.tile.TileMatrix;
-import org.gdal.gdal.Band;
-import org.gdal.gdal.Dataset;
-import org.gdal.gdal.gdal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * {@link TileDataLevel} backed by an overview of a GDAL <code>Dataset</code>.
+ * {@link TileDataLevel} backed by an {@link GdalDataset}.
  * 
  * @author <a href="mailto:schneider@occamlabs.de">Markus Schneider</a>
  * 
- * @since 3.5
+ * @since 3.4
  */
 class GdalTileDataLevel implements TileDataLevel {
 
@@ -56,7 +52,7 @@ class GdalTileDataLevel implements TileDataLevel {
 
     private final TileMatrix metadata;
 
-    private final File file;
+    private final GdalDataset dataset;
 
     private final int xMin;
 
@@ -71,7 +67,7 @@ class GdalTileDataLevel implements TileDataLevel {
     private double unitsPerPixelX;
 
     private double unitsPerPixelY;
-    
+
     private String imageFormat;
 
     /**
@@ -79,64 +75,23 @@ class GdalTileDataLevel implements TileDataLevel {
      * 
      * @param matrix
      *            tile matrix, must not be <code>null</code>
-     * @param file
-     *            raster file, must not be <code>null</code>
+     * @param dataset
+     *            GDAL raster file, must not be <code>null</code>
      * @param xMin
      * @param yMin
      * @param tilesX
      * @param tilesY
      * @throws Exception
      */
-    GdalTileDataLevel( TileMatrix matrix, File file, int xMin, int yMin, int xMax, int yMax, String imageFormat ) throws Exception {
+    GdalTileDataLevel( TileMatrix matrix, GdalDataset dataset, int xMin, int yMin, int xMax, int yMax,
+                       String imageFormat ) throws Exception {
         this.metadata = matrix;
-        this.file = file;
+        this.dataset = dataset;
         this.xMin = xMin;
         this.yMin = yMin;
         this.xMax = xMax;
         this.yMax = yMax;
         this.imageFormat = imageFormat;
-        Dataset dataset = gdal.OpenShared( file.toString() );
-        try {
-            Band firstBand = dataset.GetRasterBand( 1 );
-            datasetEnvelope = getEnvelope( dataset );
-            double width = datasetEnvelope.getSpan0();
-            double height = datasetEnvelope.getSpan1();
-            unitsPerPixelX = width / (double) firstBand.getXSize();
-            unitsPerPixelY = height / (double) firstBand.getYSize();
-            LOG.info( "GDAL info" );
-            LOG.info( "- pixels (x): " + firstBand.getXSize() );
-            LOG.info( "- pixels (y): " + firstBand.getYSize() );
-            LOG.info( "- units per pixel (x): " + unitsPerPixelX );
-            LOG.info( "- units per pixel (y): " + unitsPerPixelY );
-            LOG.info( "- units per pixel (by matrix): " + matrix.getResolution() );
-        } finally {
-            dataset.delete();
-        }
-    }
-
-    private static Envelope getEnvelope( Dataset dataset ) {
-        double[] geoTransform = dataset.GetGeoTransform();
-        int rasterXSize = dataset.getRasterXSize();
-        int rasterYSize = dataset.getRasterYSize();
-        double pixelResX = geoTransform[1];
-        double pixelResY = geoTransform[5];
-        double minX = geoTransform[0];
-        double maxX = minX + pixelResX * rasterXSize;
-        double minY = geoTransform[3];
-        double maxY = minY + pixelResY * rasterYSize;
-        if ( minX > maxX ) {
-            double tmp = maxX;
-            maxX = minX;
-            minX = tmp;
-        }
-        if ( minY > maxY ) {
-            double tmp = maxY;
-            maxY = minY;
-            minY = tmp;
-        }
-        Point min = new DefaultPoint( null, null, null, new double[] { minX, minY } );
-        Point max = new DefaultPoint( null, null, null, new double[] { maxX, maxY } );
-        return new DefaultEnvelope( min, max );
     }
 
     @Override
@@ -160,19 +115,8 @@ class GdalTileDataLevel implements TileDataLevel {
         Point min = new DefaultPoint( null, crs, null, new double[] { minX, minY } );
         Point max = new DefaultPoint( null, crs, null, new double[] { maxX, maxY } );
         Envelope tileEnvelope = new DefaultEnvelope( null, crs, null, min, max );
-        min = new DefaultPoint( null, crs, null, new double[] { minX, maxY } );
-        max = new DefaultPoint( null, crs, null, new double[] { maxX, minY } );
-        Envelope tileEnvelope2 = new DefaultEnvelope( null, crs, null, min, max );
-        double relX = minX - datasetEnvelope.getMin().get0();
-        double relY = datasetEnvelope.getMax().get1() - maxY;
-        int datasetMinX = (int) Math.round( relX / (double) unitsPerPixelX - 0.5 );
-        int datasetMinY = (int) Math.round( relY / (double) unitsPerPixelY - 0.5 );
-        int datasetPixelsX = (int) Math.round( tileWidth / unitsPerPixelX + 0.5 );
-        int datasetPixelsY = (int) Math.round( tileHeight / unitsPerPixelY + 0.5 );
-        return new GdalTile( tileEnvelope, datasetEnvelope, (int) metadata.getTilePixelsX(),
-                             (int) metadata.getTilePixelsY(), file, datasetMinX, datasetMinY, datasetPixelsX,
-                             datasetPixelsY, x, y, metadata.getResolution(), unitsPerPixelX, unitsPerPixelY,
-                             tileEnvelope2, imageFormat );
+        return new GdalTile( dataset, tileEnvelope, (int) metadata.getTilePixelsX(), (int) metadata.getTilePixelsY(),
+                             imageFormat );
     }
 
     private boolean isWithinLimits( long x, long y ) {

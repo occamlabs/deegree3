@@ -1,6 +1,20 @@
 package org.deegree.tile.persistence.gdal;
 
+import static java.awt.image.DataBuffer.TYPE_BYTE;
 import static java.util.Collections.singletonList;
+import static org.gdal.gdalconst.gdalconstConstants.GDT_Byte;
+
+import java.awt.color.ColorSpace;
+import java.awt.image.BandedSampleModel;
+import java.awt.image.BufferedImage;
+import java.awt.image.ColorModel;
+import java.awt.image.ComponentColorModel;
+import java.awt.image.DataBuffer;
+import java.awt.image.DataBufferByte;
+import java.awt.image.Raster;
+import java.awt.image.SampleModel;
+import java.awt.image.WritableRaster;
+import java.io.IOException;
 
 import org.deegree.cs.coordinatesystems.ICRS;
 import org.deegree.cs.exceptions.UnknownCRSException;
@@ -10,6 +24,7 @@ import org.deegree.geometry.metadata.SpatialMetadata;
 import org.deegree.geometry.primitive.Point;
 import org.deegree.geometry.standard.DefaultEnvelope;
 import org.deegree.geometry.standard.primitive.DefaultPoint;
+import org.gdal.gdal.Band;
 import org.gdal.gdal.Dataset;
 
 public class GdalUtils {
@@ -44,5 +59,4 @@ public class GdalUtils {
         Envelope env = new DefaultEnvelope( null, crs, null, min, max );
         return new SpatialMetadata( env, singletonList( env.getCoordinateSystem() ) );
     }
-
 }
