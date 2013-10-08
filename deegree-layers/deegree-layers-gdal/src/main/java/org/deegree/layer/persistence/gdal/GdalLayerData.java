@@ -37,6 +37,7 @@ import java.util.List;
 import org.deegree.feature.FeatureCollection;
 import org.deegree.geometry.Envelope;
 import org.deegree.layer.LayerData;
+import org.deegree.rendering.r2d.context.DefaultRenderContext;
 import org.deegree.rendering.r2d.context.RenderContext;
 import org.deegree.tile.GdalDataset;
 import org.slf4j.Logger;
@@ -70,13 +71,8 @@ class GdalLayerData implements LayerData {
     @Override
     public void render( RenderContext context ) {
         try {
-            long before = System.currentTimeMillis();
             BufferedImage img = extractRegionFromGdalFiles();
-            long elapsed = System.currentTimeMillis() - before;
-            System.out.println("extract: " + elapsed + " [ms]");
-            context.paintImage( img );
-            elapsed = System.currentTimeMillis() - before;
-            System.out.println("paint: " + elapsed + " [ms]");
+            ( (DefaultRenderContext) context ).setImage( img );
         } catch ( Throwable e ) {
             LOG.trace( "Stack trace:", e );
             LOG.error( "Unable to render raster: {}", e.getLocalizedMessage() );

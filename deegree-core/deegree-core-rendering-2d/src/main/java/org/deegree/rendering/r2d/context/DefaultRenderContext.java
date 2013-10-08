@@ -151,6 +151,11 @@ public class DefaultRenderContext implements RenderContext {
         graphics.drawImage( img, 0, 0, null );
     }
 
+    public void setImage( BufferedImage img ) {
+        this.image = img;
+        this.graphics = img.createGraphics();
+    }
+
     @Override
     public void applyOptions( MapOptions options ) {
         applyQuality( options );
