@@ -27,7 +27,7 @@
 ----------------------------------------------------------------------------*/
 package org.deegree.tile.persistence.merge;
 
-import static java.awt.Color.WHITE;
+import static java.awt.image.BufferedImage.TYPE_3BYTE_BGR;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.awt.Graphics;
@@ -71,22 +71,14 @@ class MergingTile implements Tile {
         LOG.debug( "Merging tiles" );
         Iterator<Tile> itr = tiles.iterator();
         Tile firstTile = itr.next();
-        BufferedImage firstImage = firstTile.getAsImage();
-        BufferedImage mergedImage = new BufferedImage( firstImage.getWidth(), firstImage.getHeight(),
-                                                       BufferedImage.TYPE_3BYTE_BGR );
-        Graphics g = mergedImage.getGraphics();
-        g.setColor( WHITE );
-        g.fillRect( 0, 0, firstImage.getWidth(), firstImage.getHeight() );
-        g.drawImage( firstImage, 0, 0, null );
-        int count = 1;
+        BufferedImage img = firstTile.getAsImage();
+        Graphics g = img.getGraphics();
         while ( itr.hasNext() ) {
             Tile nextTile = itr.next();
             BufferedImage nextImage = nextTile.getAsImage();
             g.drawImage( nextImage, 0, 0, null );
-            count++;
         }
-        LOG.debug( "Number of tiles merged: " + count );
-        return mergedImage;
+        return img;
     }
 
     @Override
@@ -95,7 +87,14 @@ class MergingTile implements Tile {
         LOG.debug( "Writing image" );
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         try {
-            ImageIO.write( getAsImage(), "jpeg", output );
+            BufferedImage img = getAsImage();
+            if ( img.getTransparency() != BufferedImage.OPAQUE ) {
+                BufferedImage noTransparency = new BufferedImage( img.getWidth(), img.getHeight(), TYPE_3BYTE_BGR );
+                Graphics g = noTransparency.getGraphics();
+                g.drawImage( img, 0, 0, null );
+                img = noTransparency;
+            }
+            ImageIO.write( img, "jpeg", output );
         } catch ( IOException e ) {
             throw new TileIOException( e );
         }
