@@ -134,6 +134,10 @@ public class GdalDataset {
         return dataset;
     }
 
+    public Envelope getEnvelope () {
+        return datasetEnvelope;
+    }
+    
     /**
      * Extracts the specified region.
      * 

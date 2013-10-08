@@ -72,7 +72,9 @@ class GdalLayerData implements LayerData {
     public void render( RenderContext context ) {
         try {
             BufferedImage img = extractRegionFromGdalFiles();
-            ( (DefaultRenderContext) context ).setImage( img );
+            if ( img != null ) {
+                ( (DefaultRenderContext) context ).setImage( img );
+            }
         } catch ( Throwable e ) {
             LOG.trace( "Stack trace:", e );
             LOG.error( "Unable to render raster: {}", e.getLocalizedMessage() );
@@ -81,21 +83,17 @@ class GdalLayerData implements LayerData {
 
     private BufferedImage extractRegionFromGdalFiles()
                             throws IOException {
-        if ( datasets.size() == 1 ) {
-            GdalDataset dataset = datasets.get( 0 );
-            return dataset.extractRegion( bbox, width, height, false );
-        }
         Graphics g = null;
         BufferedImage img = null;
         for ( GdalDataset dataset : datasets ) {
-            if ( img == null ) {
-                img = dataset.extractRegion( bbox, width, height, false );
-                g = img.getGraphics();
-                g.dispose();
-            } else {
-                BufferedImage img2 = dataset.extractRegion( bbox, width, height, false );
-                g.drawImage( img2, 0, 0, null );
-                g.dispose();
+            if ( bbox.intersects( dataset.getEnvelope() ) ) {
+                if ( img != null ) {
+                    BufferedImage img2 = dataset.extractRegion( bbox, width, height, true );
+                    g.drawImage( img2, 0, 0, null );
+                } else {
+                    img = dataset.extractRegion( bbox, width, height, false );
+                    g = img.getGraphics();
+                }
             }
         }
         return img;
