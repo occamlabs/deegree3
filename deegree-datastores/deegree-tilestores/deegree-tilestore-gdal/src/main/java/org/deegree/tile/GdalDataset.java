@@ -236,7 +236,9 @@ public class GdalDataset {
         for ( int i = 0; i < bands.length; i++ ) {
             byte[] src = windowData[i];
             byte[] dst = bands[i];
-            setWhite( dst );
+            if ( i != 3 ) {
+                setWhite( dst );
+            }
             for ( int y = 0; y < windowSizeY; y++ ) {
                 for ( int x = 0; x < windowSizeX; x++ ) {
                     int targetX = offsetX + x;
