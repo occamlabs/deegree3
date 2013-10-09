@@ -65,13 +65,13 @@ class GdalTileDataSetBuilder {
         String imageFormat = cfg.getImageFormat();
         String tmsId = cfg.getTileMatrixSetId();
         File file = location.resolveToFile( filename );
+        TileMatrixSet tms = workspace.getResource( TileMatrixSetProvider.class, tmsId );
         GdalDataset dataset;
         try {
-            dataset = new GdalDataset( file );
+            dataset = new GdalDataset( file, tms.getSpatialMetadata().getCoordinateSystems().get( 0 ) );
         } catch ( Exception e ) {
             throw new RuntimeException( e.getMessage() );
         }
-        TileMatrixSet tms = workspace.getResource( TileMatrixSetProvider.class, tmsId );
         List<TileDataLevel> levels = new ArrayList<TileDataLevel>();
         double datasetMinX = gdalEnvelope.getMin().get0();
         double matrixMinX = tms.getSpatialMetadata().getEnvelope().getMin().get0();

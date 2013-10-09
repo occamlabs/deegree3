@@ -89,18 +89,20 @@ class GdalLayerStoreBuilder implements ResourceBuilder<LayerStore> {
                                                                           gdalLayerCfg.getStyleRef() );
             md.setStyles( p.first );
             md.setLegendStyles( p.second );
-            List<GdalDataset> datasets = buildDatasets( gdalLayerCfg.getFile() );
+            List<ICRS> crsList = fromJaxb( gdalLayerCfg.getCRS() );
+            ICRS crs = crsList.isEmpty() ? null : crsList.get( 0 );
+            List<GdalDataset> datasets = buildDatasets( gdalLayerCfg.getFile(), crs );
             Layer layer = new GdalLayer( md, datasets );
             layerNameToLayer.put( gdalLayerCfg.getName(), layer );
         }
         return new MultipleLayerStore( layerNameToLayer, metadata );
     }
 
-    private List<GdalDataset> buildDatasets( List<String> files ) {
+    private List<GdalDataset> buildDatasets( List<String> files, ICRS crs ) {
         List<GdalDataset> datasets = new ArrayList<GdalDataset>( files.size() );
         for ( String file : files ) {
             try {
-                datasets.add( new GdalDataset( new File( file ) ) );
+                datasets.add( new GdalDataset( new File( file ), crs ) );
             } catch ( UnknownCRSException e ) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
