@@ -34,6 +34,7 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.List;
 
+import org.deegree.cs.coordinatesystems.ICRS;
 import org.deegree.feature.FeatureCollection;
 import org.deegree.geometry.Envelope;
 import org.deegree.layer.LayerData;
@@ -70,6 +71,11 @@ class GdalLayerData implements LayerData {
 
     @Override
     public void render( RenderContext context ) {
+        ICRS nativeCrs = datasets.get( 0 ).getCrs();
+        if ( !bbox.getCoordinateSystem().equals( nativeCrs ) ) {
+            LOG.error( "Raster transformation not implemented yet. Requested: " + bbox.getCoordinateDimension()
+                       + ", native: " + nativeCrs );
+        }
         try {
             BufferedImage img = extractRegionFromGdalFiles();
             if ( img != null ) {

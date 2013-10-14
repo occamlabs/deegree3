@@ -66,6 +66,8 @@ public class GdalDataset {
 
     private final File file;
 
+    private final ICRS crs;
+
     private final Envelope datasetEnvelope;
 
     private final double width;
@@ -85,11 +87,14 @@ public class GdalDataset {
      * 
      * @param file
      *            raster image file (format must be supported by GDAL), never <code>null</code>
+     * @param crs
+     *            native CRS, can be <code>null</code> (unknown)
      * @throws UnknownCRSException
      * @throws IOException
      */
-    public GdalDataset( File file ) throws UnknownCRSException, IOException {
+    public GdalDataset( File file, ICRS crs ) throws UnknownCRSException, IOException {
         this.file = file;
+        this.crs = crs;
         datasetEnvelope = readEnvelope();
         width = datasetEnvelope.getSpan0();
         height = datasetEnvelope.getSpan1();
@@ -102,7 +107,6 @@ public class GdalDataset {
 
     private Envelope readEnvelope()
                             throws UnknownCRSException, IOException {
-        ICRS crs = null;
         Dataset dataset = getUnderlyingDataset();
         double[] geoTransform = dataset.GetGeoTransform();
         int rasterXSize = dataset.getRasterXSize();
@@ -134,10 +138,24 @@ public class GdalDataset {
         return dataset;
     }
 
-    public Envelope getEnvelope () {
+    /**
+     * Return the native CRS.
+     * 
+     * @return native CRS, can be null (unknown)
+     */
+    public ICRS getCrs() {
+        return crs;
+    }
+
+    /**
+     * Returns the datasets's extent.
+     * 
+     * @return the datasets's extent, never, <code>null</code>
+     */
+    public Envelope getEnvelope() {
         return datasetEnvelope;
     }
-    
+
     /**
      * Extracts the specified region.
      * 
