@@ -25,7 +25,7 @@
  e-mail: info@deegree.org
  website: http://www.deegree.org/
 ----------------------------------------------------------------------------*/
-package org.deegree.tile;
+package org.deegree.commons.gdal;
 
 import static java.awt.color.ColorSpace.CS_sRGB;
 import static java.awt.image.DataBuffer.TYPE_BYTE;
@@ -51,9 +51,9 @@ import org.deegree.geometry.Envelope;
 import org.deegree.geometry.primitive.Point;
 import org.deegree.geometry.standard.DefaultEnvelope;
 import org.deegree.geometry.standard.primitive.DefaultPoint;
-import org.deegree.tile.persistence.gdal.GdalDatasetPerThreadPool;
 import org.gdal.gdal.Band;
 import org.gdal.gdal.Dataset;
+import org.gdal.gdal.gdal;
 
 /**
  * Encapsulates access to <code>org.gdal.gdal.Dataset</code> to make its use thread-safe.
@@ -82,6 +82,8 @@ public class GdalDataset {
 
     private final double unitsPerPixelY;
 
+    private Dataset dataset;
+
     /**
      * Creates a new {@link GdalDataset} from the given file (which must be supported by GDAL).
      * 
@@ -93,12 +95,12 @@ public class GdalDataset {
      * @throws IOException
      */
     public GdalDataset( File file, ICRS crs ) throws UnknownCRSException, IOException {
-        this.file = file;
+        this.file = file.getCanonicalFile();
         this.crs = crs;
+        attach();
         datasetEnvelope = readEnvelope();
         width = datasetEnvelope.getSpan0();
         height = datasetEnvelope.getSpan1();
-        Dataset dataset = getUnderlyingDataset();
         datasetPixelsX = dataset.getRasterXSize();
         datasetPixelsY = dataset.getRasterYSize();
         unitsPerPixelX = width / (double) datasetPixelsX;
@@ -107,7 +109,6 @@ public class GdalDataset {
 
     private Envelope readEnvelope()
                             throws UnknownCRSException, IOException {
-        Dataset dataset = getUnderlyingDataset();
         double[] geoTransform = dataset.GetGeoTransform();
         int rasterXSize = dataset.getRasterXSize();
         int rasterYSize = dataset.getRasterYSize();
@@ -132,10 +133,19 @@ public class GdalDataset {
         return new DefaultEnvelope( null, crs, null, min, max );
     }
 
-    private Dataset getUnderlyingDataset()
-                            throws IOException {
-        Dataset dataset = GdalDatasetPerThreadPool.getInstance().getDataset( file );
-        return dataset;
+    void detach() {
+        dataset.delete();
+        dataset = null;
+    }
+    
+    void attach() {
+        if ( dataset == null ) {
+            dataset = gdal.OpenShared( file.getPath() );
+        }
+    }
+
+    public File getFile() {
+        return file;
     }
 
     /**
@@ -172,7 +182,7 @@ public class GdalDataset {
      */
     public BufferedImage extractRegion( Envelope region, int pixelsX, int pixelsY, boolean withAlpha )
                             throws IOException {
-        Dataset dataset = getUnderlyingDataset();
+
         int numBands = dataset.GetRasterCount();
         if ( numBands == 4 && !withAlpha ) {
             numBands = 3;

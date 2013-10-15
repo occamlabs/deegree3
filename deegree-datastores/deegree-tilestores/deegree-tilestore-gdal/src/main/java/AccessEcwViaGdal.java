@@ -1,9 +1,8 @@
 import static java.awt.color.ColorSpace.CS_sRGB;
 import static java.awt.image.DataBuffer.TYPE_BYTE;
 import static java.awt.image.Raster.createBandedRaster;
-import static org.apache.commons.io.FileUtils.readFileToString;
-import static org.gdal.gdal.gdal.AutoCreateWarpedVRT;
 import static org.gdal.gdalconst.gdalconstConstants.CE_None;
+import static org.gdal.gdalconst.gdalconstConstants.GA_ReadOnly;
 import static org.gdal.gdalconst.gdalconstConstants.GDT_Byte;
 
 import java.awt.color.ColorSpace;
@@ -18,6 +17,9 @@ import java.awt.image.SampleModel;
 import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import javax.imageio.ImageIO;
 
@@ -30,7 +32,6 @@ import org.gdal.gdal.Dataset;
 import org.gdal.gdal.Driver;
 import org.gdal.gdal.gdal;
 import org.gdal.gdalconst.gdalconstConstants;
-import org.gdal.osr.SpatialReference;
 
 // GDAL_DATA: /usr/share/gdal/1.10
 // LD_LIBRARY_PATH: /home/schneider/gdal-1.10.1/.libs
@@ -43,31 +44,97 @@ public class AccessEcwViaGdal {
     public static void main( String[] args )
                             throws Exception {
         gdal.AllRegister();
-        String wktnad83 = readFileToString( new File( AccessEcwViaGdal.class.getResource( "/nad83.wkt" ).toURI() ) );
-        SpatialReference crsnad83 = new SpatialReference( wktnad83 );
-        String wkt4326 = readFileToString( new File( AccessEcwViaGdal.class.getResource( "/epsg4326.wkt" ).toURI() ) );
-        SpatialReference crs4326 = new SpatialReference( wkt4326 );
-        Dataset dataset = gdal.OpenShared( "/home/markus/Development/geodata/Satellite_Provo.tif" );
-        double[] getGeoTransform = dataset.GetGeoTransform();
-        long before = System.currentTimeMillis();
-        for ( int i = 0; i < 10; i++ ) {
-            Dataset region = extractRegion( dataset, 0, 0, 3318, 3792, 1659, 1896 );
-            double upperLeftX = 441174.0;
-            double upperLeftY = 4456039.0;
-            double unitsPerPixelX = 4.0;
-            double unitsPerPixelY = -4.0;
-            double[] geoTransform = new double[] { upperLeftX, unitsPerPixelX, 0.0, upperLeftY, 0.0, unitsPerPixelY };
-            region.SetGeoTransform( geoTransform );
-            Dataset dataset4326 = AutoCreateWarpedVRT( region, wktnad83, wkt4326 );
-            save( dataset4326, "/tmp/out.tif", "GTiff" );
-            dataset4326.delete();
-            region.delete();
-        }
-        long elapsed = System.currentTimeMillis() - before;
-        System.out.println( "Took " + elapsed + " [ms]" );
-        dataset.delete();
 
-        // final Dataset dataset = gdal.Open( "/mnt/storage/geodata/ecw/Ortho10_2012_01.ecw", GA_ReadOnly );
+        List<Thread> threads = new ArrayList<Thread>();
+        final List<Dataset> datasets = Collections.synchronizedList( new ArrayList<Dataset>() );
+
+        for ( int threadNo = 0; threadNo < 10; threadNo++ ) {
+            final int j = threadNo;
+            threads.add( new Thread( new Runnable() {
+                @Override
+                public void run() {
+                    Dataset dataset = gdal.Open( "/mnt/storage/geodata/ecw/gbo-lufo/2012/ortho10_2012_overview.ecw",
+                                                 GA_ReadOnly );
+                    datasets.add( dataset );
+                    for ( int i = 0; i < 10; i++ ) {
+                        try {
+                            extractRandomRegionAndSaveImage( dataset, i, j );
+                        } catch ( IOException e ) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            } ) );
+        }
+
+        for ( Thread thread : threads ) {
+            thread.start();
+        }
+
+        for ( Thread thread : threads ) {
+            thread.join();
+        }
+        
+        for ( Dataset dataset : datasets ) {
+            dataset.delete();
+        }
+
+        System.out.println("********************************* DELETED");
+
+        threads.clear();
+        datasets.clear();
+        for ( int threadNo = 0; threadNo < 10; threadNo++ ) {
+            final int j = threadNo;
+            threads.add( new Thread( new Runnable() {
+                @Override
+                public void run() {
+                    Dataset dataset = gdal.Open( "/mnt/storage/geodata/ecw/gbo-lufo/2012/ortho10_2012_overview.ecw",
+                                                 GA_ReadOnly );
+                    datasets.add( dataset );
+                    for ( int i = 0; i < 10; i++ ) {
+                        try {
+                            extractRandomRegionAndSaveImage( dataset, i, j );
+                        } catch ( IOException e ) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            } ) );
+        }
+        
+        for ( Thread thread : threads ) {
+            thread.start();
+        }
+        for ( Thread thread : threads ) {
+            thread.join();
+        }        
+        for ( Dataset dataset : datasets ) {
+            dataset.delete();
+        }
+        
+        
+//        for ( int threadNo = 0; threadNo < 27; threadNo++ ) {
+//            final int j = threadNo;
+//            threads.add( new Thread( new Runnable() {
+//                @Override
+//                public void run() {
+//                    Dataset dataset = datasets.get( j );
+//                    for ( int i = 0; i < 20; i++ ) {
+//                        try {
+//                            extractRandomRegionAndSaveImage( dataset, i, j );
+//                        } catch ( IOException e ) {
+//                            e.printStackTrace();
+//                        }
+//                    }
+//                }
+//            } ) );
+//        }
+//
+//        for ( Dataset dataset : datasets ) {
+//            dataset.delete();
+//        }
+
+        //
         // System.out.println( "- Envelope: " + getEnvelope( dataset ) );
         //
         // for ( int i = 0; i < dataset.getRasterCount(); i++ ) {
@@ -200,30 +267,22 @@ public class AccessEcwViaGdal {
     private static void extractRandomRegionAndSaveImage( Dataset dataset, int run, int threadNo )
                             throws IOException {
         long before = System.currentTimeMillis();
-        int pixelsX = 1600;
-        int pixelsY = 1200;
-        int numOverviews = 7;
+        int pixelsX = 256;
+        int pixelsY = 256;
         int numBands = 3;
         byte[][] bands = new byte[numBands][pixelsX * pixelsY];
-        int overview = (int) ( Math.random() * (double) numOverviews );
         Band firstBand = dataset.GetRasterBand( 1 );
-        if ( overview != 0 ) {
-            firstBand = firstBand.GetOverview( overview );
-        }
         double xPos = ( (double) ( firstBand.getXSize() - pixelsX ) ) * Math.random();
         double yPos = ( (double) ( firstBand.getYSize() - pixelsY ) ) * Math.random();
 
         for ( int i = 0; i < numBands; i++ ) {
             Band band = dataset.GetRasterBand( i + 1 );
-            if ( overview != 0 ) {
-                band = band.GetOverview( overview );
-            }
             byte[] bandBytes = bands[i];
             band.ReadRaster( (int) xPos, (int) yPos, pixelsX, pixelsY, pixelsX, pixelsY, GDT_Byte, bandBytes, 0, 0 );
         }
         // saveAsJpegImage( bands, pixelsX, pixelsY, run, threadNo );
         long after = System.currentTimeMillis();
-        // System.out.println( threadNo + "/" + run + ": " + ( after - before ) + " [ms]" );
+        System.out.println( threadNo + "/" + run + ": " + ( after - before ) + " [ms]" );
     }
 
     // private static BufferedImage extractRegion( Dataset dataset, int xPosSrc, int yPosSrc, int xSizeSrc, int

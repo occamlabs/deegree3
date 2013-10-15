@@ -31,9 +31,9 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.deegree.commons.gdal.GdalSettings;
 import org.deegree.geometry.Envelope;
 import org.deegree.tile.DefaultTileDataSet;
-import org.deegree.tile.GdalDataset;
 import org.deegree.tile.TileDataLevel;
 import org.deegree.tile.TileDataSet;
 import org.deegree.tile.TileMatrix;
@@ -66,12 +66,8 @@ class GdalTileDataSetBuilder {
         String tmsId = cfg.getTileMatrixSetId();
         File file = location.resolveToFile( filename );
         TileMatrixSet tms = workspace.getResource( TileMatrixSetProvider.class, tmsId );
-        GdalDataset dataset;
-        try {
-            dataset = new GdalDataset( file, tms.getSpatialMetadata().getCoordinateSystems().get( 0 ) );
-        } catch ( Exception e ) {
-            throw new RuntimeException( e.getMessage() );
-        }
+        GdalSettings gdalSettings = workspace.getInitializable( GdalSettings.class );
+        gdalSettings.registerDatasetCrs( file, tms.getSpatialMetadata().getCoordinateSystems().get( 0 ) );
         List<TileDataLevel> levels = new ArrayList<TileDataLevel>();
         double datasetMinX = gdalEnvelope.getMin().get0();
         double matrixMinX = tms.getSpatialMetadata().getEnvelope().getMin().get0();
@@ -85,7 +81,8 @@ class GdalTileDataSetBuilder {
             int xMax = (int) Math.floor( ( datasetToMatrixOffsetX + gdalEnvelope.getSpan0() ) / tm.getTileWidth() );
             int yMax = (int) Math.floor( ( datasetToMatrixOffsetY + gdalEnvelope.getSpan1() ) / tm.getTileHeight() );
             try {
-                levels.add( new GdalTileDataLevel( tm, dataset, xMin, yMin, xMax, yMax, imageFormat ) );
+                levels.add( new GdalTileDataLevel( tm, file.getCanonicalPath(), xMin, yMin, xMax, yMax, imageFormat,
+                                                   gdalSettings ) );
             } catch ( Exception e ) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();

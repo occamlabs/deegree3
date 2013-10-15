@@ -37,25 +37,19 @@
     </plugins>
   </build>
 
-  <dependencyManagement>
-    <dependencies>
-      <dependency>
-        <groupId>it.geosolutions.imageio-ext</groupId>
-        <artifactId>imageio-ext-gdal-bindings</artifactId>
-        <version>1.10.1</version>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
-
   <dependencies>
     <dependency>
       <groupId>org.deegree</groupId>
-      <artifactId>deegree-core-cs</artifactId>
+      <artifactId>deegree-core-geometry</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>it.geosolutions.imageio-ext</groupId>
       <artifactId>imageio-ext-gdal-bindings</artifactId>
     </dependency>
+	<dependency>
+      <groupId>commons-collections</groupId>
+      <artifactId>commons-collections</artifactId>
+	</dependency>    
   </dependencies>
 </project>

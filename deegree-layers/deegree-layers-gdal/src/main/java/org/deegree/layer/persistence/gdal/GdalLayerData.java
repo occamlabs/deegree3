@@ -31,16 +31,17 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
+import org.deegree.commons.gdal.GdalSettings;
 import org.deegree.cs.coordinatesystems.ICRS;
 import org.deegree.feature.FeatureCollection;
 import org.deegree.geometry.Envelope;
 import org.deegree.layer.LayerData;
 import org.deegree.rendering.r2d.context.DefaultRenderContext;
 import org.deegree.rendering.r2d.context.RenderContext;
-import org.deegree.tile.GdalDataset;
 import org.slf4j.Logger;
 
 /**
@@ -54,7 +55,7 @@ class GdalLayerData implements LayerData {
 
     private static final Logger LOG = getLogger( GdalLayerData.class );
 
-    private final List<GdalDataset> datasets;
+    private final List<File> datasets;
 
     private final Envelope bbox;
 
@@ -62,16 +63,19 @@ class GdalLayerData implements LayerData {
 
     private final int height;
 
-    GdalLayerData( List<GdalDataset> datasets, Envelope bbox, int width, int height ) {
+    private final GdalSettings gdalSettings;
+
+    GdalLayerData( List<File> datasets, Envelope bbox, int width, int height, GdalSettings gdalSettings ) {
         this.datasets = datasets;
         this.bbox = bbox;
         this.width = width;
         this.height = height;
+        this.gdalSettings = gdalSettings;
     }
 
     @Override
     public void render( RenderContext context ) {
-        ICRS nativeCrs = datasets.get( 0 ).getCrs();
+        ICRS nativeCrs = gdalSettings.getCrs( datasets.get( 0 ) );
         if ( !bbox.getCoordinateSystem().equals( nativeCrs ) ) {
             LOG.error( "Raster transformation not implemented yet. Requested: " + bbox.getCoordinateDimension()
                        + ", native: " + nativeCrs );
@@ -91,13 +95,13 @@ class GdalLayerData implements LayerData {
                             throws IOException {
         Graphics g = null;
         BufferedImage img = null;
-        for ( GdalDataset dataset : datasets ) {
-            if ( bbox.intersects( dataset.getEnvelope() ) ) {
+        for ( File dataset : datasets ) {
+            if ( bbox.intersects( gdalSettings.getEnvelope( dataset ) ) ) {
                 if ( img != null ) {
-                    BufferedImage img2 = dataset.extractRegion( bbox, width, height, true );
+                    BufferedImage img2 = gdalSettings.extractRegion( dataset, bbox, width, height, true );
                     g.drawImage( img2, 0, 0, null );
                 } else {
-                    img = dataset.extractRegion( bbox, width, height, false );
+                    img = gdalSettings.extractRegion( dataset, bbox, width, height, false );
                     g = img.getGraphics();
                 }
             }

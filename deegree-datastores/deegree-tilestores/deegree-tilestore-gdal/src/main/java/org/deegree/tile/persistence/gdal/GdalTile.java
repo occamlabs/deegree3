@@ -30,14 +30,15 @@ package org.deegree.tile.persistence.gdal;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import java.io.File;
 import java.io.InputStream;
 
 import javax.imageio.ImageIO;
 
+import org.deegree.commons.gdal.GdalDataset;
+import org.deegree.commons.gdal.GdalSettings;
 import org.deegree.feature.FeatureCollection;
 import org.deegree.geometry.Envelope;
-import org.deegree.tile.GdalDataset;
 import org.deegree.tile.Tile;
 import org.deegree.tile.TileIOException;
 
@@ -50,21 +51,23 @@ import org.deegree.tile.TileIOException;
  */
 class GdalTile implements Tile {
 
-    private final GdalDataset dataset;
+    private final String fileName;
 
     private final Envelope tileEnvelope;
 
-    private int pixelsX;
+    private final int pixelsX;
 
-    private int pixelsY;
+    private final int pixelsY;
 
-    private String imageFormat;
+    private final String imageFormat;
+
+    private final GdalSettings gdalSettings;
 
     /**
      * Creates a new {@link GdalTile} instance.
      * 
-     * @param dataset
-     *            GDAL dataset, must not be <code>null</code>
+     * @param fileName
+     *            name of GDAL-supported file, must not be <code>null</code>
      * @param tileEnvelope
      *            bounding box of the tile, must not be <code>null</code>
      * @param pixelsX
@@ -72,21 +75,24 @@ class GdalTile implements Tile {
      * @param pixelsY
      *            height of the tile in pixels
      * @param imageFormat
+     * @param gdalSettings
      */
-    GdalTile( GdalDataset dataset, Envelope tileEnvelope, int pixelsX, int pixelsY, String imageFormat ) {
-        this.dataset = dataset;
+    GdalTile( String fileName, Envelope tileEnvelope, int pixelsX, int pixelsY, String imageFormat,
+              GdalSettings gdalSettings ) {
+        this.fileName = fileName;
         this.tileEnvelope = tileEnvelope;
         this.pixelsX = pixelsX;
         this.pixelsY = pixelsY;
         this.imageFormat = imageFormat;
+        this.gdalSettings = gdalSettings;
     }
 
     @Override
     public BufferedImage getAsImage()
                             throws TileIOException {
         try {
-            return dataset.extractRegion( tileEnvelope, pixelsX, pixelsY, true );
-        } catch ( IOException e ) {
+            return gdalSettings.extractRegion( new File( fileName ), tileEnvelope, pixelsX, pixelsY, true );
+        } catch ( Exception e ) {
             throw new TileIOException( e.getMessage(), e );
         }
     }
@@ -102,9 +108,9 @@ class GdalTile implements Tile {
             } else {
                 formatName = imageFormat;
             }
-            BufferedImage img = dataset.extractRegion( tileEnvelope, pixelsX, pixelsY, false );
+            BufferedImage img = gdalSettings.extractRegion( new File( fileName ), tileEnvelope, pixelsX, pixelsY, false );
             ImageIO.write( img, formatName, bos );
-        } catch ( IOException e ) {
+        } catch ( Exception e ) {
             e.printStackTrace();
             throw new TileIOException( "Error retrieving image: " + e.getMessage(), e );
         }

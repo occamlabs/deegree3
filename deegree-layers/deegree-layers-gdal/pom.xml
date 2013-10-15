@@ -52,7 +52,7 @@
     </dependency>
     <dependency>
       <groupId>org.deegree</groupId>
-      <artifactId>deegree-tilestore-gdal</artifactId>
+      <artifactId>deegree-core-gdal</artifactId>
       <version>${project.version}</version>
     </dependency>
   </dependencies>

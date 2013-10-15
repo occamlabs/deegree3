@@ -27,12 +27,13 @@
 ----------------------------------------------------------------------------*/
 package org.deegree.tile.persistence.gdal;
 
+import org.deegree.commons.gdal.GdalDataset;
+import org.deegree.commons.gdal.GdalSettings;
 import org.deegree.cs.coordinatesystems.ICRS;
 import org.deegree.geometry.Envelope;
 import org.deegree.geometry.primitive.Point;
 import org.deegree.geometry.standard.DefaultEnvelope;
 import org.deegree.geometry.standard.primitive.DefaultPoint;
-import org.deegree.tile.GdalDataset;
 import org.deegree.tile.Tile;
 import org.deegree.tile.TileDataLevel;
 import org.deegree.tile.TileMatrix;
@@ -52,7 +53,7 @@ class GdalTileDataLevel implements TileDataLevel {
 
     private final TileMatrix metadata;
 
-    private final GdalDataset dataset;
+    private final String fileName;
 
     private final int xMin;
 
@@ -62,36 +63,32 @@ class GdalTileDataLevel implements TileDataLevel {
 
     private final int xMax;
 
-    private Envelope datasetEnvelope;
+    private final String imageFormat;
 
-    private double unitsPerPixelX;
-
-    private double unitsPerPixelY;
-
-    private String imageFormat;
+    private final GdalSettings gdalSettings;
 
     /**
      * Creates a new {@link GdalTileDataLevel} instance.
      * 
      * @param matrix
      *            tile matrix, must not be <code>null</code>
-     * @param dataset
+     * @param fileName
      *            GDAL raster file, must not be <code>null</code>
      * @param xMin
      * @param yMin
-     * @param tilesX
-     * @param tilesY
+     * @param gdalSettings
      * @throws Exception
      */
-    GdalTileDataLevel( TileMatrix matrix, GdalDataset dataset, int xMin, int yMin, int xMax, int yMax,
-                       String imageFormat ) throws Exception {
+    GdalTileDataLevel( TileMatrix matrix, String fileName, int xMin, int yMin, int xMax, int yMax, String imageFormat,
+                       GdalSettings gdalSettings ) throws Exception {
         this.metadata = matrix;
-        this.dataset = dataset;
+        this.fileName = fileName;
         this.xMin = xMin;
         this.yMin = yMin;
         this.xMax = xMax;
         this.yMax = yMax;
         this.imageFormat = imageFormat;
+        this.gdalSettings = gdalSettings;
     }
 
     @Override
@@ -115,8 +112,8 @@ class GdalTileDataLevel implements TileDataLevel {
         Point min = new DefaultPoint( null, crs, null, new double[] { minX, minY } );
         Point max = new DefaultPoint( null, crs, null, new double[] { maxX, maxY } );
         Envelope tileEnvelope = new DefaultEnvelope( null, crs, null, min, max );
-        return new GdalTile( dataset, tileEnvelope, (int) metadata.getTilePixelsX(), (int) metadata.getTilePixelsY(),
-                             imageFormat );
+        return new GdalTile( fileName, tileEnvelope, (int) metadata.getTilePixelsX(), (int) metadata.getTilePixelsY(),
+                             imageFormat, gdalSettings );
     }
 
     private boolean isWithinLimits( long x, long y ) {

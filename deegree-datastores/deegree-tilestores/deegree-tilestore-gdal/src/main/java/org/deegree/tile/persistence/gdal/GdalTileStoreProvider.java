@@ -47,7 +47,6 @@ import org.deegree.tile.persistence.TileStoreProvider;
 import org.deegree.workspace.ResourceLocation;
 import org.deegree.workspace.ResourceMetadata;
 import org.deegree.workspace.Workspace;
-import org.gdal.gdal.gdal;
 
 /**
  * The <code>GeoTIFFTileStoreProvider</code> provides a <code>TileMatrixSet</code> out of a GeoTIFF file (tiled
@@ -71,7 +70,6 @@ public class GdalTileStoreProvider extends TileStoreProvider {
 
     @Override
     public ResourceMetadata<TileStore> createFromLocation( Workspace workspace, ResourceLocation<TileStore> location ) {
-        gdal.AllRegister();
         return new GdalTileStoreMetadata( workspace, location, this );
     }
 

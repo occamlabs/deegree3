@@ -10,14 +10,19 @@
     </appinfo>
   </annotation>
 
-  <element name="GDALOptions">
+  <element name="GDALSettings">
     <complexType>
       <sequence>
-        <element name="Option" maxOccurs="unbounded">
-        <complexType>
-          <simpleContent>
-          </simpleContent>
-        </complexType>
+        <element name="DatasetPoolSize" type="positiveInteger" minOccurs="0" />
+        <element name="NumberOfExtractorThreads" type="positiveInteger" minOccurs="0" />        
+        <element name="GDALOption" minOccurs="0" maxOccurs="unbounded">
+          <complexType>
+            <simpleContent>
+              <extension base="string">
+                <attribute name="name" use="required" />
+              </extension>
+            </simpleContent>
+          </complexType>
         </element>
       </sequence>
       <attribute name="configVersion" type="gdal:ConfigVersionType" use="required" />

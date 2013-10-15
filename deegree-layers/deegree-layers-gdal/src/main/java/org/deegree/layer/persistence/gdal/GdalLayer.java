@@ -27,15 +27,16 @@
 ----------------------------------------------------------------------------*/
 package org.deegree.layer.persistence.gdal;
 
+import java.io.File;
 import java.util.List;
 
+import org.deegree.commons.gdal.GdalSettings;
 import org.deegree.commons.ows.exception.OWSException;
 import org.deegree.geometry.Envelope;
 import org.deegree.layer.AbstractLayer;
 import org.deegree.layer.Layer;
 import org.deegree.layer.LayerQuery;
 import org.deegree.layer.metadata.LayerMetadata;
-import org.deegree.tile.GdalDataset;
 
 /**
  * {@link Layer} implementation for layers backed by GDAL datasets.
@@ -46,25 +47,28 @@ import org.deegree.tile.GdalDataset;
  */
 class GdalLayer extends AbstractLayer {
 
-    private final List<GdalDataset> datasets;
+    private final List<File> datasets;
 
-    GdalLayer( LayerMetadata md, List<GdalDataset> datasets ) {
+    private final GdalSettings gdalSettings;
+
+    GdalLayer( LayerMetadata md, List<File> datasets, GdalSettings gdalSettings ) {
         super( md );
         this.datasets = datasets;
+        this.gdalSettings = gdalSettings;
     }
 
     @Override
     public GdalLayerData mapQuery( LayerQuery query, List<String> headers )
                             throws OWSException {
         Envelope bbox = query.getEnvelope();
-        return new GdalLayerData( datasets, bbox, query.getWidth(), query.getHeight() );
+        return new GdalLayerData( datasets, bbox, query.getWidth(), query.getHeight(), gdalSettings );
     }
 
     @Override
     public GdalLayerData infoQuery( LayerQuery query, List<String> headers )
                             throws OWSException {
         Envelope bbox = query.calcClickBox( query.getRenderingOptions().getFeatureInfoRadius( getMetadata().getName() ) );
-        return new GdalLayerData( datasets, bbox, query.getWidth(), query.getHeight() );
+        return new GdalLayerData( datasets, bbox, query.getWidth(), query.getHeight(), gdalSettings );
     }
 
 }

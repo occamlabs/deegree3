@@ -39,11 +39,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.deegree.commons.gdal.GdalSettings;
 import org.deegree.commons.ows.metadata.Description;
 import org.deegree.commons.utils.DoublePair;
 import org.deegree.commons.utils.Pair;
 import org.deegree.cs.coordinatesystems.ICRS;
-import org.deegree.cs.exceptions.UnknownCRSException;
+import org.deegree.geometry.Envelope;
 import org.deegree.geometry.metadata.SpatialMetadata;
 import org.deegree.layer.Layer;
 import org.deegree.layer.config.ConfigUtils;
@@ -54,7 +55,6 @@ import org.deegree.layer.persistence.base.jaxb.ScaleDenominatorsType;
 import org.deegree.layer.persistence.gdal.jaxb.GDALLayerType;
 import org.deegree.layer.persistence.gdal.jaxb.GDALLayers;
 import org.deegree.style.se.unevaluated.Style;
-import org.deegree.tile.GdalDataset;
 import org.deegree.workspace.ResourceBuilder;
 import org.deegree.workspace.ResourceMetadata;
 import org.deegree.workspace.Workspace;
@@ -68,53 +68,55 @@ import org.deegree.workspace.Workspace;
  */
 class GdalLayerStoreBuilder implements ResourceBuilder<LayerStore> {
 
-    private GDALLayers cfg;
+    private final GDALLayers cfg;
 
-    private Workspace workspace;
+    private final Workspace workspace;
 
-    private ResourceMetadata<LayerStore> metadata;
+    private final ResourceMetadata<LayerStore> metadata;
+
+    private final GdalSettings gdalSettings;
 
     GdalLayerStoreBuilder( GDALLayers cfg, Workspace workspace, ResourceMetadata<LayerStore> metadata ) {
         this.cfg = cfg;
         this.workspace = workspace;
         this.metadata = metadata;
+        gdalSettings = workspace.getInitializable( GdalSettings.class );
     }
 
     @Override
     public LayerStore build() {
         Map<String, Layer> layerNameToLayer = new HashMap<String, Layer>();
         for ( GDALLayerType gdalLayerCfg : cfg.getGDALLayer() ) {
-            LayerMetadata md = buildLayerMetadata( gdalLayerCfg );
+
+            List<ICRS> crsList = fromJaxb( gdalLayerCfg.getCRS() );
+            ICRS crs = crsList.isEmpty() ? null : crsList.get( 0 );
+            List<File> datasets = buildDatasets( gdalLayerCfg.getFile(), crs );
+            LayerMetadata md = buildLayerMetadata( gdalLayerCfg, datasets );
             Pair<Map<String, Style>, Map<String, Style>> p = parseStyles( workspace, gdalLayerCfg.getName(),
                                                                           gdalLayerCfg.getStyleRef() );
             md.setStyles( p.first );
             md.setLegendStyles( p.second );
-            List<ICRS> crsList = fromJaxb( gdalLayerCfg.getCRS() );
-            ICRS crs = crsList.isEmpty() ? null : crsList.get( 0 );
-            List<GdalDataset> datasets = buildDatasets( gdalLayerCfg.getFile(), crs );
-            Layer layer = new GdalLayer( md, datasets );
+            Layer layer = new GdalLayer( md, datasets, gdalSettings );
             layerNameToLayer.put( gdalLayerCfg.getName(), layer );
         }
         return new MultipleLayerStore( layerNameToLayer, metadata );
     }
 
-    private List<GdalDataset> buildDatasets( List<String> files, ICRS crs ) {
-        List<GdalDataset> datasets = new ArrayList<GdalDataset>( files.size() );
-        for ( String file : files ) {
+    private List<File> buildDatasets( List<String> files, ICRS crs ) {
+        List<File> datasets = new ArrayList<File>( files.size() );
+        for ( String path : files ) {
             try {
-                datasets.add( new GdalDataset( new File( file ), crs ) );
-            } catch ( UnknownCRSException e ) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+                File file = metadata.getLocation().resolveToFile( path ).getCanonicalFile();
+                gdalSettings.registerDatasetCrs( file, crs );
+                datasets.add( file );
             } catch ( IOException e ) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+                throw new IllegalArgumentException( e.getMessage(), e );
             }
         }
         return datasets;
     }
 
-    private LayerMetadata buildLayerMetadata( GDALLayerType lay ) {
+    private LayerMetadata buildLayerMetadata( GDALLayerType lay, List<File> datasets ) {
         SpatialMetadata smd = fromJaxb( lay.getEnvelope(), lay.getCRS() );
         Description desc = fromJaxb( lay.getTitle(), lay.getAbstract(), lay.getKeywords() );
         LayerMetadata md = new LayerMetadata( lay.getName(), desc, smd );
@@ -122,7 +124,19 @@ class GdalLayerStoreBuilder implements ResourceBuilder<LayerStore> {
         md.setMapOptions( ConfigUtils.parseLayerOptions( lay.getLayerOptions() ) );
         md.setMetadataId( lay.getMetadataSetId() );
         if ( smd.getEnvelope() == null ) {
-            // TODO envelope from GDAL file
+            Envelope env = null;
+            try {
+            for ( File file : datasets ) {
+                if ( env == null ) {
+                    env = gdalSettings.getEnvelope( file );
+                } else {
+                    env.merge( gdalSettings.getEnvelope( file ) );
+                }
+            }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            smd.setEnvelope( env );
         }
         if ( smd.getCoordinateSystems() == null || smd.getCoordinateSystems().isEmpty() ) {
             List<ICRS> crs = new ArrayList<ICRS>();
