@@ -15,7 +15,10 @@ import org.deegree.geometry.Envelope;
 import org.deegree.workspace.Destroyable;
 import org.deegree.workspace.Initializable;
 import org.deegree.workspace.Workspace;
+import org.gdal.gdal.Dataset;
+import org.gdal.gdal.Driver;
 import org.gdal.gdal.gdal;
+import org.gdal.osr.SpatialReference;
 
 /**
  * TODO add class documentation here
@@ -31,18 +34,20 @@ import org.gdal.gdal.gdal;
  * @since 3.4
  */
 public class GdalSettings implements Initializable, Destroyable {
-   
+
     private ExecutorService threadPool;
-    
+
     private final ThreadLocal<GdalDatasetThreadPoolCache> cache = new ThreadLocal<GdalDatasetThreadPoolCache>();
-    
+
     private final Map<File, ICRS> gdalFileToCrs = synchronizedMap( new HashMap<File, ICRS>() );
 
     private final Map<File, Envelope> gdalFileToEnvelope = synchronizedMap( new HashMap<File, Envelope>() );
 
+    private final Map<Integer, SpatialReference> epsgCodeToSpatialReference = synchronizedMap( new HashMap<Integer, SpatialReference>() );
+
     private int threadPoolSize = 8;
-    
-    private int maxAttachedDatasetsPerThread = 10;   
+
+    private int maxAttachedDatasetsPerThread = 10;
 
     @Override
     public void destroy( Workspace workspace ) {
@@ -78,6 +83,21 @@ public class GdalSettings implements Initializable, Destroyable {
         return gdalFileToCrs.get( file );
     }
 
+    public SpatialReference getCrsAsWkt( int epsgCode ) {
+        SpatialReference sr = epsgCodeToSpatialReference.get( epsgCode );
+        if ( sr == null ) {
+            synchronized ( this ) {
+                sr = new SpatialReference();
+                int importFromEPSG = sr.ImportFromEPSG( epsgCode );
+                if ( importFromEPSG != 0 ) {
+                    throw new RuntimeException( "Cannot import EPSG:" + epsgCode + " from GDAL." );
+                }               
+                epsgCodeToSpatialReference.put( epsgCode, sr );
+            }
+        }
+        return sr;
+    }
+
     public Envelope getEnvelope( File gdalFile ) {
         return gdalFileToEnvelope.get( gdalFile );
     }
@@ -100,6 +120,40 @@ public class GdalSettings implements Initializable, Destroyable {
         }
     }
 
+    public byte[][] extractRegionRaw( final File gdalFile, final Envelope region, final int pixelsX, final int pixelsY,
+                                      final boolean withAlpha ) {
+        try {
+            final String fileName = gdalFile.getCanonicalPath();
+            return threadPool.submit( new Callable<byte[][]>() {
+                @Override
+                public byte[][] call()
+                                        throws Exception {
+                    GdalDataset dataset = getThreadLocalDatasetCache().get( fileName );
+                    return dataset.extractRegionAsByteArray( region, pixelsX, pixelsY, withAlpha );
+                }
+            } ).get();
+        } catch ( Exception e ) {
+            throw new RuntimeException( e.getMessage(), e );
+        }
+    }
+
+    public Dataset extractRegionAsDataset( final File gdalFile, final Envelope region, final int pixelsX,
+                                           final int pixelsY, final boolean withAlpha ) {
+        try {
+            final String fileName = gdalFile.getCanonicalPath();
+            return threadPool.submit( new Callable<Dataset>() {
+                @Override
+                public Dataset call()
+                                        throws Exception {
+                    GdalDataset dataset = getThreadLocalDatasetCache().get( fileName );
+                    return dataset.extractRegionAsDataset( region, pixelsX, pixelsY, withAlpha );
+                }
+            } ).get();
+        } catch ( Exception e ) {
+            throw new RuntimeException( e.getMessage(), e );
+        }
+    }
+
     private GdalDatasetThreadPoolCache getThreadLocalDatasetCache() {
         GdalDatasetThreadPoolCache cache = this.cache.get();
         if ( cache == null ) {
@@ -109,6 +163,6 @@ public class GdalSettings implements Initializable, Destroyable {
         }
         cache.register( gdalFileToCrs );
         return cache;
-    }
+    }   
 
 }

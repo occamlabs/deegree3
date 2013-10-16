@@ -8,6 +8,20 @@ import java.util.NoSuchElementException;
 
 import org.deegree.cs.coordinatesystems.ICRS;
 
+/**
+ * Cache for limiting the number of <code>GdalDataset</code> objects that are attached to an
+ * <code>org.gdal.gdal.Dataset</code>. For each Java thread, a unique {@link GdalDatasetThreadPoolCache} has to be used.
+ * <p>
+ * Due to restrictions in GDAL/GDAL plugins, standard pooling of <code>org.gdal.gdal.Dataset</code> objects doesn't work
+ * currently. To be on the safe side, one has to use a unique instance of <code>org.gdal.gdal.Dataset</code> <i>per
+ * thread</i>. If a<code>Dataset</code> is used by different threads (subsequently, not in parallel), access violations
+ * can occur that crash the VM.
+ * </p>
+ * 
+ * @author <a href="mailto:schneider@occamlabs.de">Markus Schneider</a>
+ * 
+ * @since 3.4
+ */
 class GdalDatasetThreadPoolCache {
 
     private final Map<String, GdalDataset> fileNameToDataset = new HashMap<String, GdalDataset>();

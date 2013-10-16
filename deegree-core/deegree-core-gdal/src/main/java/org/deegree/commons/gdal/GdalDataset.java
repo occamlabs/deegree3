@@ -30,6 +30,7 @@ package org.deegree.commons.gdal;
 import static java.awt.color.ColorSpace.CS_sRGB;
 import static java.awt.image.DataBuffer.TYPE_BYTE;
 import static java.lang.Math.round;
+import static org.gdal.gdalconst.gdalconstConstants.CE_None;
 import static org.gdal.gdalconst.gdalconstConstants.GDT_Byte;
 
 import java.awt.color.ColorSpace;
@@ -53,6 +54,7 @@ import org.deegree.geometry.standard.DefaultEnvelope;
 import org.deegree.geometry.standard.primitive.DefaultPoint;
 import org.gdal.gdal.Band;
 import org.gdal.gdal.Dataset;
+import org.gdal.gdal.Driver;
 import org.gdal.gdal.gdal;
 
 /**
@@ -137,11 +139,15 @@ public class GdalDataset {
         dataset.delete();
         dataset = null;
     }
-    
+
     void attach() {
         if ( dataset == null ) {
             dataset = gdal.OpenShared( file.getPath() );
         }
+    }
+
+    public Dataset getUnderlyingDataset() {
+        return dataset;
     }
 
     public File getFile() {
@@ -217,6 +223,76 @@ public class GdalDataset {
                                           windowMinY );
         }
         return toImage( bands, pixelsX, pixelsY );
+    }
+
+    /**
+     * Extracts the specified region.
+     * 
+     * @param region
+     *            region to be extracted, must not be <code>null</code>
+     * @param pixelsX
+     *            width of the image
+     * @param pixelsY
+     *            height of the image
+     * @param withAlpha
+     *            if <code>true</code>, alpha channel be kept (if available in the file), <code>false</code> otherwise
+     * @return specified region, never <code>null</code>
+     * @throws IOException
+     */
+    public byte[][] extractRegionAsByteArray( Envelope region, int pixelsX, int pixelsY, boolean withAlpha )
+                            throws IOException {
+
+        int numBands = dataset.GetRasterCount();
+        if ( numBands == 4 && !withAlpha ) {
+            numBands = 3;
+        }
+        if ( region.getSpan0() <= 0 || region.getSpan1() <= 0 ) {
+            byte[][] bands = new byte[numBands][pixelsX * pixelsY];
+            return bands;
+        }
+        boolean clipped = false;
+        Envelope readWindow = clip( region );
+        if ( region != readWindow ) {
+            clipped = true;
+        }
+        double offsetX = readWindow.getMin().get0() - datasetEnvelope.getMin().get0();
+        double offsetY = datasetEnvelope.getMax().get1() - readWindow.getMax().get1();
+        int readWindowMinX = (int) round( offsetX / (double) unitsPerPixelX );
+        int readWindowMinY = (int) round( offsetY / (double) unitsPerPixelY );
+        int readWindowPixelsX = (int) round( readWindow.getSpan0() / unitsPerPixelX );
+        int readWindowPixelsY = (int) round( readWindow.getSpan1() / unitsPerPixelY );
+        int availablePixelsX = pixelsX;
+        int availablePixelsY = pixelsY;
+        if ( clipped ) {
+            availablePixelsX = (int) round( readWindow.getSpan0() * (double) pixelsX / region.getSpan0() );
+            availablePixelsY = (int) round( readWindow.getSpan1() * (double) pixelsY / region.getSpan1() );
+        }
+        byte[][] bands = readRegion( dataset, readWindowMinX, readWindowMinY, readWindowPixelsX, readWindowPixelsY,
+                                     availablePixelsX, availablePixelsY, numBands );
+        if ( clipped ) {
+            int windowMinX = (int) round( ( ( readWindow.getMin().get0() - region.getMin().get0() ) * (double) pixelsX / region.getSpan0() ) );
+            int windowMinY = (int) round( ( ( region.getMax().get1() - readWindow.getMax().get1() ) * (double) pixelsY / region.getSpan1() ) );
+            bands = createTileFromWindow( pixelsX, pixelsY, bands, availablePixelsX, availablePixelsY, windowMinX,
+                                          windowMinY );
+        }
+        return bands;
+    }
+
+    public Dataset extractRegionAsDataset( Envelope region, int pixelsX, int pixelsY, boolean withAlpha )
+                            throws IOException {
+        byte[][] buffer = extractRegionAsByteArray( region, pixelsX, pixelsY, withAlpha );
+        Driver vrtDriver = gdal.GetDriverByName( "MEM" );
+        Dataset ds = vrtDriver.Create( "/tmp/whatever", pixelsX, pixelsY, buffer.length );
+        ds.SetProjection( dataset.GetProjection() );
+        int i = 1;
+        for ( byte[] bytes : buffer ) {
+            Band band = ds.GetRasterBand( i );
+            if ( band.WriteRaster( 0, 0, pixelsX, pixelsY, pixelsX, pixelsY, GDT_Byte, bytes ) != CE_None ) {
+                throw new RuntimeException( "Error writing raster band." );
+            }
+            i++;
+        }
+        return ds;
     }
 
     private byte[][] readRegion( Dataset dataset, int regionMinX, int regionMinY, int regionPixelsX, int regionPixelsY,
