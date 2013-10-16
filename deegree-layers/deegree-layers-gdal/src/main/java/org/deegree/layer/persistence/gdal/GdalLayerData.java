@@ -112,20 +112,6 @@ class GdalLayerData implements LayerData {
         }
         byte[][] bytes = compose( regions );
         return toImage( bytes, width, height, true );
-        // Graphics g = null;
-        // BufferedImage img = null;
-        // for ( File dataset : datasets ) {
-        // if ( bbox.intersects( gdalSettings.getEnvelope( dataset ) ) ) {
-        // if ( img != null ) {
-        // BufferedImage img2 = gdalSettings.extractRegion( dataset, bbox, width, height, true );
-        // g.drawImage( img2, 0, 0, null );
-        // } else {
-        // img = gdalSettings.extractRegion( dataset, bbox, width, height, false );
-        // g = img.getGraphics();
-        // }
-        // }
-        // }
-        // return img;
     }
 
     private BufferedImage extractAndReprojectRegion( ICRS nativeCrs ) {
