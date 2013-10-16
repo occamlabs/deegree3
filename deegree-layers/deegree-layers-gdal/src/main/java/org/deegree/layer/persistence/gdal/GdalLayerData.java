@@ -33,7 +33,6 @@ import static org.gdal.gdalconst.gdalconstConstants.CE_None;
 import static org.gdal.gdalconst.gdalconstConstants.GDT_Byte;
 import static org.gdal.osr.CoordinateTransformation.CreateCoordinateTransformation;
 
-import java.awt.Graphics;
 import java.awt.color.ColorSpace;
 import java.awt.image.BandedSampleModel;
 import java.awt.image.BufferedImage;
@@ -66,7 +65,7 @@ import org.gdal.osr.CoordinateTransformation;
 import org.gdal.osr.SpatialReference;
 
 /**
- * {@link LayerData} implementation for layers that are drawn from GDAL datasets.
+ * {@link LayerData} implementation for layers that are rendered from GDAL datasets.
  * 
  * @author <a href="mailto:schneider@occamlabs.de">Markus Schneider</a>
  * 
@@ -96,14 +95,37 @@ class GdalLayerData implements LayerData {
     public void render( RenderContext context ) {
         ICRS nativeCrs = gdalSettings.getCrs( datasets.get( 0 ) );
         BufferedImage img = null;
-        if ( !bbox.getCoordinateSystem().equals( nativeCrs ) ) {
-            img = extractAndReprojectRegion( nativeCrs );
-        } else {
+        if ( bbox.getCoordinateSystem().equals( nativeCrs ) ) {
             img = extractRegionFromGdalFiles( bbox );
+        } else {
+            img = extractAndReprojectRegion( nativeCrs );
         }
         if ( img != null ) {
             ( (DefaultRenderContext) context ).setImage( img );
         }
+    }
+
+    private BufferedImage extractRegionFromGdalFiles( Envelope bbox ) {
+        List<byte[][]> regions = getIntersectingRegionsFromAllDatasets( bbox );
+        if ( regions.isEmpty() ) {
+            return null;
+        }
+        byte[][] bytes = compose( regions );
+        return toImage( bytes, width, height, true );
+        // Graphics g = null;
+        // BufferedImage img = null;
+        // for ( File dataset : datasets ) {
+        // if ( bbox.intersects( gdalSettings.getEnvelope( dataset ) ) ) {
+        // if ( img != null ) {
+        // BufferedImage img2 = gdalSettings.extractRegion( dataset, bbox, width, height, true );
+        // g.drawImage( img2, 0, 0, null );
+        // } else {
+        // img = gdalSettings.extractRegion( dataset, bbox, width, height, false );
+        // g = img.getGraphics();
+        // }
+        // }
+        // }
+        // return img;
     }
 
     private BufferedImage extractAndReprojectRegion( ICRS nativeCrs ) {
@@ -121,7 +143,7 @@ class GdalLayerData implements LayerData {
         byte[][] rawImage = readBands( reprojectedRegion );
         nativeRegion.delete();
         reprojectedRegion.delete();
-        return toImage( rawImage, width, height );
+        return toImage( rawImage, width, height, true );
     }
 
     private Dataset reproject( Dataset src, String dstCrsWkt ) {
@@ -134,9 +156,40 @@ class GdalLayerData implements LayerData {
     }
 
     private Dataset composeMemDataset( Envelope nativeBbox, String nativeProjection, List<byte[][]> nativeRegions ) {
-        byte[][] composedRegion = nativeRegions.get( 0 );
-        // TODO compose
+        byte[][] composedRegion = compose( nativeRegions );
         return createMemDataset( nativeBbox, nativeProjection, composedRegion );
+    }
+
+    private byte[][] compose( List<byte[][]> regions ) {
+        byte[][] composedRegion = regions.get( 0 );
+        for ( int i = 1; i < regions.size(); i++ ) {
+            byte[][] region = regions.get( i );
+            compose( composedRegion, region );
+        }
+        return composedRegion;
+    }
+
+    private void compose( byte[][] composedRegion, byte[][] overlay ) {
+        if ( composedRegion.length == 4 && overlay.length == 4 ) {
+            byte[] alpha = overlay[3];
+            for ( int i = 0; i < 3; i++ ) {
+                compose( composedRegion[i], overlay[i], alpha );
+            }
+        }
+    }
+
+    private void compose( byte[] merged, byte[] bytes, byte[] alpha ) {
+        if ( alpha != null ) {
+            for ( int i = 0; i < merged.length; i++ ) {
+                if ( alpha[i] == -1 ) {
+                    merged[i] = bytes[i];
+                }
+            }
+        } else {
+            for ( int i = 0; i < merged.length; i++ ) {
+                merged[i] = bytes[i];
+            }
+        }
     }
 
     private Dataset createMemDataset( Envelope nativeBbox, String nativeProjection, byte[][] composedRegion ) {
@@ -243,29 +296,25 @@ class GdalLayerData implements LayerData {
         if ( crs == null ) {
             return true;
         }
-        System.out.println( crs.getAxis()[0].getOrientation() );
-        return crs.getAxis()[0].getOrientation() == 0;
-    }
-
-    private BufferedImage extractRegionFromGdalFiles( Envelope bbox ) {
-        Graphics g = null;
-        BufferedImage img = null;
-        for ( File dataset : datasets ) {
-            if ( bbox.intersects( gdalSettings.getEnvelope( dataset ) ) ) {
-                if ( img != null ) {
-                    BufferedImage img2 = gdalSettings.extractRegion( dataset, bbox, width, height, true );
-                    g.drawImage( img2, 0, 0, null );
-                } else {
-                    img = gdalSettings.extractRegion( dataset, bbox, width, height, false );
-                    g = img.getGraphics();
-                }
-            }
+        // TODO implement using CRS API
+        String code = crs.getCode().getCode();
+        if ( "3034".equals( code ) || "3035".equals( code ) || "3043".equals( code ) || "3044".equals( code )
+             || "4326".equals( code ) || "4258".equals( code ) || "31466".equals( code ) || "31467".equals( code ) ) {
+            return false;
         }
-        return img;
+        return true;
     }
 
-    private BufferedImage toImage( byte[][] bands, int xSize, int ySize ) {
-        int numBytes = xSize * ySize * bands.length;
+    private BufferedImage toImage( byte[][] bands, int xSize, int ySize, boolean removeTransparency ) {
+        int numBands = bands.length;
+        if ( removeTransparency && bands.length == 4 ) {
+            byte[][] bands2 = new byte[3][];
+            bands2[0] = bands[0];
+            bands2[1] = bands[1];
+            bands2[2] = bands[2];
+            bands = bands2;
+        }
+        int numBytes = xSize * ySize * numBands;
         DataBuffer imgBuffer = new DataBufferByte( bands, numBytes );
         SampleModel sampleModel = new BandedSampleModel( TYPE_BYTE, xSize, ySize, bands.length );
         WritableRaster raster = Raster.createWritableRaster( sampleModel, imgBuffer, null );
