@@ -1,86 +1,131 @@
+/*----------------------------------------------------------------------------
+ This file is part of deegree
+ Copyright (C) 2001-2013 by:
+ - Department of Geography, University of Bonn -
+ and
+ - lat/lon GmbH -
+ and
+ - Occam Labs UG (haftungsbeschränkt) -
+ and others
+
+ This library is free software; you can redistribute it and/or modify it under
+ the terms of the GNU Lesser General Public License as published by the Free
+ Software Foundation; either version 2.1 of the License, or (at your option)
+ any later version.
+ This library is distributed in the hope that it will be useful, but WITHOUT
+ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ details.
+ You should have received a copy of the GNU Lesser General Public License
+ along with this library; if not, write to the Free Software Foundation, Inc.,
+ 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+
+ Contact information:
+
+ e-mail: info@deegree.org
+ website: http://www.deegree.org/
+----------------------------------------------------------------------------*/
 package org.deegree.commons.gdal;
 
 import static java.util.Collections.synchronizedMap;
+import static org.slf4j.LoggerFactory.getLogger;
 
-import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.math.BigInteger;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
-import org.deegree.cs.coordinatesystems.ICRS;
-import org.deegree.geometry.Envelope;
+import javax.xml.bind.JAXBException;
+
+import org.apache.commons.io.IOUtils;
+import org.deegree.commons.gdal.jaxb.GDALSettings;
+import org.deegree.commons.gdal.jaxb.GDALSettings.GDALOption;
+import org.deegree.commons.xml.jaxb.JAXBUtils;
 import org.deegree.workspace.Destroyable;
 import org.deegree.workspace.Initializable;
 import org.deegree.workspace.Workspace;
-import org.gdal.gdal.Dataset;
-import org.gdal.gdal.Driver;
+import org.deegree.workspace.standard.DefaultWorkspace;
 import org.gdal.gdal.gdal;
 import org.gdal.osr.SpatialReference;
+import org.slf4j.Logger;
 
 /**
- * TODO add class documentation here
+ * Pool for <code>GdalDataset</code> objects that automatically limits the number of open datasets.
  * 
- * <p>
- * Due to restrictions in GDAL/GDAL plugins, standard pooling doesn't work here. One has to use a unique instance <i>per
- * thread</i>. If a GDAL <code>dataset</code> is used by different threads (subsequently, not in parallel), access
- * violations can occur that crash the VM.
- * </p>
- * 
- * @author <a href="mailto:name@company.com">Your Name</a>
+ * @author <a href="mailto:schneider@occamlabs.de">Markus Schneider</a>
  * 
  * @since 3.4
  */
 public class GdalSettings implements Initializable, Destroyable {
 
-    private ExecutorService threadPool;
+    private static final Logger LOG = getLogger( GdalSettings.class );
 
-    private final ThreadLocal<GdalDatasetThreadPoolCache> cache = new ThreadLocal<GdalDatasetThreadPoolCache>();
+    private static final URL CONFIG_SCHEMA = GdalSettings.class.getResource( "/META-INF/schemas/commons/gdal/3.4.0/gdal.xsd" );
 
-    private final Map<File, ICRS> gdalFileToCrs = synchronizedMap( new HashMap<File, ICRS>() );
+    private static final String CONFIG_JAXB_PACKAGE = "org.deegree.commons.gdal.jaxb";
 
-    private final Map<File, Envelope> gdalFileToEnvelope = synchronizedMap( new HashMap<File, Envelope>() );
+    private static final String configFileName = "gdal.xml";
 
     private final Map<Integer, SpatialReference> epsgCodeToSpatialReference = synchronizedMap( new HashMap<Integer, SpatialReference>() );
 
-    private int threadPoolSize = 8;
-
-    private int maxAttachedDatasetsPerThread = 10;
+    private GdalDatasetPool pool;
 
     @Override
     public void destroy( Workspace workspace ) {
-        threadPool.shutdown();
-        gdalFileToCrs.clear();
-        gdalFileToEnvelope.clear();
+        pool.shutdown();
     }
 
     @Override
     public void init( Workspace workspace ) {
+        LOG.info( "--------------------------------------------------------------------------------" );
+        LOG.info( "GDAL configuration." );
+        LOG.info( "--------------------------------------------------------------------------------" );
         gdal.AllRegister();
-        gdal.SetConfigOption( "GDAL_CACHEMAX", "20" );
-        gdal.SetConfigOption( "ECW_CACHE_MAXMEM", "" + 1024 * 1024 * 1024 );
-        threadPool = Executors.newFixedThreadPool( threadPoolSize );
-    }
-
-    public void registerDatasetCrs( File file, ICRS crs ) {
-        gdalFileToCrs.put( file, crs );
-        GdalDataset dataset = null;
-        try {
-            dataset = new GdalDataset( file, crs );
-            gdalFileToEnvelope.put( file, dataset.getEnvelope() );
-        } catch ( Exception e ) {
-            throw new IllegalArgumentException( e.getMessage(), e );
-        } finally {
-            if ( dataset != null ) {
-                dataset.detach();
-            }
+        GDALSettings settings = getGdalConfigOptions( workspace );
+        for ( GDALOption gdalConfigOption : settings.getGDALOption() ) {
+            LOG.info( "GDAL: " + gdalConfigOption.getName() + "=" + gdalConfigOption.getValue().trim() );
+            gdal.SetConfigOption( gdalConfigOption.getName(), gdalConfigOption.getValue().trim() );
         }
+        int activeDatasets = settings.getOpenDatasets().intValue();
+        LOG.info( "Max number of open GDAL datasets: " + activeDatasets );
+        pool = new GdalDatasetPool( activeDatasets );
     }
 
-    public ICRS getCrs( File file ) {
-        return gdalFileToCrs.get( file );
+    public GdalDatasetPool getDatasetPool() {
+        return pool;
+    }
+
+    private GDALSettings getGdalConfigOptions( Workspace ws ) {
+        File configFile = new File( ( (DefaultWorkspace) ws ).getLocation(), configFileName );
+        if ( configFile.exists() ) {
+            LOG.info( "Using '" + configFileName + "' from workspace for GDAL settings." );
+            try {
+                return readGdalConfigOptions( configFile, ws );
+            } catch ( Exception e ) {
+                LOG.error( "Error reading GDALSettings file: " + e.getMessage() );
+            }
+        } else {
+            LOG.info( "No '" + configFileName + "' in workspace." );
+        }
+        LOG.info( "Using default values for GDAL settings." );
+        GDALSettings cfg = new GDALSettings();
+        cfg.setOpenDatasets( BigInteger.valueOf( 20 ) );
+        return cfg;
+    }
+
+    private GDALSettings readGdalConfigOptions( File configFile, Workspace ws )
+                            throws FileNotFoundException, JAXBException {
+        InputStream is = null;
+        try {
+            is = new FileInputStream( configFile );
+            return (GDALSettings) JAXBUtils.unmarshall( CONFIG_JAXB_PACKAGE, CONFIG_SCHEMA, is, ws );
+        } finally {
+            IOUtils.closeQuietly( is );
+        }
     }
 
     public SpatialReference getCrsAsWkt( int epsgCode ) {
@@ -91,78 +136,53 @@ public class GdalSettings implements Initializable, Destroyable {
                 int importFromEPSG = sr.ImportFromEPSG( epsgCode );
                 if ( importFromEPSG != 0 ) {
                     throw new RuntimeException( "Cannot import EPSG:" + epsgCode + " from GDAL." );
-                }               
+                }
                 epsgCodeToSpatialReference.put( epsgCode, sr );
             }
         }
         return sr;
     }
 
-    public Envelope getEnvelope( File gdalFile ) {
-        return gdalFileToEnvelope.get( gdalFile );
-    }
-
-    public BufferedImage extractRegion( final File gdalFile, final Envelope region, final int pixelsX,
-                                        final int pixelsY, final boolean withAlpha ) {
-        try {
-            final String fileName = gdalFile.getCanonicalPath();
-            return threadPool.submit( new Callable<BufferedImage>() {
-                @Override
-                public BufferedImage call()
-                                        throws Exception {
-                    GdalDataset dataset = getThreadLocalDatasetCache().get( fileName );
-                    BufferedImage extractRegion = dataset.extractRegion( region, pixelsX, pixelsY, withAlpha );
-                    return extractRegion;
-                }
-            } ).get();
-        } catch ( Exception e ) {
-            throw new RuntimeException( e.getMessage(), e );
-        }
-    }
-
-    public byte[][] extractRegionRaw( final File gdalFile, final Envelope region, final int pixelsX, final int pixelsY,
-                                      final boolean withAlpha ) {
-        try {
-            final String fileName = gdalFile.getCanonicalPath();
-            return threadPool.submit( new Callable<byte[][]>() {
-                @Override
-                public byte[][] call()
-                                        throws Exception {
-                    GdalDataset dataset = getThreadLocalDatasetCache().get( fileName );
-                    return dataset.extractRegionAsByteArray( region, pixelsX, pixelsY, withAlpha );
-                }
-            } ).get();
-        } catch ( Exception e ) {
-            throw new RuntimeException( e.getMessage(), e );
-        }
-    }
-
-    public Dataset extractRegionAsDataset( final File gdalFile, final Envelope region, final int pixelsX,
-                                           final int pixelsY, final boolean withAlpha ) {
-        try {
-            final String fileName = gdalFile.getCanonicalPath();
-            return threadPool.submit( new Callable<Dataset>() {
-                @Override
-                public Dataset call()
-                                        throws Exception {
-                    GdalDataset dataset = getThreadLocalDatasetCache().get( fileName );
-                    return dataset.extractRegionAsDataset( region, pixelsX, pixelsY, withAlpha );
-                }
-            } ).get();
-        } catch ( Exception e ) {
-            throw new RuntimeException( e.getMessage(), e );
-        }
-    }
-
-    private GdalDatasetThreadPoolCache getThreadLocalDatasetCache() {
-        GdalDatasetThreadPoolCache cache = this.cache.get();
-        if ( cache == null ) {
-            System.out.println( "Setting up thread-local cache for thread: " + Thread.currentThread().getName() );
-            cache = new GdalDatasetThreadPoolCache( maxAttachedDatasetsPerThread, gdalFileToCrs );
-            this.cache.set( cache );
-        }
-        cache.register( gdalFileToCrs );
-        return cache;
-    }   
-
+    // public BufferedImage extractRegion( final File gdalFile, final Envelope region, final int pixelsX,
+    // final int pixelsY, final boolean withAlpha ) {
+    // try {
+    // GdalDataset dataset = pool.borrow( gdalFile, gdalFileToCrs.get( gdalFile ) );
+    // try {
+    // return dataset.extractRegion( region, pixelsX, pixelsY, withAlpha );
+    // } finally {
+    // pool.returnDataset( dataset );
+    // }
+    // } catch ( Exception e ) {
+    // throw new RuntimeException( e.getMessage(), e );
+    // }
+    // }
+    //
+    // public byte[][] extractRegionRaw( final File gdalFile, final Envelope region, final int pixelsX, final int
+    // pixelsY,
+    // final boolean withAlpha ) {
+    // try {
+    // GdalDataset dataset = pool.borrow( gdalFile, gdalFileToCrs.get( gdalFile ) );
+    // try {
+    // return dataset.extractRegionAsByteArray( region, pixelsX, pixelsY, withAlpha );
+    // } finally {
+    // pool.returnDataset( dataset );
+    // }
+    // } catch ( Exception e ) {
+    // throw new RuntimeException( e.getMessage(), e );
+    // }
+    // }
+    //
+    // public Dataset extractRegionAsDataset( final File gdalFile, final Envelope region, final int pixelsX,
+    // final int pixelsY, final boolean withAlpha ) {
+    // try {
+    // GdalDataset dataset = pool.borrow( gdalFile, gdalFileToCrs.get( gdalFile ) );
+    // try {
+    // return dataset.extractRegionAsDataset( region, pixelsX, pixelsY, withAlpha );
+    // } finally {
+    // pool.returnDataset( dataset );
+    // }
+    // } catch ( Exception e ) {
+    // throw new RuntimeException( e.getMessage(), e );
+    // }
+    // }
 }

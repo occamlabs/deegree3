@@ -107,7 +107,7 @@ class GdalLayerStoreBuilder implements ResourceBuilder<LayerStore> {
         for ( String path : files ) {
             try {
                 File file = metadata.getLocation().resolveToFile( path ).getCanonicalFile();
-                gdalSettings.registerDatasetCrs( file, crs );
+                gdalSettings.getDatasetPool().addDataset( file, crs );
                 datasets.add( file );
             } catch ( IOException e ) {
                 throw new IllegalArgumentException( e.getMessage(), e );
@@ -126,14 +126,14 @@ class GdalLayerStoreBuilder implements ResourceBuilder<LayerStore> {
         if ( smd.getEnvelope() == null ) {
             Envelope env = null;
             try {
-            for ( File file : datasets ) {
-                if ( env == null ) {
-                    env = gdalSettings.getEnvelope( file );
-                } else {
-                    env.merge( gdalSettings.getEnvelope( file ) );
+                for ( File file : datasets ) {
+                    if ( env == null ) {
+                        env = gdalSettings.getDatasetPool().getEnvelope( file );
+                    } else {
+                        env.merge( gdalSettings.getDatasetPool().getEnvelope( file ) );
+                    }
                 }
-            }
-            } catch (Exception e) {
+            } catch ( Exception e ) {
                 e.printStackTrace();
             }
             smd.setEnvelope( env );

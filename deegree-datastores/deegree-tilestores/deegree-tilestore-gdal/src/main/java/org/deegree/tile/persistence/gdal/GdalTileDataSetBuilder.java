@@ -67,7 +67,7 @@ class GdalTileDataSetBuilder {
         File file = location.resolveToFile( filename );
         TileMatrixSet tms = workspace.getResource( TileMatrixSetProvider.class, tmsId );
         GdalSettings gdalSettings = workspace.getInitializable( GdalSettings.class );
-        gdalSettings.registerDatasetCrs( file, tms.getSpatialMetadata().getCoordinateSystems().get( 0 ) );
+        gdalSettings.getDatasetPool().addDataset( file, tms.getSpatialMetadata().getCoordinateSystems().get( 0 ) );
         List<TileDataLevel> levels = new ArrayList<TileDataLevel>();
         double datasetMinX = gdalEnvelope.getMin().get0();
         double matrixMinX = tms.getSpatialMetadata().getEnvelope().getMin().get0();
@@ -81,7 +81,7 @@ class GdalTileDataSetBuilder {
             int xMax = (int) Math.floor( ( datasetToMatrixOffsetX + gdalEnvelope.getSpan0() ) / tm.getTileWidth() );
             int yMax = (int) Math.floor( ( datasetToMatrixOffsetY + gdalEnvelope.getSpan1() ) / tm.getTileHeight() );
             try {
-                levels.add( new GdalTileDataLevel( tm, file.getCanonicalPath(), xMin, yMin, xMax, yMax, imageFormat,
+                levels.add( new GdalTileDataLevel( tm, file.getCanonicalFile(), xMin, yMin, xMax, yMax, imageFormat,
                                                    gdalSettings ) );
             } catch ( Exception e ) {
                 // TODO Auto-generated catch block

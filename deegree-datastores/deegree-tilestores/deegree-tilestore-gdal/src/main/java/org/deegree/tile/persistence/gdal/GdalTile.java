@@ -36,7 +36,7 @@ import java.io.InputStream;
 import javax.imageio.ImageIO;
 
 import org.deegree.commons.gdal.GdalDataset;
-import org.deegree.commons.gdal.GdalSettings;
+import org.deegree.commons.gdal.GdalDatasetPool;
 import org.deegree.feature.FeatureCollection;
 import org.deegree.geometry.Envelope;
 import org.deegree.tile.Tile;
@@ -51,7 +51,7 @@ import org.deegree.tile.TileIOException;
  */
 class GdalTile implements Tile {
 
-    private final String fileName;
+    private final File file;
 
     private final Envelope tileEnvelope;
 
@@ -61,13 +61,13 @@ class GdalTile implements Tile {
 
     private final String imageFormat;
 
-    private final GdalSettings gdalSettings;
+    private final GdalDatasetPool pool;
 
     /**
      * Creates a new {@link GdalTile} instance.
      * 
-     * @param fileName
-     *            name of GDAL-supported file, must not be <code>null</code>
+     * @param file
+     *            GDAL file, must not be <code>null</code>
      * @param tileEnvelope
      *            bounding box of the tile, must not be <code>null</code>
      * @param pixelsX
@@ -75,25 +75,34 @@ class GdalTile implements Tile {
      * @param pixelsY
      *            height of the tile in pixels
      * @param imageFormat
-     * @param gdalSettings
+     * @param pool
      */
-    GdalTile( String fileName, Envelope tileEnvelope, int pixelsX, int pixelsY, String imageFormat,
-              GdalSettings gdalSettings ) {
-        this.fileName = fileName;
+    GdalTile( File file, Envelope tileEnvelope, int pixelsX, int pixelsY, String imageFormat, GdalDatasetPool pool ) {
+        this.file = file;
         this.tileEnvelope = tileEnvelope;
         this.pixelsX = pixelsX;
         this.pixelsY = pixelsY;
         this.imageFormat = imageFormat;
-        this.gdalSettings = gdalSettings;
+        this.pool = pool;
     }
 
     @Override
     public BufferedImage getAsImage()
                             throws TileIOException {
+        GdalDataset dataset = null;
         try {
-            return gdalSettings.extractRegion( new File( fileName ), tileEnvelope, pixelsX, pixelsY, true );
+            dataset = pool.borrow( file );
+            return dataset.extractRegion( tileEnvelope, pixelsX, pixelsY, true );
         } catch ( Exception e ) {
             throw new TileIOException( e.getMessage(), e );
+        } finally {
+            if ( dataset != null ) {
+                try {
+                    pool.returnDataset( dataset );
+                } catch ( Exception e ) {
+                    // nothing to do
+                }
+            }
         }
     }
 
@@ -101,18 +110,28 @@ class GdalTile implements Tile {
     public InputStream getAsStream()
                             throws TileIOException {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        GdalDataset dataset = null;
         try {
+            dataset = pool.borrow( file );
             String formatName;
             if ( imageFormat.startsWith( "image/" ) ) {
                 formatName = imageFormat.substring( 6 );
             } else {
                 formatName = imageFormat;
             }
-            BufferedImage img = gdalSettings.extractRegion( new File( fileName ), tileEnvelope, pixelsX, pixelsY, false );
+            BufferedImage img = dataset.extractRegion( tileEnvelope, pixelsX, pixelsY, false );
             ImageIO.write( img, formatName, bos );
         } catch ( Exception e ) {
             e.printStackTrace();
             throw new TileIOException( "Error retrieving image: " + e.getMessage(), e );
+        } finally {
+            if ( dataset != null ) {
+                try {
+                    pool.returnDataset( dataset );
+                } catch ( Exception e ) {
+                    // nothing to do
+                }
+            }
         }
         return new ByteArrayInputStream( bos.toByteArray() );
     }

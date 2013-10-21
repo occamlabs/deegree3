@@ -58,7 +58,7 @@ import org.gdal.gdal.Driver;
 import org.gdal.gdal.gdal;
 
 /**
- * Encapsulates access to <code>org.gdal.gdal.Dataset</code> to make its use thread-safe.
+ * Encapsulates access to <code>org.gdal.gdal.Dataset</code>.
  * 
  * @author <a href="mailto:schneider@occamlabs.de">Markus Schneider</a>
  * 
@@ -142,7 +142,7 @@ public class GdalDataset {
 
     void attach() {
         if ( dataset == null ) {
-            dataset = gdal.OpenShared( file.getPath() );
+            dataset = gdal.Open( file.getPath() );
         }
     }
 

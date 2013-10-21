@@ -32,6 +32,7 @@ import static java.awt.image.DataBuffer.TYPE_BYTE;
 import static org.gdal.gdalconst.gdalconstConstants.CE_None;
 import static org.gdal.gdalconst.gdalconstConstants.GDT_Byte;
 import static org.gdal.osr.CoordinateTransformation.CreateCoordinateTransformation;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.awt.color.ColorSpace;
 import java.awt.image.BandedSampleModel;
@@ -47,6 +48,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.deegree.commons.gdal.GdalDataset;
+import org.deegree.commons.gdal.GdalDatasetPool;
 import org.deegree.commons.gdal.GdalSettings;
 import org.deegree.cs.coordinatesystems.ICRS;
 import org.deegree.feature.FeatureCollection;
@@ -63,6 +66,7 @@ import org.gdal.gdal.Driver;
 import org.gdal.gdal.gdal;
 import org.gdal.osr.CoordinateTransformation;
 import org.gdal.osr.SpatialReference;
+import org.slf4j.Logger;
 
 /**
  * {@link LayerData} implementation for layers that are rendered from GDAL datasets.
@@ -72,6 +76,8 @@ import org.gdal.osr.SpatialReference;
  * @since 3.4
  */
 class GdalLayerData implements LayerData {
+
+    private static final Logger LOG = getLogger( GdalSettings.class );
 
     private final List<File> datasets;
 
@@ -93,7 +99,7 @@ class GdalLayerData implements LayerData {
 
     @Override
     public void render( RenderContext context ) {
-        ICRS nativeCrs = gdalSettings.getCrs( datasets.get( 0 ) );
+        ICRS nativeCrs = gdalSettings.getDatasetPool().getCrs( datasets.get( 0 ) );
         BufferedImage img = null;
         if ( bbox.getCoordinateSystem().equals( nativeCrs ) ) {
             img = extractRegionFromGdalFiles( bbox );
@@ -209,9 +215,24 @@ class GdalLayerData implements LayerData {
 
     private List<byte[][]> getIntersectingRegionsFromAllDatasets( Envelope bbox ) {
         List<byte[][]> regions = new ArrayList<byte[][]>( datasets.size() );
-        for ( File dataset : datasets ) {
-            if ( bbox.intersects( gdalSettings.getEnvelope( dataset ) ) ) {
-                regions.add( gdalSettings.extractRegionRaw( dataset, bbox, width, height, true ) );
+        GdalDatasetPool pool = gdalSettings.getDatasetPool();
+        for ( File file : datasets ) {
+            if ( bbox.intersects( gdalSettings.getDatasetPool().getEnvelope( file ) ) ) {
+                GdalDataset dataset = null;
+                try {
+                    dataset = pool.borrow( file );
+                    regions.add( dataset.extractRegionAsByteArray( bbox, width, height, true ) );
+                } catch ( Exception e ) {
+                    LOG.error( "Error extracting region from dataset: " + e.getMessage() );
+                } finally {
+                    if ( dataset != null ) {
+                        try {
+                            pool.returnDataset( dataset );
+                        } catch ( Exception e ) {
+                            LOG.error( "Error returning dataset to pool: " + e.getMessage() );
+                        }
+                    }
+                }
             }
         }
         return regions;
