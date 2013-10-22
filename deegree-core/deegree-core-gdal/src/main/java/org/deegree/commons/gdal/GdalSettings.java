@@ -143,46 +143,4 @@ public class GdalSettings implements Initializable, Destroyable {
         return sr;
     }
 
-    // public BufferedImage extractRegion( final File gdalFile, final Envelope region, final int pixelsX,
-    // final int pixelsY, final boolean withAlpha ) {
-    // try {
-    // GdalDataset dataset = pool.borrow( gdalFile, gdalFileToCrs.get( gdalFile ) );
-    // try {
-    // return dataset.extractRegion( region, pixelsX, pixelsY, withAlpha );
-    // } finally {
-    // pool.returnDataset( dataset );
-    // }
-    // } catch ( Exception e ) {
-    // throw new RuntimeException( e.getMessage(), e );
-    // }
-    // }
-    //
-    // public byte[][] extractRegionRaw( final File gdalFile, final Envelope region, final int pixelsX, final int
-    // pixelsY,
-    // final boolean withAlpha ) {
-    // try {
-    // GdalDataset dataset = pool.borrow( gdalFile, gdalFileToCrs.get( gdalFile ) );
-    // try {
-    // return dataset.extractRegionAsByteArray( region, pixelsX, pixelsY, withAlpha );
-    // } finally {
-    // pool.returnDataset( dataset );
-    // }
-    // } catch ( Exception e ) {
-    // throw new RuntimeException( e.getMessage(), e );
-    // }
-    // }
-    //
-    // public Dataset extractRegionAsDataset( final File gdalFile, final Envelope region, final int pixelsX,
-    // final int pixelsY, final boolean withAlpha ) {
-    // try {
-    // GdalDataset dataset = pool.borrow( gdalFile, gdalFileToCrs.get( gdalFile ) );
-    // try {
-    // return dataset.extractRegionAsDataset( region, pixelsX, pixelsY, withAlpha );
-    // } finally {
-    // pool.returnDataset( dataset );
-    // }
-    // } catch ( Exception e ) {
-    // throw new RuntimeException( e.getMessage(), e );
-    // }
-    // }
 }

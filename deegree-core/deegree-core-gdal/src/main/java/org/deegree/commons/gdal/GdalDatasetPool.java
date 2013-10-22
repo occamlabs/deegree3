@@ -98,7 +98,7 @@ public class GdalDatasetPool {
     public GdalDataset borrow( File file )
                             throws NoSuchElementException, IllegalStateException, Exception {
         GdalDataset dataset = pool.borrowObject( file );
-        limiter.require( dataset );
+        limiter.requireOpen( dataset );
         return dataset;
     }
 
@@ -107,6 +107,7 @@ public class GdalDatasetPool {
         if ( detachRequests.contains( dataset ) ) {
             LOG.debug( "Detaching warm dataset" );
             dataset.detach();
+            detachRequests.remove( dataset );
         }
         pool.returnObject( dataset.getFile(), dataset );
     }
@@ -115,6 +116,8 @@ public class GdalDatasetPool {
         if ( !borrowedInstances.contains( dataset ) ) {
             LOG.debug( "Detaching cold dataset" );
             dataset.detach();
+        } else {
+            detachRequests.add( dataset );
         }
     }
 

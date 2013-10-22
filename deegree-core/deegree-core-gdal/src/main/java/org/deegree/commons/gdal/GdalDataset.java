@@ -32,6 +32,7 @@ import static java.awt.image.DataBuffer.TYPE_BYTE;
 import static java.lang.Math.round;
 import static org.gdal.gdalconst.gdalconstConstants.CE_None;
 import static org.gdal.gdalconst.gdalconstConstants.GDT_Byte;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.awt.color.ColorSpace;
 import java.awt.image.BandedSampleModel;
@@ -56,6 +57,7 @@ import org.gdal.gdal.Band;
 import org.gdal.gdal.Dataset;
 import org.gdal.gdal.Driver;
 import org.gdal.gdal.gdal;
+import org.slf4j.Logger;
 
 /**
  * Encapsulates access to <code>org.gdal.gdal.Dataset</code>.
@@ -65,6 +67,8 @@ import org.gdal.gdal.gdal;
  * @since 3.4
  */
 public class GdalDataset {
+
+    private static final Logger LOG = getLogger( GdalDataset.class );
 
     private final File file;
 
@@ -136,8 +140,10 @@ public class GdalDataset {
     }
 
     void detach() {
-        dataset.delete();
-        dataset = null;
+        if ( dataset != null ) {
+            dataset.delete();
+            dataset = null;
+        }
     }
 
     void attach() {
@@ -299,11 +305,19 @@ public class GdalDataset {
                                  int targetWidth, int targetHeight, int numBands )
                             throws IOException {
         byte[][] bands = new byte[numBands][targetWidth * targetHeight];
-        for ( int i = 0; i < numBands; i++ ) {
-            Band band = dataset.GetRasterBand( i + 1 );
-            byte[] bandBytes = bands[i];
-            band.ReadRaster( regionMinX, regionMinY, regionPixelsX, regionPixelsY, targetWidth, targetHeight, GDT_Byte,
-                             bandBytes, 0, 0 );
+        if ( targetWidth * targetHeight > 0 ) {
+            for ( int i = 0; i < numBands; i++ ) {
+                Band band = dataset.GetRasterBand( i + 1 );
+                byte[] bandBytes = bands[i];
+                if ( band.ReadRaster( regionMinX, regionMinY, regionPixelsX, regionPixelsY, targetWidth, targetHeight,
+                                      GDT_Byte, bandBytes, 0, 0 ) != CE_None ) {
+                    LOG.error( "GDAL ReadRaster failed: " + regionMinX + "," + regionMinY + "," + regionPixelsX + ","
+                               + regionPixelsY + "," + targetWidth + "," + targetHeight + "," + bandBytes.length + ","
+                               + datasetPixelsX + "," + datasetPixelsY );
+                    detach();
+                    return bands;
+                }
+            }
         }
         return bands;
     }

@@ -77,7 +77,7 @@ import org.slf4j.Logger;
  */
 class GdalLayerData implements LayerData {
 
-    private static final Logger LOG = getLogger( GdalSettings.class );
+    private static final Logger LOG = getLogger( GdalLayerData.class );
 
     private final List<File> datasets;
 
@@ -223,7 +223,8 @@ class GdalLayerData implements LayerData {
                     dataset = pool.borrow( file );
                     regions.add( dataset.extractRegionAsByteArray( bbox, width, height, true ) );
                 } catch ( Exception e ) {
-                    LOG.error( "Error extracting region from dataset: " + e.getMessage() );
+                    LOG.error( "Error extracting region from dataset: " + e.getMessage(), e );
+                    System.out.println(bbox);
                 } finally {
                     if ( dataset != null ) {
                         try {
