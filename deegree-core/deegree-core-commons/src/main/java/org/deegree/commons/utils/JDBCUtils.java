@@ -100,6 +100,16 @@ public final class JDBCUtils {
      * @param stmt
      */
     public static void close( Statement stmt ) {
+        closeQuietly( stmt );
+    }
+
+    /**
+     * Close the object, suppress all errors/exceptions. Useful for finally clauses.
+     * 
+     * @param stmt
+     *            can be <code>null</code>
+     */
+    public static void closeQuietly( Statement stmt ) {
         if ( stmt != null ) {
             try {
                 stmt.close();
@@ -173,7 +183,7 @@ public final class JDBCUtils {
         boolean useLegacyPredicates = false;
         String version = determinePostGISVersion( conn, log );
         if ( version.startsWith( "0." ) || version.startsWith( "1.0" ) || version.startsWith( "1.1" )
-             || version.startsWith( "1.2" ) ) {
+                                || version.startsWith( "1.2" ) ) {
             log.debug( "PostGIS version is " + version + " -- using legacy (pre-SQL-MM) predicates." );
             useLegacyPredicates = true;
         } else {

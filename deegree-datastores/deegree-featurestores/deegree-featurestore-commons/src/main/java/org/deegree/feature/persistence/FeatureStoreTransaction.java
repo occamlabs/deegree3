@@ -1,7 +1,7 @@
 //$HeadURL$
 /*----------------------------------------------------------------------------
  This file is part of deegree, http://deegree.org/
- Copyright (C) 2001-2012 by:
+ Copyright (C) 2001-2013 by:
  Department of Geography, University of Bonn
  and
  lat/lon GmbH
@@ -42,6 +42,7 @@ import javax.xml.namespace.QName;
 import org.deegree.feature.Feature;
 import org.deegree.feature.FeatureCollection;
 import org.deegree.feature.persistence.lock.Lock;
+import org.deegree.feature.stream.FeatureInputStream;
 import org.deegree.filter.Filter;
 import org.deegree.filter.IdFilter;
 import org.deegree.filter.OperatorFilter;
@@ -56,10 +57,9 @@ import org.deegree.protocol.wfs.transaction.action.ParsedPropertyReplacement;
  * 
  * @see FeatureStore#acquireTransaction()
  * 
- * @author <a href="mailto:schneider@lat-lon.de">Markus Schneider</a>
- * @author last edited by: $Author$
+ * @author <a href="mailto:schneider@occamlabs.de">Markus Schneider</a>
  * 
- * @version $Revision$, $Date$
+ * @since 3.0
  */
 public interface FeatureStoreTransaction {
 
@@ -88,6 +88,20 @@ public interface FeatureStoreTransaction {
      *             if the rollback fails
      */
     public void rollback()
+                            throws FeatureStoreException;
+
+    /**
+     * Inserts the given {@link Feature} instances into the {@link FeatureStore} (including subfeatures).
+     * 
+     * @param features
+     *            features to be inserted, must not be <code>null</code>
+     * @param mode
+     *            mode for deriving the ids of the inserted objects, must not be <code>null</code>
+     * @return effective ids of the inserted feature and subfeatures (in document order)
+     * @throws FeatureStoreException
+     *             if the insertion fails
+     */
+    public List<String> performInsert( FeatureInputStream features, IDGenMode mode )
                             throws FeatureStoreException;
 
     /**
@@ -121,7 +135,7 @@ public interface FeatureStoreTransaction {
      */
     public List<String> performUpdate( QName ftName, List<ParsedPropertyReplacement> replacementProps, Filter filter,
                                        Lock lock )
-                            throws FeatureStoreException;
+                                                               throws FeatureStoreException;
 
     /**
      * Performs a replace operation against the {@link FeatureStore}.

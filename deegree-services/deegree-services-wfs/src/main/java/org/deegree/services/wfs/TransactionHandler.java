@@ -44,8 +44,8 @@ import static org.deegree.commons.ows.exception.OWSException.NO_APPLICABLE_CODE;
 import static org.deegree.commons.ows.exception.OWSException.OPERATION_NOT_SUPPORTED;
 import static org.deegree.commons.xml.CommonNamespaces.FES_20_NS;
 import static org.deegree.commons.xml.CommonNamespaces.OGCNS;
-import static org.deegree.commons.xml.CommonNamespaces.XLNNS;
 import static org.deegree.commons.xml.XMLAdapter.writeElement;
+import static org.deegree.commons.xml.stax.XMLStreamUtils.nextElement;
 import static org.deegree.commons.xml.stax.XMLStreamUtils.skipElement;
 import static org.deegree.gml.GMLInputFactory.createGMLStreamReader;
 import static org.deegree.gml.GMLVersion.GML_32;
@@ -66,9 +66,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLStreamException;
@@ -85,23 +85,21 @@ import org.deegree.commons.tom.ows.Version;
 import org.deegree.commons.utils.Pair;
 import org.deegree.commons.utils.kvp.InvalidParameterValueException;
 import org.deegree.commons.utils.kvp.MissingParameterException;
-import org.deegree.commons.xml.CommonNamespaces;
 import org.deegree.commons.xml.XMLParsingException;
 import org.deegree.commons.xml.stax.XMLStreamReaderWrapper;
-import org.deegree.commons.xml.stax.XMLStreamUtils;
 import org.deegree.cs.coordinatesystems.ICRS;
 import org.deegree.cs.exceptions.UnknownCRSException;
 import org.deegree.cs.persistence.CRSManager;
 import org.deegree.feature.Feature;
-import org.deegree.feature.FeatureCollection;
-import org.deegree.feature.GenericFeatureCollection;
 import org.deegree.feature.persistence.FeatureStore;
 import org.deegree.feature.persistence.FeatureStoreException;
 import org.deegree.feature.persistence.FeatureStoreTransaction;
 import org.deegree.feature.persistence.lock.Lock;
 import org.deegree.feature.persistence.lock.LockManager;
 import org.deegree.feature.property.GenericProperty;
+import org.deegree.feature.stream.FeatureInputStream;
 import org.deegree.feature.types.AppSchema;
+import org.deegree.feature.types.FeatureCollectionType;
 import org.deegree.feature.types.FeatureType;
 import org.deegree.feature.types.property.CustomPropertyType;
 import org.deegree.filter.Filter;
@@ -110,11 +108,9 @@ import org.deegree.filter.IdFilter;
 import org.deegree.filter.OperatorFilter;
 import org.deegree.geometry.GeometryFactory;
 import org.deegree.geometry.validation.CoordinateValidityInspector;
-import org.deegree.gml.GMLInputFactory;
 import org.deegree.gml.GMLStreamReader;
 import org.deegree.gml.GMLVersion;
 import org.deegree.gml.feature.GMLFeatureReader;
-import org.deegree.gml.reference.FeatureReference;
 import org.deegree.protocol.wfs.transaction.ReleaseAction;
 import org.deegree.protocol.wfs.transaction.Transaction;
 import org.deegree.protocol.wfs.transaction.TransactionAction;
@@ -129,6 +125,8 @@ import org.deegree.protocol.wfs.transaction.action.Update;
 import org.deegree.protocol.wfs.transaction.action.UpdateAction;
 import org.deegree.services.controller.utils.HttpResponseBuffer;
 import org.deegree.services.i18n.Messages;
+import org.deegree.services.wfs.transaction.UnenclosedGmlFeatureInputStream;
+import org.deegree.services.wfs.transaction.WfsFeatureCollectionInputStream;
 import org.jaxen.expr.Expr;
 import org.jaxen.expr.LocationPath;
 import org.jaxen.expr.NameStep;
@@ -370,8 +368,8 @@ class TransactionHandler {
         // TODO deal with this problem
         if ( service.getStores().length > 1 ) {
             String msg = "Cannot perform insert. More than one feature store is active -- "
-                         + "this is currently not supported. Please deactivate all feature stores, "
-                         + "but one in order to make Insert transactions work.";
+                                    + "this is currently not supported. Please deactivate all feature stores, "
+                                    + "but one in order to make Insert transactions work.";
             throw new OWSException( msg, NO_APPLICABLE_CODE );
         }
 
@@ -381,18 +379,16 @@ class TransactionHandler {
                 defaultCRS = CRSManager.lookup( insert.getSrsName() );
             } catch ( UnknownCRSException e ) {
                 String msg = "Cannot perform insert. Specified srsName '" + insert.getSrsName()
-                             + "' is not supported by this WFS.";
+                                        + "' is not supported by this WFS.";
                 throw new OWSException( msg, INVALID_PARAMETER_VALUE, "srsName" );
             }
         }
 
         GMLVersion inputFormat = determineFormat( request.getVersion(), insert.getInputFormat() );
-
-        // TODO streaming
         FeatureStoreTransaction ta = null;
         try {
             XMLStreamReader xmlStream = insert.getFeatures();
-            FeatureCollection fc = parseFeaturesOrCollection( xmlStream, inputFormat, defaultCRS );
+            FeatureInputStream features = parseFeaturesOrCollection( xmlStream, inputFormat, defaultCRS );
             FeatureStore fs = service.getStores()[0];
             ta = acquireTransaction( fs );
             IDGenMode mode = insert.getIdGen();
@@ -403,10 +399,11 @@ class TransactionHandler {
                     mode = idGenMode;
                 }
             }
-            List<String> newFids = ta.performInsert( fc, mode );
+            List<String> newFids = ta.performInsert( features, mode );
             for ( String newFid : newFids ) {
                 inserted.add( newFid, insert.getHandle() );
             }
+            skipToClosingInsertElement( xmlStream );
         } catch ( Exception e ) {
             LOG.debug( e.getMessage(), e );
             String msg = "Cannot perform insert operation: " + e.getMessage();
@@ -414,90 +411,44 @@ class TransactionHandler {
         }
     }
 
-    private FeatureCollection parseFeaturesOrCollection( XMLStreamReader xmlStream, GMLVersion inputFormat,
-                                                         ICRS defaultCRS )
-                            throws XMLStreamException, XMLParsingException, UnknownCRSException,
-                            ReferenceResolvingException {
+    private void skipToClosingInsertElement( XMLStreamReader xmlStream )
+                            throws NoSuchElementException, XMLStreamException {
+        while ( !xmlStream.isEndElement() || !"Insert".equals( xmlStream.getName().getLocalPart() ) ) {
+            nextElement( xmlStream );
+        }
+    }
 
-        FeatureCollection fc = null;
+    private FeatureInputStream parseFeaturesOrCollection( XMLStreamReader xmlStream, GMLVersion inputFormat,
+                                                          ICRS defaultCRS )
+                                                                                  throws XMLStreamException, XMLParsingException, UnknownCRSException,
+                                                                                  ReferenceResolvingException {
+
+        FeatureInputStream features = null;
 
         // TODO determine correct schema
         AppSchema schema = service.getStores()[0].getSchema();
-        GMLStreamReader gmlStream = GMLInputFactory.createGMLStreamReader( inputFormat, xmlStream );
+        GMLStreamReader gmlStream = createGMLStreamReader( inputFormat, xmlStream );
         gmlStream.setApplicationSchema( schema );
         gmlStream.setDefaultCRS( defaultCRS );
-
-        if ( new QName( WFS_NS, "FeatureCollection" ).equals( xmlStream.getName() ) ) {
+        QName featureName = xmlStream.getName();
+        if ( new QName( WFS_NS, "FeatureCollection" ).equals( featureName ) ) {
             LOG.debug( "Features embedded in wfs:FeatureCollection" );
-            fc = parseWFSFeatureCollection( xmlStream, gmlStream );
-            // skip to wfs:Insert END_ELEMENT
-            xmlStream.nextTag();
+            features = new WfsFeatureCollectionInputStream( gmlStream );
         } else {
-            // must contain one or more features or a feature collection from the application schema
-            Feature feature = gmlStream.readFeature();
-            if ( feature instanceof FeatureCollection ) {
-                LOG.debug( "Features embedded in application FeatureCollection" );
-                fc = (FeatureCollection) feature;
-                // skip to wfs:Insert END_ELEMENT
-                xmlStream.nextTag();
+            FeatureType ft = schema.getFeatureType( featureName );
+            if ( ft == null ) {
+                String msg = "Unexpected feature element ('" + featureName + "') in insert.";
+                throw new XMLParsingException( xmlStream, msg );
+            }
+            if ( ft instanceof FeatureCollectionType ) {
+                LOG.debug( "Features embedded in application feature collection container" );
+                features = gmlStream.readFeatureCollectionStream();
             } else {
-                LOG.debug( "Unenclosed features to be inserted" );
-                List<Feature> features = new LinkedList<Feature>();
-                features.add( feature );
-                while ( xmlStream.nextTag() == START_ELEMENT ) {
-                    // more features
-                    feature = gmlStream.readFeature();
-                    features.add( feature );
-                }
-                fc = new GenericFeatureCollection( null, features );
+                LOG.debug( "Unenclosed features" );
+                features = new UnenclosedGmlFeatureInputStream( gmlStream );
             }
         }
-
-        // resolve local xlink references
-        gmlStream.getIdContext().resolveLocalRefs();
-
-        return fc;
-    }
-
-    private FeatureCollection parseWFSFeatureCollection( XMLStreamReader xmlStream, GMLStreamReader gmlStream )
-                            throws XMLStreamException, XMLParsingException, UnknownCRSException {
-
-        // TODO handle crs + move this method somewhere else
-        xmlStream.require( START_ELEMENT, WFS_NS, "FeatureCollection" );
-        List<Feature> memberFeatures = new ArrayList<Feature>();
-
-        while ( xmlStream.nextTag() == START_ELEMENT ) {
-            QName elName = xmlStream.getName();
-            if ( CommonNamespaces.GMLNS.equals( elName.getNamespaceURI() ) ) {
-                if ( "featureMember".equals( elName.getLocalPart() ) ) {
-                    // xlink?
-                    String href = xmlStream.getAttributeValue( XLNNS, "href" );
-                    if ( href != null ) {
-                        FeatureReference refFeature = new FeatureReference( gmlStream.getIdContext(), href, null );
-                        memberFeatures.add( refFeature );
-                        gmlStream.getIdContext().addReference( refFeature );
-                    } else {
-                        xmlStream.nextTag();
-                        memberFeatures.add( gmlStream.readFeature() );
-                    }
-                    xmlStream.nextTag();
-                } else if ( "featureMembers".equals( elName.getLocalPart() ) ) {
-                    while ( xmlStream.nextTag() == START_ELEMENT ) {
-                        memberFeatures.add( gmlStream.readFeature() );
-                    }
-                } else {
-                    LOG.debug( "Ignoring element '" + elName + "'" );
-                    XMLStreamUtils.skipElement( xmlStream );
-                }
-            } else {
-                LOG.debug( "Ignoring element '" + elName + "'" );
-                XMLStreamUtils.skipElement( xmlStream );
-            }
-        }
-
-        // idContext.resolveXLinks( decoder.getApplicationSchema() );
-        xmlStream.require( END_ELEMENT, WFS_NS, "FeatureCollection" );
-        return new GenericFeatureCollection( null, memberFeatures );
+        return features;
     }
 
     private void doNative( Native nativeOp )
@@ -577,7 +528,7 @@ class TransactionHandler {
         NumberExpr ne = (NumberExpr) expr;
         int index = Math.round( Float.parseFloat( ne.getText() ) );
         return new Pair<QName, Integer>( new QName( ft.getName().getNamespaceURI(), namestep.getLocalName() ),
-                                         index - 1 );
+                                index - 1 );
     }
 
     private List<ParsedPropertyReplacement> getReplacementProps( Update update, FeatureType ft, GMLVersion inputFormat )

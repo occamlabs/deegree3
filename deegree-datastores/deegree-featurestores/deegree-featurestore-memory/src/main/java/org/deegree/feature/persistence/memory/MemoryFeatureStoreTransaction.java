@@ -61,6 +61,7 @@ import org.deegree.feature.persistence.FeatureStoreException;
 import org.deegree.feature.persistence.FeatureStoreTransaction;
 import org.deegree.feature.persistence.lock.Lock;
 import org.deegree.feature.persistence.lock.LockManager;
+import org.deegree.feature.stream.FeatureInputStream;
 import org.deegree.feature.types.FeatureType;
 import org.deegree.feature.xpath.TypedObjectNodeXPathEvaluator;
 import org.deegree.filter.Filter;
@@ -192,10 +193,10 @@ class MemoryFeatureStoreTransaction implements FeatureStoreTransaction {
             if ( !lockManager.isFeatureModifiable( id.getRid(), lockId ) ) {
                 if ( lockId == null ) {
                     throw new MissingParameterException( getMessage( "TA_DELETE_LOCKED_NO_LOCK_ID", id.getRid() ),
-                                                         "lockId" );
+                                            "lockId" );
                 }
                 throw new InvalidParameterValueException( getMessage( "TA_DELETE_LOCKED_WRONG_LOCK_ID", id.getRid() ),
-                                                          "lockId" );
+                                        "lockId" );
             }
         }
 
@@ -214,6 +215,12 @@ class MemoryFeatureStoreTransaction implements FeatureStoreTransaction {
             }
         }
         return deleted;
+    }
+
+    @Override
+    public List<String> performInsert( FeatureInputStream features, IDGenMode mode )
+                            throws FeatureStoreException {
+        return performInsert( features.toCollection(), mode );
     }
 
     @Override
@@ -307,7 +314,7 @@ class MemoryFeatureStoreTransaction implements FeatureStoreTransaction {
                 String id = getGeometryId( geom, mode );
                 if ( sf.getObjectById( id ) != null ) {
                     String msg = "Cannot insert geometry '" + id
-                                 + "'. This geometry already exists in the feature store.";
+                                            + "'. This geometry already exists in the feature store.";
                     throw new IllegalArgumentException( msg );
                 }
                 geom.setId( id );
@@ -320,7 +327,7 @@ class MemoryFeatureStoreTransaction implements FeatureStoreTransaction {
                 String id = getFeatureId( feature, mode );
                 if ( sf.getObjectById( id ) != null ) {
                     String msg = "Cannot insert feature '" + id
-                                 + "'. This feature already exists in the feature store.";
+                                            + "'. This feature already exists in the feature store.";
                     throw new IllegalArgumentException( msg );
                 }
                 if ( feature != fc ) {
@@ -501,7 +508,7 @@ class MemoryFeatureStoreTransaction implements FeatureStoreTransaction {
     @Override
     public List<String> performUpdate( QName ftName, List<ParsedPropertyReplacement> replacementProps, Filter filter,
                                        Lock lock )
-                            throws FeatureStoreException {
+                                                               throws FeatureStoreException {
 
         String lockId = lock != null ? lock.getId() : null;
 
