@@ -103,14 +103,18 @@ public class PostGISDDLCreator extends DDLCreator {
         TableName blobTable = schema.getBlobMapping().getTable();
         String blobTableSchema = blobTable.getSchema() == null ? "public" : blobTable.getSchema();
         ddl.add( "CREATE TABLE " + blobTable + " (id serial PRIMARY KEY, "
-                 + "gml_id text UNIQUE NOT NULL, ft_type smallint REFERENCES " + ftTable + " , binary_object bytea)" );
+                                + "gml_id text UNIQUE NOT NULL, ft_type smallint REFERENCES " + ftTable + " , binary_object bytea)" );
         ddl.add( "COMMENT ON TABLE " + blobTable + " IS 'All objects (features and geometries)'" );
         ddl.add( "SELECT ADDGEOMETRYCOLUMN('" + blobTableSchema.toLowerCase() + "', '"
-                 + blobTable.getTable().toLowerCase() + "','gml_bounded_by','" + undefinedSrid + "','GEOMETRY',2)" );
+                                + blobTable.getTable().toLowerCase() + "','gml_bounded_by','" + undefinedSrid + "','GEOMETRY',2)" );
         ddl.add( "ALTER TABLE " + blobTable + " ADD CONSTRAINT gml_objects_geochk CHECK (ST_IsValid(gml_bounded_by))" );
         ddl.add( "CREATE INDEX gml_objects_sidx ON " + blobTable + "  USING GIST (gml_bounded_by)" );
-        // ddl.add( "CREATE TABLE gml_names (gml_object_id integer REFERENCES gml_objects,"
-        // + "name text NOT NULL,codespace text,prop_idx smallint NOT NULL)" );
+        TableName gmlIdentifiersTable = schema.getBlobMapping().getGmlIdentifiersTable();
+        if ( gmlIdentifiersTable != null ) {
+            ddl.add( "CREATE TABLE " + gmlIdentifiersTable + " (gml_id text REFERENCES " + blobTable
+                     + " (gml_id), gml_identifier text NOT NULL, codespace text)" );
+            ddl.add( "CREATE UNIQUE INDEX idx_gml_identifiers_unique ON gml_identifiers (gml_identifier, codespace)" );
+        }
         return ddl;
     }
 

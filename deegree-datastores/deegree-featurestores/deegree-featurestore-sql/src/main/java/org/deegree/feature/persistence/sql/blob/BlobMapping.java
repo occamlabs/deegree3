@@ -1,7 +1,6 @@
-//$HeadURL$
 /*----------------------------------------------------------------------------
  This file is part of deegree, http://deegree.org/
- Copyright (C) 2001-2009 by:
+ Copyright (C) 2001-2013 by:
  - Department of Geography, University of Bonn -
  and
  - lat/lon GmbH -
@@ -47,33 +46,37 @@ import org.deegree.feature.persistence.sql.MappedAppSchema;
  * @see MappedAppSchema
  * @see FeatureTypeMapping
  * 
- * @author <a href="mailto:schneider@lat-lon.de">Markus Schneider</a>
- * @author last edited by: $Author$
+ * @author <a href="mailto:schneider@occamlabs.de">Markus Schneider</a>
  * 
- * @version $Revision$, $Date$
+ * @since 3.2
  */
 public class BlobMapping {
 
-    private final TableName table;
+    private final TableName gmlObjectsTable;
 
-    private final ICRS storageCRS;
+    private final TableName gmlIdentifiersTable;
+
+    private final ICRS storageCrs;
 
     private final BlobCodec codec;
 
     /**
      * Creates a new {@link BlobMapping} instance.
      * 
-     * @param table
+     * @param gmlObjectsTable
      *            the name of the table that stores the BLOBs, must not be <code>null</code>
-     * @param storageCRS
+     * @param storageCrs
      *            crs used for storing geometries / envelopes, must not be <code>null</code>
      * @param codec
      *            the decoder / encoder used for the BLOBs, must not be <code>null</code>
+     * @param gmlIdentifiersTable
+     *            the name of the table that stores the GML identifiers, can be <code>null</code>
      */
-    public BlobMapping( String table, ICRS storageCRS, BlobCodec codec ) {
-        this.table = new TableName( table );
-        this.storageCRS = storageCRS;
+    public BlobMapping( String gmlObjectsTable, ICRS storageCrs, BlobCodec codec, String gmlIdentifiersTable ) {
+        this.gmlObjectsTable = new TableName( gmlObjectsTable );
+        this.storageCrs = storageCrs;
         this.codec = codec;
+        this.gmlIdentifiersTable = new TableName( gmlIdentifiersTable );
     }
 
     /**
@@ -82,7 +85,16 @@ public class BlobMapping {
      * @return the table that stores the BLOBs, never <code>null</code>
      */
     public TableName getTable() {
-        return table;
+        return gmlObjectsTable;
+    }
+
+    /**
+     * Returns the table that stores the GML identifiers.
+     * 
+     * @return table that stores the GML identifiers, can be <code>null</code>
+     */
+    public TableName getGmlIdentifiersTable() {
+        return gmlIdentifiersTable;
     }
 
     /**
@@ -91,7 +103,7 @@ public class BlobMapping {
      * @return the crs, never <code>null</code>
      */
     public ICRS getCRS() {
-        return storageCRS;
+        return storageCrs;
     }
 
     /**

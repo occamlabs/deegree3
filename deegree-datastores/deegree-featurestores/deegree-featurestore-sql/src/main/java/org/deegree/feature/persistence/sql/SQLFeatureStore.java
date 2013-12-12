@@ -39,6 +39,7 @@ import static org.deegree.commons.utils.JDBCUtils.close;
 import static org.deegree.commons.xml.CommonNamespaces.OGCNS;
 import static org.deegree.commons.xml.CommonNamespaces.XLNNS;
 import static org.deegree.commons.xml.CommonNamespaces.XSINS;
+import static org.deegree.feature.types.property.GeometryPropertyType.CoordinateDimension.DIM_2;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.lang.reflect.Constructor;
@@ -92,6 +93,7 @@ import org.deegree.feature.persistence.lock.LockManager;
 import org.deegree.feature.persistence.query.Query;
 import org.deegree.feature.persistence.sql.blob.BlobCodec;
 import org.deegree.feature.persistence.sql.blob.BlobMapping;
+import org.deegree.feature.persistence.sql.blob.BlobPropertyNameMapper;
 import org.deegree.feature.persistence.sql.blob.FeatureBuilderBlob;
 import org.deegree.feature.persistence.sql.config.AbstractMappedSchemaBuilder;
 import org.deegree.feature.persistence.sql.converter.CustomParticleConverter;
@@ -113,13 +115,10 @@ import org.deegree.feature.stream.FilteredFeatureInputStream;
 import org.deegree.feature.stream.IteratorFeatureInputStream;
 import org.deegree.feature.stream.MemoryFeatureInputStream;
 import org.deegree.feature.types.FeatureType;
-import org.deegree.feature.types.property.GeometryPropertyType.CoordinateDimension;
-import org.deegree.feature.types.property.GeometryPropertyType.GeometryType;
 import org.deegree.filter.Filter;
 import org.deegree.filter.FilterEvaluationException;
 import org.deegree.filter.IdFilter;
 import org.deegree.filter.OperatorFilter;
-import org.deegree.filter.expression.ValueReference;
 import org.deegree.filter.sort.SortProperty;
 import org.deegree.filter.spatial.BBOX;
 import org.deegree.geometry.Envelope;
@@ -132,7 +131,6 @@ import org.deegree.sqldialect.filter.Join;
 import org.deegree.sqldialect.filter.MappingExpression;
 import org.deegree.sqldialect.filter.PropertyNameMapper;
 import org.deegree.sqldialect.filter.PropertyNameMapping;
-import org.deegree.sqldialect.filter.TableAliasManager;
 import org.deegree.sqldialect.filter.UnmappableException;
 import org.deegree.sqldialect.filter.expression.SQLArgument;
 import org.deegree.workspace.Resource;
@@ -285,11 +283,11 @@ public class SQLFeatureStore implements FeatureStore {
         }
     }
 
-    ParticleConverter<Geometry> getGeometryConverter( GeometryMapping geomMapping ) {
+    public ParticleConverter<Geometry> getGeometryConverter( GeometryMapping geomMapping ) {
         String column = geomMapping.getMapping().toString();
         ICRS crs = geomMapping.getCRS();
         String srid = geomMapping.getSrid();
-        boolean is2d = geomMapping.getDim() == CoordinateDimension.DIM_2;
+        boolean is2d = geomMapping.getDim() == DIM_2;
         return dialect.getGeometryConverter( column, crs, srid, is2d );
     }
 
@@ -864,7 +862,7 @@ public class SQLFeatureStore implements FeatureStore {
                             throws FeatureStoreException, FilterEvaluationException {
 
         if ( query.getTypeNames() == null || query.getTypeNames().length > 1 ) {
-            String msg = "Join queries between multiple feature types are not by SQLFeatureStore (yet).";
+            String msg = "Join queries between multiple feature types are not supported by the SQLFeatureStore implementation (yet).";
             throw new UnsupportedOperationException( msg );
         }
 
@@ -1108,54 +1106,38 @@ public class SQLFeatureStore implements FeatureStore {
         FeatureInputStream result = null;
         PreparedStatement stmt = null;
         ResultSet rs = null;
+        OperatorFilter postFilter = filter;
 
         try {
             conn = getConnection();
 
-            FeatureTypeMapping ftMapping = getMapping( ftName );
             BlobMapping blobMapping = getSchema().getBlobMapping();
             FeatureBuilder builder = new FeatureBuilderBlob( this, blobMapping );
 
             List<String> columns = builder.getInitialSelectColumns();
 
-            if ( query.getPrefilterBBox() != null ) {
-                OperatorFilter bboxFilter = new OperatorFilter( query.getPrefilterBBox() );
-                wb = getWhereBuilderBlob( bboxFilter, conn );
+            if ( filter != null ) {
+                wb = getWhereBuilderBlob( filter, conn );
+                // postFilter = wb.getPostFilter();
                 LOG.debug( "WHERE clause: " + wb.getWhere() );
-                // LOG.debug( "ORDER BY clause: " + wb.getOrderBy() );
+                LOG.debug( "ORDER BY clause: " + wb.getOrderBy() );
             }
-            String alias = wb != null ? wb.getAliasManager().getRootTableAlias() : "X1";
+            String rootAlias = wb != null ? wb.getAliasManager().getRootTableAlias() : "X1";
 
             StringBuilder sql = new StringBuilder( "SELECT " );
+            sql.append( rootAlias );
+            sql.append( '.' );
             sql.append( columns.get( 0 ) );
             for ( int i = 1; i < columns.size(); i++ ) {
                 sql.append( ',' );
+                sql.append( rootAlias );
+                sql.append( '.' );
                 sql.append( columns.get( i ) );
             }
             sql.append( " FROM " );
-            if ( ftMapping == null ) {
-                // pure BLOB query
-                sql.append( blobMapping.getTable() );
-                sql.append( ' ' );
-                sql.append( alias );
-                // } else {
-                // hybrid query
-                // sql.append( blobMapping.getTable() );
-                // sql.append( ' ' );
-                // sql.append( alias );
-                // sql.append( " LEFT OUTER JOIN " );
-                // sql.append( ftMapping.getFtTable() );
-                // sql.append( ' ' );
-                // sql.append( alias );
-                // sql.append( " ON " );
-                // sql.append( alias );
-                // sql.append( "." );
-                // sql.append( blobMapping.getInternalIdColumn() );
-                // sql.append( "=" );
-                // sql.append( alias );
-                // sql.append( "." );
-                // sql.append( ftMapping.getFidMapping().getColumn() );
-            }
+            sql.append( blobMapping.getTable() );
+            sql.append( ' ' );
+            sql.append( rootAlias );
 
             if ( wb != null ) {
                 for ( PropertyNameMapping mappedPropName : wb.getMappedPropertyNames() ) {
@@ -1169,28 +1151,27 @@ public class SQLFeatureStore implements FeatureStore {
                     }
                 }
             }
-            sql.append( " WHERE " );
-            sql.append( alias );
-            sql.append( "." );
-            sql.append( blobMapping.getTypeColumn() );
-            sql.append( "=?" );
-            if ( wb != null ) {
-                sql.append( " AND " );
-                sql.append( wb.getWhere().getSQL() );
+
+            Short ftId = null;
+            if ( !schema.getFeatureType( ftName ).isAbstract() ) {
+                ftId = schema.getFtId( ftName );
             }
 
-            // if ( wb != null && wb.getWhere() != null ) {
-            // if ( blobMapping != null ) {
-            // sql.append( " AND " );
-            // } else {
-            // sql.append( " WHERE " );
-            // }
-            // sql.append( wb.getWhere().getSQL() );
-            // }
-            // if ( wb != null && wb.getOrderBy() != null ) {
-            // sql.append( " ORDER BY " );
-            // sql.append( wb.getOrderBy().getSQL() );
-            // }
+            if ( ftId != null || wb != null ) {
+                sql.append( " WHERE " );
+                if ( ftId != null ) {
+                    sql.append( rootAlias );
+                    sql.append( "." );
+                    sql.append( blobMapping.getTypeColumn() );
+                    sql.append( "=?" );
+                }
+                if ( wb != null ) {
+                    if ( ftId != null ) {
+                        sql.append( " AND " );
+                    }
+                    sql.append( wb.getWhere().getSQL() );
+                }
+            }
 
             LOG.debug( "SQL: {}", sql );
             long begin = System.currentTimeMillis();
@@ -1198,24 +1179,14 @@ public class SQLFeatureStore implements FeatureStore {
             LOG.debug( "Preparing SELECT took {} [ms] ", System.currentTimeMillis() - begin );
 
             int i = 1;
-            // if ( blobMapping != null ) {
-            stmt.setShort( i++, getSchema().getFtId( ftName ) );
+            if ( ftId != null ) {
+                stmt.setShort( i++, getSchema().getFtId( ftName ) );
+            }
             if ( wb != null ) {
                 for ( SQLArgument o : wb.getWhere().getArguments() ) {
                     o.setArgument( stmt, i++ );
                 }
             }
-            // }
-            // if ( wb != null && wb.getWhere() != null ) {
-            // for ( SQLArgument o : wb.getWhere().getArguments() ) {
-            // o.setArgument( stmt, i++ );
-            // }
-            // }
-            // if ( wb != null && wb.getOrderBy() != null ) {
-            // for ( SQLArgument o : wb.getOrderBy().getArguments() ) {
-            // o.setArgument( stmt, i++ );
-            // }
-            // }
 
             begin = System.currentTimeMillis();
             stmt.setFetchSize( fetchSize );
@@ -1230,9 +1201,9 @@ public class SQLFeatureStore implements FeatureStore {
             throw new FeatureStoreException( msg, e );
         }
 
-        if ( filter != null ) {
+        if ( postFilter != null ) {
             LOG.debug( "Applying in-memory post-filtering." );
-            result = new FilteredFeatureInputStream( result, filter );
+            result = new FilteredFeatureInputStream( result, postFilter );
         }
 
         if ( query.getSortProperties().length > 0 ) {
@@ -1434,26 +1405,7 @@ public class SQLFeatureStore implements FeatureStore {
 
     private AbstractWhereBuilder getWhereBuilderBlob( OperatorFilter filter, Connection conn )
                             throws FilterEvaluationException, UnmappableException {
-        final String undefinedSrid = dialect.getUndefinedSrid();
-        PropertyNameMapper mapper = new PropertyNameMapper() {
-            @Override
-            public PropertyNameMapping getMapping( ValueReference propName, TableAliasManager aliasManager )
-                                    throws FilterEvaluationException, UnmappableException {
-                GeometryStorageParams geometryParams = new GeometryStorageParams( blobMapping.getCRS(), undefinedSrid,
-                                                                                  CoordinateDimension.DIM_2 );
-                GeometryMapping bboxMapping = new GeometryMapping( null, false,
-                                                                   new DBField( blobMapping.getBBoxColumn() ),
-                                                                   GeometryType.GEOMETRY, geometryParams, null );
-                return new PropertyNameMapping( getGeometryConverter( bboxMapping ), null, blobMapping.getBBoxColumn(),
-                                                aliasManager.getRootTableAlias() );
-            }
-
-            @Override
-            public PropertyNameMapping getSpatialMapping( ValueReference propName, TableAliasManager aliasManager )
-                                    throws FilterEvaluationException, UnmappableException {
-                return getMapping( propName, aliasManager );
-            }
-        };
+        PropertyNameMapper mapper = new BlobPropertyNameMapper( this, dialect, blobMapping );
         return dialect.getWhereBuilder( mapper, filter, null, allowInMemoryFiltering );
     }
 

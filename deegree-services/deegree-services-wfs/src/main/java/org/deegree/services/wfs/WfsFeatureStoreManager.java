@@ -36,8 +36,6 @@
 
 package org.deegree.services.wfs;
 
-import static org.deegree.commons.xml.CommonNamespaces.GML3_2_NS;
-import static org.deegree.commons.xml.CommonNamespaces.GMLNS;
 import static org.deegree.services.i18n.Messages.get;
 
 import java.util.Collection;
@@ -84,7 +82,7 @@ public class WfsFeatureStoreManager {
 
     private final Map<String, String> prefixToNs = new LinkedHashMap<String, String>();
 
-    private Map<String, String> targetNsToPrefix = new LinkedHashMap<String, String>();
+    private final Map<String, String> targetNsToPrefix = new LinkedHashMap<String, String>();
 
     private int indexPrefix = 0;
 
@@ -177,7 +175,7 @@ public class WfsFeatureStoreManager {
             QName match = QNameUtils.findBestMatch( ftName, ftNameToFt.keySet() );
             if ( match != null && ( !match.equals( ftName ) ) ) {
                 LOG.debug( "Repairing unqualified FeatureType name: " + QNameUtils.toString( ftName ) + " -> "
-                           + QNameUtils.toString( match ) );
+                                        + QNameUtils.toString( match ) );
                 ft = ftNameToFt.get( match );
             }
         }
@@ -241,11 +239,7 @@ public class WfsFeatureStoreManager {
                 LOG.error( msg );
                 throw new IllegalArgumentException( msg );
             }
-            for ( FeatureType ft : fs.getSchema().getFeatureTypes( null, false, false ) ) {
-                if ( ft.getName().getNamespaceURI().equals( GMLNS )
-                     || ft.getName().getNamespaceURI().equals( GML3_2_NS ) ) {
-                    continue;
-                }
+            for ( FeatureType ft : fs.getSchema().getFeatureTypes( null, false, true ) ) {
                 if ( ftNameToFt.containsKey( ft.getName() ) ) {
                     String msg = get( "WFS_FEATURETYPE_ALREADY_SERVED", ft.getName() );
                     LOG.error( msg );

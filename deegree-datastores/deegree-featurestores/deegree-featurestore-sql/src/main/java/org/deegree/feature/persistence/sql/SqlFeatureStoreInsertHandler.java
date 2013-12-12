@@ -1,4 +1,3 @@
-//$HeadURL$
 /*----------------------------------------------------------------------------
  This file is part of deegree, http://deegree.org/
  Copyright (C) 2001-2013 by:
@@ -38,6 +37,7 @@ package org.deegree.feature.persistence.sql;
 import static org.deegree.commons.utils.JDBCUtils.closeQuietly;
 import static org.deegree.feature.Features.findFeaturesAndGeometries;
 import static org.deegree.feature.types.property.GeometryPropertyType.CoordinateDimension.DIM_2;
+import static org.deegree.gml.GMLVersion.GML_32;
 import static org.deegree.protocol.wfs.transaction.action.IDGenMode.USE_EXISTING;
 
 import java.io.ByteArrayOutputStream;
@@ -50,8 +50,13 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+import javax.xml.namespace.QName;
+
 import org.deegree.commons.jdbc.TableName;
 import org.deegree.commons.tom.ReferenceResolvingException;
+import org.deegree.commons.tom.TypedObjectNode;
+import org.deegree.commons.tom.gml.property.Property;
+import org.deegree.commons.tom.primitive.PrimitiveValue;
 import org.deegree.commons.tom.sql.ParticleConverter;
 import org.deegree.commons.utils.Pair;
 import org.deegree.cs.coordinatesystems.ICRS;
@@ -70,6 +75,7 @@ import org.deegree.feature.types.property.GeometryPropertyType.GeometryType;
 import org.deegree.geometry.Envelope;
 import org.deegree.geometry.Geometries;
 import org.deegree.geometry.Geometry;
+import org.deegree.gml.schema.GMLSchemaInfoSet;
 import org.deegree.gml.utils.GmlReferenceCollector;
 import org.deegree.protocol.wfs.transaction.action.IDGenMode;
 import org.deegree.sqldialect.filter.DBField;
@@ -101,6 +107,8 @@ class SqlFeatureStoreInsertHandler {
 
     private ParticleConverter<Geometry> blobGeomConverter;
 
+    private final QName GML_IDENTIFIER_NAME;
+
     SqlFeatureStoreInsertHandler( SQLFeatureStore fs, Connection conn, List<FeatureInspector> inspectors,
                                   BBoxTracker bboxTracker ) {
         this.fs = fs;
@@ -115,6 +123,15 @@ class SqlFeatureStoreInsertHandler {
                                                                    geometryParams, null );
             blobGeomConverter = fs.getGeometryConverter( blobGeomMapping );
         }
+        GML_IDENTIFIER_NAME = getGmlIdentifierName( fs.getSchema().getGMLSchema() );
+    }
+
+    private QName getGmlIdentifierName( GMLSchemaInfoSet gmlSchema ) {
+        String gmlNamespace = GML_32.getNamespace();
+        if ( gmlSchema != null ) {
+            gmlNamespace = gmlSchema.getVersion().getNamespace();
+        }
+        return new QName( gmlNamespace, "identifier" );
     }
 
     List<String> performInsert( FeatureInputStream features, IDGenMode mode )
@@ -160,7 +177,6 @@ class SqlFeatureStoreInsertHandler {
 
         long begin = System.currentTimeMillis();
 
-        String fid = null;
         try {
             PreparedStatement blobInsertStmt = null;
             if ( blobMapping != null ) {
@@ -226,9 +242,8 @@ class SqlFeatureStoreInsertHandler {
                 LOG.debug( "Inserting: {}", sql );
                 blobInsertStmt = conn.prepareStatement( sql.toString() );
                 for ( Feature feature : features ) {
-                    fid = feature.getId();
                     if ( blobInsertStmt != null ) {
-                        insertFeatureBlob( blobInsertStmt, feature );
+                        insertGmlObject( blobInsertStmt, feature );
                     }
                     FeatureTypeMapping ftMapping = fs.getMapping( feature.getName() );
                     if ( ftMapping != null ) {
@@ -286,32 +301,21 @@ class SqlFeatureStoreInsertHandler {
 
     private List<String> performInsertBlobUseExisting( FeatureInputStream features, BlobMapping blobMapping )
                             throws FeatureStoreException {
-        StringBuilder sql = new StringBuilder( "INSERT INTO " );
-        sql.append( blobMapping.getTable() );
-        sql.append( " (" );
-        sql.append( blobMapping.getGMLIdColumn() );
-        sql.append( "," );
-        sql.append( blobMapping.getTypeColumn() );
-        sql.append( "," );
-        sql.append( blobMapping.getDataColumn() );
-        sql.append( "," );
-        sql.append( blobMapping.getBBoxColumn() );
-        sql.append( ") VALUES(?,?,?," );
-        sql.append( blobGeomConverter.getSetSnippet( null ) );
-        sql.append( ")" );
-        PreparedStatement blobInsertStmt = null;
+        PreparedStatement gmlObjectInsertStmt = null;
+        PreparedStatement gmlIdentifierInsertStmt = null;
         List<String> fids = new ArrayList<String>();
         try {
-            LOG.debug( "Preparing insert: {}", sql );
-            blobInsertStmt = conn.prepareStatement( sql.toString() );
+            gmlObjectInsertStmt = getPreparedStatementInsertGmlObject( blobMapping );
+            gmlIdentifierInsertStmt = getPreparedStatementInsertGmlIdentifier( blobMapping );
             for ( Feature feature : features ) {
-                fids.add( feature.getId() );
-                insertFeatureBlob( blobInsertStmt, feature );
                 FeatureTypeMapping ftMapping = fs.getMapping( feature.getName() );
                 if ( ftMapping != null ) {
                     String msg = "Hybrid mode insert not implemented yet.";
                     throw new UnsupportedOperationException( msg );
                 }
+                fids.add( feature.getId() );
+                insertGmlObject( gmlObjectInsertStmt, feature );
+                insertGmlIdentifier( gmlIdentifierInsertStmt, feature );
                 ICRS storageSrs = blobMapping.getCRS();
                 bboxTracker.insert( feature, storageSrs );
             }
@@ -319,7 +323,8 @@ class SqlFeatureStoreInsertHandler {
             String msg = "Error inserting feature (BLOB-mode): " + e.getMessage();
             throw new FeatureStoreException( msg );
         } finally {
-            closeQuietly( blobInsertStmt );
+            closeQuietly( gmlObjectInsertStmt );
+            closeQuietly( gmlIdentifierInsertStmt );
         }
         return fids;
     }
@@ -333,11 +338,10 @@ class SqlFeatureStoreInsertHandler {
      * @throws SQLException
      * @throws FeatureStoreException
      */
-    private int insertFeatureBlob( PreparedStatement stmt, Feature feature )
+    private int insertGmlObject( PreparedStatement stmt, Feature feature )
                             throws SQLException, FeatureStoreException {
 
         LOG.debug( "Inserting feature with id '" + feature.getId() + "' (BLOB)" );
-
         if ( fs.getSchema().getFeatureType( feature.getName() ) == null ) {
             throw new FeatureStoreException( "Cannot insert feature '" + feature.getName()
                                              + "': feature type is not served by this feature store." );
@@ -388,4 +392,72 @@ class SqlFeatureStoreInsertHandler {
         return internalId;
     }
 
+    private PreparedStatement getPreparedStatementInsertGmlObject( BlobMapping blobMapping )
+                            throws SQLException {
+        StringBuilder sql = new StringBuilder( "INSERT INTO " );
+        sql.append( blobMapping.getTable() );
+        sql.append( " (" );
+        sql.append( blobMapping.getGMLIdColumn() );
+        sql.append( "," );
+        sql.append( blobMapping.getTypeColumn() );
+        sql.append( "," );
+        sql.append( blobMapping.getDataColumn() );
+        sql.append( "," );
+        sql.append( blobMapping.getBBoxColumn() );
+        sql.append( ") VALUES(?,?,?," );
+        sql.append( blobGeomConverter.getSetSnippet( null ) );
+        sql.append( ")" );
+        return conn.prepareStatement( sql.toString() );
+    }
+
+    private PreparedStatement getPreparedStatementInsertGmlIdentifier( BlobMapping blobMapping )
+                            throws SQLException {
+        if ( blobMapping.getGmlIdentifiersTable() == null ) {
+            return null;
+        }
+        StringBuilder sql = new StringBuilder( "INSERT INTO " );
+        sql.append( blobMapping.getGmlIdentifiersTable() );
+        sql.append( " (" );
+        sql.append( "gml_id" );
+        sql.append( "," );
+        sql.append( "gml_identifier" );
+        sql.append( "," );
+        sql.append( "codespace" );
+        sql.append( ") VALUES(?,?,?)" );
+        return conn.prepareStatement( sql.toString() );
+    }
+
+    private void insertGmlIdentifier( PreparedStatement gmlIdentifierInsertStmt, Feature feature )
+                            throws SQLException {
+        List<Property> gmlIdentifierProps = feature.getProperties( GML_IDENTIFIER_NAME );
+        String fid = feature.getId();
+        for ( Property gmlIdentifierProp : gmlIdentifierProps ) {
+            String gmlIdentifier = getIdentifier( gmlIdentifierProp );
+            String codespace = null;
+            PrimitiveValue codeSpaceValue = gmlIdentifierProp.getAttributes().get( new QName( "codeSpace" ) );
+            if ( codeSpaceValue != null ) {
+                codespace = codeSpaceValue.toString();
+            }
+            insertGmlIdentifier( gmlIdentifierInsertStmt, fid, gmlIdentifier, codespace );
+        }
+    }
+
+    private String getIdentifier( Property gmlIdentifierProp ) {
+        List<TypedObjectNode> children = gmlIdentifierProp.getChildren();
+        for ( TypedObjectNode child : children ) {
+            if ( child instanceof PrimitiveValue ) {
+                return "" + child;
+            }
+        }
+        return null;
+    }
+
+    private void insertGmlIdentifier( PreparedStatement gmlIdentifierInsertStmt, String fid, String gmlIdentifier,
+                                      String codespace )
+                                                              throws SQLException {
+        gmlIdentifierInsertStmt.setString( 1, fid );
+        gmlIdentifierInsertStmt.setString( 2, gmlIdentifier );
+        gmlIdentifierInsertStmt.setString( 3, codespace );
+        gmlIdentifierInsertStmt.execute();
+    }
 }

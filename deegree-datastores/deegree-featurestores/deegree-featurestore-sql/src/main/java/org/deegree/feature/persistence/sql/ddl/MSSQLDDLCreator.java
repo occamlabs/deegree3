@@ -112,8 +112,8 @@ public class MSSQLDDLCreator extends DDLCreator {
         // create gml_objects table
         TableName blobTable = schema.getBlobMapping().getTable();
         ddl.add( "CREATE TABLE " + blobTable + " (id integer IDENTITY(1,1) PRIMARY KEY, "
-                 + "gml_id varchar(2000) NOT NULL, ft_type integer REFERENCES " + ftTable
-                 + " , binary_object varbinary(max), gml_bounded_by GEOMETRY)" );
+                                + "gml_id varchar(2000) NOT NULL, ft_type integer REFERENCES " + ftTable
+                                + " , binary_object varbinary(max), gml_bounded_by GEOMETRY)" );
 
         ddl.add( "ALTER TABLE " + blobTable
                  + " ADD CONSTRAINT gml_objects_geochk CHECK (gml_bounded_by.STIsValid() = 1)" );
@@ -121,11 +121,13 @@ public class MSSQLDDLCreator extends DDLCreator {
         double[] dom = schema.getBlobMapping().getCRS().getValidDomain();
 
         ddl.add( "CREATE SPATIAL INDEX gml_objects_sidx ON " + blobTable + "(gml_bounded_by) WITH ( BOUNDING_BOX = ( "
-                 + ArrayUtils.join( ",", dom ) + " ) )" );
-        // ddl.add( "CREATE INDEX gml_objects_sidx ON " + blobTable + "  USING GIST (gml_bounded_by GIST_GEOMETRY_OPS)"
-        // );
-        // ddl.add( "CREATE TABLE gml_names (gml_object_id integer REFERENCES gml_objects,"
-        // + "name text NOT NULL,codespace text,prop_idx smallint NOT NULL)" );
+                                + ArrayUtils.join( ",", dom ) + " ) )" );
+        TableName gmlIdentifiersTable = schema.getBlobMapping().getGmlIdentifiersTable();
+        if ( gmlIdentifiersTable != null ) {
+            ddl.add( "CREATE TABLE " + gmlIdentifiersTable + " (gml_id varchar(2000) REFERENCES " + blobTable
+                     + " (gml_id), gml_identifier varchar(2000) NOT NULL, codespace varchar(2000))" );
+            ddl.add( "CREATE UNIQUE INDEX gml_identifiers_idx ON gml_identifiers (gml_identifier, codespace)" );
+        }
         return ddl;
     }
 

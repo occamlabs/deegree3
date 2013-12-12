@@ -97,8 +97,8 @@ public class OracleDDLCreator extends DDLCreator {
         // create gml_objects table
         TableName blobTable = schema.getBlobMapping().getTable();
         ddl.add( "CREATE TABLE " + blobTable + " (id integer not null, "
-                 + "gml_id varchar2(4000) NOT NULL, ft_type integer REFERENCES " + ftTable
-                 + " , binary_object blob, gml_bounded_by sdo_GEOMETRY, constraint gml_objects_id_pk primary key(id))" );
+                                + "gml_id varchar2(4000) NOT NULL, ft_type integer REFERENCES " + ftTable
+                                + " , binary_object blob, gml_bounded_by sdo_GEOMETRY, constraint gml_objects_id_pk primary key(id))" );
 
         ddl.add( "create sequence " + blobTable + "_id_seq start with 1 increment by 1 nomaxvalue" );
 
@@ -109,17 +109,19 @@ public class OracleDDLCreator extends DDLCreator {
 
         ddl.add( "INSERT INTO user_sdo_geom_metadata(TABLE_NAME,COLUMN_NAME,DIMINFO,SRID) VALUES (" + "'" + blobTable
                  + "','gml_bounded_by',SDO_DIM_ARRAY(" + "SDO_DIM_ELEMENT('X', " + dom[0] + ", " + dom[2]
-                 + ", 0.00000005), SDO_DIM_ELEMENT('Y', " + dom[1] + ", " + dom[3] + ", 0.00000005)), null)" );
+                                         + ", 0.00000005), SDO_DIM_ELEMENT('Y', " + dom[1] + ", " + dom[3] + ", 0.00000005)), null)" );
 
         // TODO validity check, how?
         // ddl.add( "ALTER TABLE " + blobTable
         // + " ADD CONSTRAINT gml_objects_geochk CHECK (" + blobTable + ".gml_bounded_by.st_isvalid()=1)" );
 
         ddl.add( "CREATE INDEX gml_objects_sidx ON " + blobTable + "(gml_bounded_by) INDEXTYPE IS MDSYS.SPATIAL_INDEX" );
-        // ddl.add( "CREATE INDEX gml_objects_sidx ON " + blobTable + "  USING GIST (gml_bounded_by GIST_GEOMETRY_OPS)"
-        // );
-        // ddl.add( "CREATE TABLE gml_names (gml_object_id integer REFERENCES gml_objects,"
-        // + "name text NOT NULL,codespace text,prop_idx smallint NOT NULL)" );
+        TableName gmlIdentifiersTable = schema.getBlobMapping().getGmlIdentifiersTable();
+        if ( gmlIdentifiersTable != null ) {
+            ddl.add( "CREATE TABLE " + gmlIdentifiersTable + " (gml_id varchar(2000) REFERENCES " + blobTable
+                     + " (gml_id), gml_identifier varchar(2000) NOT NULL, codespace varchar(2000))" );
+            ddl.add( "CREATE UNIQUE INDEX gml_identifiers_idx ON gml_identifiers (gml_identifier, codespace)" );
+        }
         return ddl;
     }
 
@@ -132,15 +134,15 @@ public class OracleDDLCreator extends DDLCreator {
         double[] dom = mapping.getCRS().getValidDomain();
         StringBuffer sql = new StringBuffer();
         sql.append( "INSERT INTO user_sdo_geom_metadata(TABLE_NAME,COLUMN_NAME,DIMINFO,SRID) VALUES (" + "'"
-                    + table.toString().toUpperCase() + "','" + column.toUpperCase() + "',SDO_DIM_ARRAY("
-                    + "SDO_DIM_ELEMENT('X', " + dom[0] + ", " + dom[2] + ", 0.00000005), SDO_DIM_ELEMENT('Y', "
-                    + dom[1] + ", " + dom[3] + ", 0.00000005)), null)" );
+                                + table.toString().toUpperCase() + "','" + column.toUpperCase() + "',SDO_DIM_ARRAY("
+                                + "SDO_DIM_ELEMENT('X', " + dom[0] + ", " + dom[2] + ", 0.00000005), SDO_DIM_ELEMENT('Y', "
+                                + dom[1] + ", " + dom[3] + ", 0.00000005)), null)" );
         ddls.add( sql );
 
         sql = new StringBuffer();
         sql.append( "CREATE INDEX " + table.getTable().toUpperCase() + "_" + column.toUpperCase() + " ON "
-                    + table.toString().toUpperCase() + "(" + column.toUpperCase()
-                    + ") INDEXTYPE IS MDSYS.SPATIAL_INDEX" );
+                                + table.toString().toUpperCase() + "(" + column.toUpperCase()
+                                + ") INDEXTYPE IS MDSYS.SPATIAL_INDEX" );
         ddls.add( sql );
         return ddls;
     }

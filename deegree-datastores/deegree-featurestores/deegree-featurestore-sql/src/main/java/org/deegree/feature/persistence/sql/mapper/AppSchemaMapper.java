@@ -201,10 +201,11 @@ public class AppSchemaMapper {
 
     private BlobMapping generateBlobMapping() {
         // TODO
-        String table = "GML_OBJECTS";
+        String gmlObjectsTable = "GML_OBJECTS";
         // TODO
         BlobCodec codec = new BlobCodec( appSchema.getGMLSchema().getVersion(), NONE );
-        return new BlobMapping( table, geometryParams.getCrs(), codec );
+        String gmlIdentifiersTable = "GML_IDENTIFIERS";
+        return new BlobMapping( gmlObjectsTable, geometryParams.getCrs(), codec, gmlIdentifiersTable );
     }
 
     private BBoxTableMapping generateBBoxMapping() {
@@ -234,14 +235,14 @@ public class AppSchemaMapper {
         if ( useIntegerFids ) {
             IDGenerator generator = new AutoIDGenerator();
             Pair<SQLIdentifier, BaseType> fidColumn = new Pair<SQLIdentifier, BaseType>( new SQLIdentifier( "gid" ),
-                                                                                         BaseType.INTEGER );
+                                    BaseType.INTEGER );
             fidMapping = new FIDMapping( prefix, "_", Collections.singletonList( fidColumn ), generator );
         } else {
             IDGenerator generator = new UUIDGenerator();
             Pair<SQLIdentifier, BaseType> fidColumn = new Pair<SQLIdentifier, BaseType>(
-                                                                                         new SQLIdentifier(
-                                                                                                            "attr_gml_id" ),
-                                                                                         STRING );
+                                    new SQLIdentifier(
+                                                      "attr_gml_id" ),
+                                                      STRING );
             fidMapping = new FIDMapping( prefix, "_", Collections.singletonList( fidColumn ), generator );
         }
 
@@ -312,7 +313,7 @@ public class AppSchemaMapper {
                         }
                     } catch ( Throwable t ) {
                         LOG.warn( "Unable to create relational mapping for property type '" + pt.getName() + "': "
-                                  + t.getMessage() );
+                                                + t.getMessage() );
                     }
                 }
                 return mappings;
@@ -826,14 +827,6 @@ public class AppSchemaMapper {
     // return XMLValueMangler.getPrimitiveType( typeDef ).getXSTypeName();
     // }
     //
-
-    private QName getQName( XSTypeDefinition xsType ) {
-        QName name = null;
-        if ( !xsType.getAnonymous() ) {
-            name = new QName( xsType.getNamespace(), xsType.getName() );
-        }
-        return name;
-    }
 
     private String getName( QName name ) {
         if ( name.getNamespaceURI() != null && !name.getNamespaceURI().equals( "" ) ) {
