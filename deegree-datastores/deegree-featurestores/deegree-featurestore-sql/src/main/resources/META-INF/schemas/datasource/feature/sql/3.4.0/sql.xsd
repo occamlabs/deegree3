@@ -11,8 +11,8 @@
   </annotation>
   <element name="SQLFeatureStore">
     <annotation>
-      <documentation>FeatureStore that is backed by an SQL database with spatial extension (e.g. PostGIS, Oracle
-        Spatial or MS SQL Server)
+      <documentation>FeatureStore that is backed by an SQL database with spatial extension (e.g. PostGIS, Oracle Spatial
+        or MS SQL Server)
       </documentation>
       <appinfo>
         <jaxb:class name="SQLFeatureStoreJAXB" />
@@ -43,7 +43,7 @@
         </element>
         <element ref="sqlfs:StorageCRS" minOccurs="0" />
         <element name="GMLSchema" type="string" minOccurs="0" maxOccurs="unbounded" />
-        <element name="NullEscalation" minOccurs="0" type="boolean" default="true" />        
+        <element name="NullEscalation" minOccurs="0" type="boolean" default="true" />
         <element name="CustomReferenceResolver" minOccurs="0" maxOccurs="unbounded" type="string" />
         <element name="NamespaceHint" minOccurs="0" maxOccurs="unbounded">
           <complexType>
@@ -56,6 +56,7 @@
             <sequence>
               <element name="BlobTable" type="string" minOccurs="0" default="gml_objects" />
               <element name="FeatureTypeTable" type="string" minOccurs="0" default="feature_types" />
+              <element name="IdentifiersTable" type="string" minOccurs="0" />
             </sequence>
           </complexType>
         </element>
@@ -183,17 +184,18 @@
     </attribute>
     <attribute name="nullEscalation" type="sqlfs:NullEscalationType">
       <annotation>
-        <documentation>Defines whether NULL values for this particle lead to voiding of the parent particle.</documentation>
+        <documentation>Defines whether NULL values for this particle lead to voiding of the parent particle.
+        </documentation>
       </annotation>
-    </attribute>    
+    </attribute>
   </complexType>
   <simpleType name="NullEscalationType">
     <restriction base="string">
       <enumeration value="true" />
       <enumeration value="false" />
       <enumeration value="auto" />
-  </restriction>
-  </simpleType>  
+    </restriction>
+  </simpleType>
   <element name="Primitive" substitutionGroup="sqlfs:AbstractParticle">
     <complexType>
       <annotation>

@@ -38,8 +38,6 @@ import static java.util.Collections.singletonList;
 import static org.apache.xerces.impl.xpath.XPath.Axis.ATTRIBUTE;
 import static org.apache.xerces.impl.xpath.XPath.Axis.CHILD;
 import static org.deegree.commons.tom.primitive.BaseType.STRING;
-import static org.deegree.feature.types.property.GeometryPropertyType.CoordinateDimension.DIM_2;
-import static org.deegree.feature.types.property.GeometryPropertyType.GeometryType.GEOMETRY;
 import static org.deegree.gml.GMLVersion.GML_32;
 
 import java.util.List;
@@ -49,13 +47,11 @@ import javax.xml.namespace.QName;
 import org.deegree.commons.tom.primitive.PrimitiveType;
 import org.deegree.commons.tom.sql.ParticleConverter;
 import org.deegree.commons.xml.NamespaceBindings;
-import org.deegree.feature.persistence.sql.GeometryStorageParams;
 import org.deegree.feature.persistence.sql.SQLFeatureStore;
-import org.deegree.feature.persistence.sql.rules.GeometryMapping;
 import org.deegree.filter.FilterEvaluationException;
 import org.deegree.filter.expression.ValueReference;
+import org.deegree.geometry.utils.GeometryParticleConverter;
 import org.deegree.sqldialect.SQLDialect;
-import org.deegree.sqldialect.filter.DBField;
 import org.deegree.sqldialect.filter.Join;
 import org.deegree.sqldialect.filter.PropertyNameMapper;
 import org.deegree.sqldialect.filter.PropertyNameMapping;
@@ -66,7 +62,15 @@ import org.jaxen.expr.LocationPath;
 import org.jaxen.expr.NameStep;
 
 /**
- * {@link PropertyNameMapper} for the BLOB mode of the {@link SQLFeatureStore}.
+ * {@link PropertyNameMapper} for the {@link SQLFeatureStore} (BLOB mode).
+ * <p>
+ * Supports the mapping of the following properties to the DB:
+ * <ul>
+ * <li>gml:boundedBy (or any geometry property) -> gml_objects.gml_bounded_by</li>
+ * <li>gml:identifier -> gml_identifiers.gml_identifier</li>
+ * <li>gml:identifier/@codeSpace -> gml_identifiers.codespace</li>
+ * </ul>
+ * </p>
  * 
  * @author <a href="mailto:schneider@occamlabs.de">Markus Schneider</a>
  * 
@@ -76,30 +80,34 @@ public class BlobPropertyNameMapper implements PropertyNameMapper {
 
     private final SQLDialect dialect;
 
-    private final SQLFeatureStore fs;
-
     private final BlobMapping blobMapping;
 
     private final QName gmlIdentifierName;
 
+    private final boolean hasGmlIdentifiersTable;
+
     /**
      * Creates a new {@link BlobPropertyNameMapper} instance.
      * 
-     * @param fs
-     * @param dialect
      * @param blobMapping
+     *            blob mapping, must not be <code>null</code>
+     * @param dialect
+     *            SQL dialect, must not be <code>null</code>
      */
-    public BlobPropertyNameMapper( SQLFeatureStore fs, SQLDialect dialect, BlobMapping blobMapping ) {
-        this.fs = fs;
+    public BlobPropertyNameMapper( BlobMapping blobMapping, SQLDialect dialect ) {
         this.dialect = dialect;
         this.blobMapping = blobMapping;
         this.gmlIdentifierName = new QName( GML_32.getNamespace(), "identifier" );
+        this.hasGmlIdentifiersTable = blobMapping.getGmlIdentifiersTable() != null;
     }
 
     @Override
     public PropertyNameMapping getMapping( ValueReference propName, TableAliasManager aliasManager )
                             throws FilterEvaluationException, UnmappableException {
-        if ( blobMapping.getGmlIdentifiersTable() != null ) {
+        if ( propName == null ) {
+            return getSpatialMapping( propName, aliasManager );
+        }
+        if ( hasGmlIdentifiersTable ) {
             Expr xpath = propName.getAsXPath();
             if ( xpath != null && xpath instanceof LocationPath ) {
                 LocationPath locationPath = (LocationPath) xpath;
@@ -150,12 +158,10 @@ public class BlobPropertyNameMapper implements PropertyNameMapper {
     }
 
     private PropertyNameMapping getBoundedByMapping( TableAliasManager aliasManager ) {
-        GeometryStorageParams geometryParams = new GeometryStorageParams( blobMapping.getCRS(),
-                                                                          dialect.getUndefinedSrid(), DIM_2 );
-        GeometryMapping bboxMapping = new GeometryMapping( null, false, new DBField( blobMapping.getBBoxColumn() ),
-                                                           GEOMETRY, geometryParams, null );
-        return new PropertyNameMapping( fs.getGeometryConverter( bboxMapping ), null, blobMapping.getBBoxColumn(),
-                                        aliasManager.getRootTableAlias() );
+        String bboxColumn = blobMapping.getBBoxColumn();
+        GeometryParticleConverter geometryConverter = dialect.getGeometryConverter( bboxColumn, blobMapping.getCRS(),
+                                                                                    dialect.getUndefinedSrid(), true );
+        return new PropertyNameMapping( geometryConverter, null, bboxColumn, aliasManager.getRootTableAlias() );
     }
 
     private PropertyNameMapping getGmlIdentifierMapping( TableAliasManager aliasManager ) {
@@ -176,7 +182,9 @@ public class BlobPropertyNameMapper implements PropertyNameMapper {
 
     private List<Join> getJoinsToGmlIdentifierTable( TableAliasManager aliasManager, String tableAlias ) {
         Join join = new Join( blobMapping.getTable().getName(), aliasManager.getRootTableAlias(),
-                              blobMapping.getGMLIdColumn(), "gml_identifiers", tableAlias, "gml_id" );
+                              blobMapping.getGMLIdColumn(), blobMapping.getGmlIdentifiersTable().getName(), tableAlias,
+                                "gml_id" );
         return singletonList( join );
     }
+
 }

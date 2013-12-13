@@ -301,13 +301,19 @@ class SqlFeatureStoreInsertHandler {
 
     private List<String> performInsertBlobUseExisting( FeatureInputStream features, BlobMapping blobMapping )
                             throws FeatureStoreException {
+        boolean useGmlIdentifiersTable = blobMapping.getGmlIdentifiersTable() != null;
         PreparedStatement gmlObjectInsertStmt = null;
         PreparedStatement gmlIdentifierInsertStmt = null;
         List<String> fids = new ArrayList<String>();
         try {
             gmlObjectInsertStmt = getPreparedStatementInsertGmlObject( blobMapping );
-            gmlIdentifierInsertStmt = getPreparedStatementInsertGmlIdentifier( blobMapping );
+            if ( useGmlIdentifiersTable ) {
+                gmlIdentifierInsertStmt = getPreparedStatementInsertGmlIdentifier( blobMapping );
+            }
             for ( Feature feature : features ) {
+                for ( FeatureInspector inspector : inspectors ) {
+                    feature = inspector.inspect( feature );
+                }
                 FeatureTypeMapping ftMapping = fs.getMapping( feature.getName() );
                 if ( ftMapping != null ) {
                     String msg = "Hybrid mode insert not implemented yet.";
@@ -315,7 +321,9 @@ class SqlFeatureStoreInsertHandler {
                 }
                 fids.add( feature.getId() );
                 insertGmlObject( gmlObjectInsertStmt, feature );
-                insertGmlIdentifier( gmlIdentifierInsertStmt, feature );
+                if ( useGmlIdentifiersTable ) {
+                    insertGmlIdentifier( gmlIdentifierInsertStmt, feature );
+                }
                 ICRS storageSrs = blobMapping.getCRS();
                 bboxTracker.insert( feature, storageSrs );
             }
@@ -329,16 +337,25 @@ class SqlFeatureStoreInsertHandler {
         return fids;
     }
 
-    /**
-     * Inserts the given feature into BLOB table and returns the generated primary key.
-     * 
-     * @param stmt
-     * @param feature
-     * @return primary key of the feature
-     * @throws SQLException
-     * @throws FeatureStoreException
-     */
-    private int insertGmlObject( PreparedStatement stmt, Feature feature )
+    private PreparedStatement getPreparedStatementInsertGmlObject( BlobMapping blobMapping )
+                            throws SQLException {
+        StringBuilder sql = new StringBuilder( "INSERT INTO " );
+        sql.append( blobMapping.getTable() );
+        sql.append( " (" );
+        sql.append( blobMapping.getGMLIdColumn() );
+        sql.append( "," );
+        sql.append( blobMapping.getTypeColumn() );
+        sql.append( "," );
+        sql.append( blobMapping.getDataColumn() );
+        sql.append( "," );
+        sql.append( blobMapping.getBBoxColumn() );
+        sql.append( ") VALUES(?,?,?," );
+        sql.append( blobGeomConverter.getSetSnippet( null ) );
+        sql.append( ")" );
+        return conn.prepareStatement( sql.toString() );
+    }
+
+    private void insertGmlObject( PreparedStatement stmt, Feature feature )
                             throws SQLException, FeatureStoreException {
 
         LOG.debug( "Inserting feature with id '" + feature.getId() + "' (BLOB)" );
@@ -373,48 +390,11 @@ class SqlFeatureStoreInsertHandler {
             LOG.warn( "Unable to determine bbox of feature with id '" + feature.getId() + "': " + e.getMessage() );
         }
         blobGeomConverter.setParticle( stmt, bboxGeom, 4 );
-        // stmt.addBatch();
         stmt.execute();
-
-        int internalId = -1;
-
-        // ResultSet rs = null;
-        // try {
-        // // TODO only supported for PostgreSQL >= 8.2
-        // rs = stmt.getGeneratedKeys();
-        // rs.next();
-        // internalId = rs.getInt( 1 );
-        // } finally {
-        // if ( rs != null ) {
-        // rs.close();
-        // }
-        // }
-        return internalId;
-    }
-
-    private PreparedStatement getPreparedStatementInsertGmlObject( BlobMapping blobMapping )
-                            throws SQLException {
-        StringBuilder sql = new StringBuilder( "INSERT INTO " );
-        sql.append( blobMapping.getTable() );
-        sql.append( " (" );
-        sql.append( blobMapping.getGMLIdColumn() );
-        sql.append( "," );
-        sql.append( blobMapping.getTypeColumn() );
-        sql.append( "," );
-        sql.append( blobMapping.getDataColumn() );
-        sql.append( "," );
-        sql.append( blobMapping.getBBoxColumn() );
-        sql.append( ") VALUES(?,?,?," );
-        sql.append( blobGeomConverter.getSetSnippet( null ) );
-        sql.append( ")" );
-        return conn.prepareStatement( sql.toString() );
     }
 
     private PreparedStatement getPreparedStatementInsertGmlIdentifier( BlobMapping blobMapping )
                             throws SQLException {
-        if ( blobMapping.getGmlIdentifiersTable() == null ) {
-            return null;
-        }
         StringBuilder sql = new StringBuilder( "INSERT INTO " );
         sql.append( blobMapping.getGmlIdentifiersTable() );
         sql.append( " (" );

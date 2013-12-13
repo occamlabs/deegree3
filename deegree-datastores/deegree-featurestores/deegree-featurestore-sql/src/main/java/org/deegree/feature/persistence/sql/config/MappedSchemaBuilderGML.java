@@ -135,8 +135,6 @@ public class MappedSchemaBuilderGML extends AbstractMappedSchemaBuilder {
 
     private static final String GML_OBJECTS_TABLE = "gml_objects";
 
-    private static final String GML_IDENTIFIERS_TABLE = "gml_identifiers";
-
     private final AppSchema gmlSchema;
 
     private final NamespaceBindings nsBindings = new NamespaceBindings();
@@ -317,7 +315,7 @@ public class MappedSchemaBuilderGML extends AbstractMappedSchemaBuilder {
                                                                        : blobMappingConf.getFeatureTypeTable();
         BBoxTableMapping bboxMapping = new BBoxTableMapping( ftTable, geometryParams.getCrs() );
         String blobTable = blobMappingConf.getBlobTable() == null ? GML_OBJECTS_TABLE : blobMappingConf.getBlobTable();
-        String gmlIdentifiersTable = GML_IDENTIFIERS_TABLE;
+        String gmlIdentifiersTable = blobMappingConf.getIdentifiersTable();
         BlobCodec codec = new BlobCodec( gmlVersion, NONE );
         BlobMapping blobMapping = new BlobMapping( blobTable, geometryParams.getCrs(), codec, gmlIdentifiersTable );
         return new Pair<BlobMapping, BBoxTableMapping>( blobMapping, bboxMapping );

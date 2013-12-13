@@ -1405,7 +1405,7 @@ public class SQLFeatureStore implements FeatureStore {
 
     private AbstractWhereBuilder getWhereBuilderBlob( OperatorFilter filter, Connection conn )
                             throws FilterEvaluationException, UnmappableException {
-        PropertyNameMapper mapper = new BlobPropertyNameMapper( this, dialect, blobMapping );
+        PropertyNameMapper mapper = new BlobPropertyNameMapper( blobMapping, dialect );
         return dialect.getWhereBuilder( mapper, filter, null, allowInMemoryFiltering );
     }
 

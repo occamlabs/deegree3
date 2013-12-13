@@ -70,13 +70,18 @@ public class BlobMapping {
      * @param codec
      *            the decoder / encoder used for the BLOBs, must not be <code>null</code>
      * @param gmlIdentifiersTable
-     *            the name of the table that stores the GML identifiers, can be <code>null</code>
+     *            the name of the table that stores the GML identifiers for efficient filtering, can be
+     *            <code>null</code> (not used)
      */
     public BlobMapping( String gmlObjectsTable, ICRS storageCrs, BlobCodec codec, String gmlIdentifiersTable ) {
         this.gmlObjectsTable = new TableName( gmlObjectsTable );
         this.storageCrs = storageCrs;
         this.codec = codec;
-        this.gmlIdentifiersTable = new TableName( gmlIdentifiersTable );
+        if ( gmlIdentifiersTable != null ) {
+            this.gmlIdentifiersTable = new TableName( gmlIdentifiersTable );
+        } else {
+            this.gmlIdentifiersTable = null;
+        }
     }
 
     /**
@@ -91,7 +96,7 @@ public class BlobMapping {
     /**
      * Returns the table that stores the GML identifiers.
      * 
-     * @return table that stores the GML identifiers, can be <code>null</code>
+     * @return table that stores the GML identifiers for efficient filtering, can be <code>null</code> (not used)
      */
     public TableName getGmlIdentifiersTable() {
         return gmlIdentifiersTable;
