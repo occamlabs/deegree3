@@ -1,4 +1,3 @@
-//$HeadURL$
 /*----------------------------------------------------------------------------
  This file is part of deegree, http://deegree.org/
  Copyright (C) 2001-2013 by:
@@ -91,13 +90,13 @@ public interface FeatureStoreTransaction {
                             throws FeatureStoreException;
 
     /**
-     * Inserts the given {@link Feature} instances into the {@link FeatureStore} (including subfeatures).
+     * Inserts the given stream of {@link Feature} instances into the {@link FeatureStore} (including subfeatures).
      * 
      * @param features
      *            features to be inserted, must not be <code>null</code>
      * @param mode
      *            mode for deriving the ids of the inserted objects, must not be <code>null</code>
-     * @return effective ids of the inserted feature and subfeatures (in document order)
+     * @return effective ids of the inserted feature and subfeatures (in stream order)
      * @throws FeatureStoreException
      *             if the insertion fails
      */

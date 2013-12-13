@@ -1,10 +1,9 @@
-//$HeadURL$
 /*----------------------------------------------------------------------------
  This file is part of deegree, http://deegree.org/
- Copyright (C) 2001-2010 by:
- - Department of Geography, University of Bonn -
+ Copyright (C) 2001-2013 by:
+ Department of Geography, University of Bonn
  and
- - lat/lon GmbH -
+ lat/lon GmbH
 
  This library is free software; you can redistribute it and/or modify it under
  the terms of the GNU Lesser General Public License as published by the Free
@@ -37,6 +36,7 @@ package org.deegree.console.datastore.feature;
 
 import static javax.faces.application.FacesMessage.SEVERITY_ERROR;
 import static javax.faces.application.FacesMessage.SEVERITY_INFO;
+import static org.deegree.gml.GMLInputFactory.createGMLStreamReader;
 import static org.deegree.gml.GMLVersion.GML_32;
 import static org.deegree.protocol.wfs.transaction.action.IDGenMode.GENERATE_NEW;
 import static org.deegree.protocol.wfs.transaction.action.IDGenMode.USE_EXISTING;
@@ -50,11 +50,9 @@ import javax.faces.bean.ManagedBean;
 import javax.faces.bean.RequestScoped;
 import javax.faces.context.FacesContext;
 
-import org.deegree.feature.FeatureCollection;
 import org.deegree.feature.persistence.FeatureStore;
 import org.deegree.feature.persistence.FeatureStoreException;
 import org.deegree.feature.persistence.FeatureStoreTransaction;
-import org.deegree.gml.GMLInputFactory;
 import org.deegree.gml.GMLStreamReader;
 import org.deegree.gml.GMLVersion;
 import org.deegree.protocol.wfs.transaction.action.IDGenMode;
@@ -128,17 +126,17 @@ public class FeatureStoreLoader implements Serializable {
     public void importData()
                             throws Throwable {
         List<String> fids = null;
+        GMLStreamReader gmlStream = null;
         FeatureStoreTransaction ta = null;
         try {
-            GMLStreamReader gmlStream = GMLInputFactory.createGMLStreamReader( gmlVersion, new URL( url ) );
+            gmlStream = createGMLStreamReader( gmlVersion, new URL( url ) );
             gmlStream.setApplicationSchema( fs.getSchema() );
-            FeatureCollection fc = gmlStream.readFeatureCollection();
-            gmlStream.getIdContext().resolveLocalRefs();
-            gmlStream.close();
+            TolerantGmlFeatureInputStream features = new TolerantGmlFeatureInputStream( gmlStream );
             ta = fs.acquireTransaction();
-            fids = ta.performInsert( fc, idGenMode );
+            fids = ta.performInsert( features, idGenMode );
             ta.commit();
         } catch ( Throwable t ) {
+            t.printStackTrace();
             if ( ta != null ) {
                 try {
                     ta.rollback();
@@ -149,8 +147,11 @@ public class FeatureStoreLoader implements Serializable {
             FacesMessage fm = new FacesMessage( SEVERITY_ERROR, "GML import failed: " + t.getMessage(), null );
             FacesContext.getCurrentInstance().addMessage( null, fm );
             return;
+        } finally {
+            if ( gmlStream != null ) {
+                gmlStream.close();
+            }
         }
-
         FacesMessage fm = new FacesMessage( SEVERITY_INFO, "Imported " + fids.size() + " features", null );
         FacesContext.getCurrentInstance().addMessage( null, fm );
     }

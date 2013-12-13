@@ -113,7 +113,7 @@ public class FeatureStoreConfig extends Config {
         FeatureStoreLoader fsLoader = new FeatureStoreLoader( fs );
         FacesContext.getCurrentInstance().getExternalContext().getSessionMap().put( "fsConfig", this );
         FacesContext.getCurrentInstance().getExternalContext().getSessionMap().put( "fsLoader", fsLoader );
-        return "/console/featurestore/loader";
+        return "/console/datastore/feature/loader";
     }
 
     public List<NamespaceBinding> getNamespaces() {
@@ -162,6 +162,7 @@ public class FeatureStoreConfig extends Config {
 
         // sort the types by name
         Arrays.sort( fts, new Comparator<FeatureType>() {
+            @Override
             public int compare( FeatureType a, FeatureType b ) {
                 int order = a.getName().getNamespaceURI().compareTo( b.getName().getNamespaceURI() );
                 if ( order == 0 ) {
@@ -189,6 +190,7 @@ public class FeatureStoreConfig extends Config {
 
         // sort the types by name
         Arrays.sort( fts, new Comparator<FeatureType>() {
+            @Override
             public int compare( FeatureType a, FeatureType b ) {
                 int order = a.getName().getNamespaceURI().compareTo( b.getName().getNamespaceURI() );
                 if ( order == 0 ) {
@@ -223,7 +225,7 @@ public class FeatureStoreConfig extends Config {
                     e.printStackTrace();
                 }
                 sb.append( indent + "- " + ft.getName().getPrefix() + ":" + ft.getName().getLocalPart() + " ("
-                           + numInstances + " instances)<br/>" );
+                                        + numInstances + " instances)<br/>" );
             } else {
                 sb.append( indent + "- " + ft.getName().getPrefix() + ":" + ft.getName().getLocalPart()
                            + " (not mapped)<br/>" );
@@ -231,6 +233,7 @@ public class FeatureStoreConfig extends Config {
         }
         FeatureType[] fts = ft.getSchema().getDirectSubtypes( ft );
         Arrays.sort( fts, new Comparator<FeatureType>() {
+            @Override
             public int compare( FeatureType a, FeatureType b ) {
                 int order = a.getName().getNamespaceURI().compareTo( b.getName().getNamespaceURI() );
                 if ( order == 0 ) {
@@ -256,6 +259,7 @@ public class FeatureStoreConfig extends Config {
         }
         FeatureType[] fts = ft.getSchema().getDirectSubtypes( ft );
         Arrays.sort( fts, new Comparator<FeatureType>() {
+            @Override
             public int compare( FeatureType a, FeatureType b ) {
                 int order = a.getName().getNamespaceURI().compareTo( b.getName().getNamespaceURI() );
                 if ( order == 0 ) {
