@@ -55,6 +55,7 @@ import org.deegree.feature.persistence.FeatureStoreException;
 import org.deegree.feature.persistence.FeatureStoreTransaction;
 import org.deegree.gml.GMLStreamReader;
 import org.deegree.gml.GMLVersion;
+import org.deegree.gml.utils.RobustGmlFeatureInputStream;
 import org.deegree.protocol.wfs.transaction.action.IDGenMode;
 
 /**
@@ -131,7 +132,7 @@ public class FeatureStoreLoader implements Serializable {
         try {
             gmlStream = createGMLStreamReader( gmlVersion, new URL( url ) );
             gmlStream.setApplicationSchema( fs.getSchema() );
-            TolerantGmlFeatureInputStream features = new TolerantGmlFeatureInputStream( gmlStream );
+            RobustGmlFeatureInputStream features = new RobustGmlFeatureInputStream( gmlStream );
             ta = fs.acquireTransaction();
             fids = ta.performInsert( features, idGenMode );
             ta.commit();

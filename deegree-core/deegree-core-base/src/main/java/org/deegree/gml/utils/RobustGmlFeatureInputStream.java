@@ -32,7 +32,7 @@
 
  e-mail: info@deegree.org
  ----------------------------------------------------------------------------*/
-package org.deegree.console.datastore.feature;
+package org.deegree.gml.utils;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -45,24 +45,45 @@ import org.deegree.feature.Feature;
 import org.deegree.feature.FeatureCollection;
 import org.deegree.feature.Features;
 import org.deegree.feature.stream.FeatureInputStream;
+import org.deegree.feature.types.AppSchema;
 import org.deegree.feature.types.FeatureCollectionType;
 import org.deegree.feature.types.FeatureType;
 import org.deegree.gml.GMLStreamReader;
 
 /**
  * {@link FeatureInputStream} that extracts {@link Feature} elements from an XML/GML stream.
+ * <p>
+ * This class does not actually take the container structure into account, but detects (non-collection) feature elements
+ * by their qualified name (as defined by the {@link AppSchema} attached to the {@link GMLStreamReader}).
+ * </p>
+ * <p>
+ * It can be used for many types of documents:
+ * <ul>
+ * <li>Single GML feature document with no additional container</li>
+ * <li>GML feature collection documents</li>
+ * <li>Application-schema defined feature collection documents</li>
+ * <li>WFS 2.0.0 feature collection documents (which are technically not GML feature collection documents)</li>
+ * </ul>
+ * </p>
  * 
  * @author <a href="mailto:schneider@occamlabs.de">Markus Schneider</a>
  * 
  * @since 3.4
  */
-class TolerantGmlFeatureInputStream implements FeatureInputStream {
+public class RobustGmlFeatureInputStream implements FeatureInputStream {
 
     private final GMLStreamReader gmlStream;
 
     private final XMLStreamReader xmlStream;
 
-    TolerantGmlFeatureInputStream( GMLStreamReader gmlStream ) throws XMLStreamException {
+    /**
+     * Creates a new {@link RobustGmlFeatureInputStream} instance.
+     * 
+     * @param gmlStream
+     *            initialized GML stream reader, must not be <code>null</code>
+     * @throws XMLStreamException
+     */
+    public RobustGmlFeatureInputStream( GMLStreamReader gmlStream ) throws XMLStreamException {
         this.gmlStream = gmlStream;
         this.xmlStream = gmlStream.getXMLReader();
         forwardStreamToNextFeatureStartElement();
@@ -129,7 +150,11 @@ class TolerantGmlFeatureInputStream implements FeatureInputStream {
 
     @Override
     public void close() {
-        // nothing to do
+        try {
+            gmlStream.close();
+        } catch ( XMLStreamException e ) {
+            throw new RuntimeException( e.getMessage() );
+        }
     }
 
     @Override
