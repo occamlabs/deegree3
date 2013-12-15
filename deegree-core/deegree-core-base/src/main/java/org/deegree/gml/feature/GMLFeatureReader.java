@@ -123,8 +123,8 @@ public class GMLFeatureReader extends AbstractGMLObjectReader {
      * given <code>XMLStreamReader</code> points at.
      * 
      * @param xmlStream
-     *            cursor must point at the <code>START_ELEMENT</code> event of the feature element, afterwards points at
-     *            the next event after the <code>END_ELEMENT</code> event of the feature element
+     *            cursor must point at the <code>START_ELEMENT</code> event of the feature element, points at the
+     *            corresponding <code>END_ELEMENT</code> event of the feature element afterwards
      * @param crs
      *            default CRS for all descendant geometry properties, can be <code>null</code>
      * @return object representation for the given feature element
@@ -216,7 +216,7 @@ public class GMLFeatureReader extends AbstractGMLObjectReader {
 
     private Property parsePropertyDynamic( QName propName, XMLStreamReaderWrapper xmlStream, ICRS activeCRS,
                                            FeatureType ft, PropertyType lastPropDecl, DynamicAppSchema appSchema )
-                            throws XMLParsingException, XMLStreamException, UnknownCRSException {
+                                                                   throws XMLParsingException, XMLStreamException, UnknownCRSException {
 
         Map<QName, String> propAttributes = XMLStreamUtils.getAttributes( xmlStream );
         StringBuffer text = new StringBuffer();
@@ -242,7 +242,6 @@ public class GMLFeatureReader extends AbstractGMLObjectReader {
                 propDecl = ( (DynamicFeatureType) ft ).addSimplePropertyDeclaration( lastPropDecl, propName );
             }
         } else {
-            System.out.println (xmlStream.getName());
             if ( gmlStreamReader.getGeometryReader().isGeometryElement( xmlStream ) ) {
                 LOG.debug( "Detected geometry property '" + propName + "'." );
                 propDecl = ( (DynamicFeatureType) ft ).addGeometryPropertyDeclaration( lastPropDecl, propName );

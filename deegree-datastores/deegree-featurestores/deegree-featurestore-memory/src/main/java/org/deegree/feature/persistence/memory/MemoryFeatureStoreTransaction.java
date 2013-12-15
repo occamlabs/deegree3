@@ -44,6 +44,7 @@ import java.util.UUID;
 import javax.xml.namespace.QName;
 
 import org.deegree.commons.tom.Reference;
+import org.deegree.commons.tom.ReferenceResolvingException;
 import org.deegree.commons.tom.TypedObjectNode;
 import org.deegree.commons.tom.genericxml.GenericXMLElement;
 import org.deegree.commons.tom.gml.GMLObject;
@@ -77,6 +78,7 @@ import org.deegree.geometry.linearization.NumPointsCriterion;
 import org.deegree.geometry.primitive.Point;
 import org.deegree.gml.utils.GMLObjectVisitor;
 import org.deegree.gml.utils.GMLObjectWalker;
+import org.deegree.gml.utils.GmlReferenceCollector;
 import org.deegree.protocol.wfs.transaction.action.IDGenMode;
 import org.deegree.protocol.wfs.transaction.action.ParsedPropertyReplacement;
 import org.slf4j.Logger;
@@ -220,7 +222,17 @@ class MemoryFeatureStoreTransaction implements FeatureStoreTransaction {
     @Override
     public List<String> performInsert( FeatureInputStream features, IDGenMode mode )
                             throws FeatureStoreException {
-        return performInsert( features.toCollection(), mode );
+        FeatureCollection fc = features.toCollection();
+        GmlReferenceCollector referenceCollector = new GmlReferenceCollector();
+        for ( Feature feature : fc ) {
+            referenceCollector.add( feature );
+        }
+        try {
+            referenceCollector.resolveLocalRefs();
+        } catch ( ReferenceResolvingException e ) {
+            throw new FeatureStoreException( e.getMessage() );
+        }
+        return performInsert( fc, mode );
     }
 
     @Override
