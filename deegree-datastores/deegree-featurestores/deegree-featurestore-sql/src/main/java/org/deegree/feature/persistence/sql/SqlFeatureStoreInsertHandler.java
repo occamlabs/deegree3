@@ -51,6 +51,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.deegree.commons.jdbc.TableName;
+import org.deegree.commons.tom.ReferenceResolvingException;
 import org.deegree.commons.tom.sql.ParticleConverter;
 import org.deegree.commons.utils.Pair;
 import org.deegree.cs.coordinatesystems.ICRS;
@@ -69,6 +70,7 @@ import org.deegree.feature.types.property.GeometryPropertyType.GeometryType;
 import org.deegree.geometry.Envelope;
 import org.deegree.geometry.Geometries;
 import org.deegree.geometry.Geometry;
+import org.deegree.gml.utils.GmlReferenceCollector;
 import org.deegree.protocol.wfs.transaction.action.IDGenMode;
 import org.deegree.sqldialect.filter.DBField;
 import org.slf4j.Logger;
@@ -118,7 +120,17 @@ class SqlFeatureStoreInsertHandler {
     List<String> performInsert( FeatureInputStream features, IDGenMode mode )
                             throws FeatureStoreException {
         if ( mode != USE_EXISTING || blobMapping == null ) {
-            return performInsert( features.toCollection(), mode );
+            FeatureCollection fc = features.toCollection();
+            GmlReferenceCollector referenceCollector = new GmlReferenceCollector();
+            for ( Feature feature : fc ) {
+                referenceCollector.add( feature );
+            }
+            try {
+                referenceCollector.resolveLocalRefs();
+            } catch ( ReferenceResolvingException e ) {
+                throw new FeatureStoreException( e.getMessage() );
+            }
+            return performInsert( fc, mode );
         }
         LOG.debug( "performInsert (streaming)" );
         return performInsertBlobUseExisting( features, blobMapping );
