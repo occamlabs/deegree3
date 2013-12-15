@@ -35,6 +35,8 @@
  ----------------------------------------------------------------------------*/
 package org.deegree.services.wfs.transaction;
 
+import static org.deegree.commons.xml.stax.XMLStreamUtils.nextElement;
+
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
@@ -82,7 +84,9 @@ public class UnenclosedGmlFeatureInputStream implements FeatureInputStream {
                     throw new NoSuchElementException();
                 }
                 try {
-                    return gmlReader.readFeature();
+                    Feature f = gmlReader.readFeature();
+                    nextElement( gmlReader.getXMLReader() );
+                    return f;
                 } catch ( Exception e ) {
                     String msg = "Error reading feature from stream: " + e.getMessage();
                     throw new IllegalArgumentException( msg, e );
