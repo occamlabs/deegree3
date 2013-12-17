@@ -83,9 +83,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Handles {@link Feature} inserts for the {@link SQLFeatureStoreTransaction}.
+ * Handles {@link Feature} inserts for the {@link SqlFeatureStoreTransaction}.
  * 
- * @see SQLFeatureStoreTransaction
+ * @see SqlFeatureStoreTransaction
  * 
  * @author <a href="mailto:schneider@occamlabs.de">Markus Schneider</a>
  * 

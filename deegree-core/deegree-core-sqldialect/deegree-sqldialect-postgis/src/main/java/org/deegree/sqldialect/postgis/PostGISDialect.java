@@ -69,18 +69,17 @@ import org.slf4j.LoggerFactory;
  * <p>
  * Supported PostgreSQL versions:
  * <ul>
- * <li>8.3</li>
  * <li>8.4</li>
  * <li>9.0</li>
  * <li>9.1</li>
  * <li>9.2</li>
+ * <li>9.3</li>
  * </ul>
  * Supported PostGIS versions:
  * <ul>
- * <li>1.3</li>
- * <li>1.4</li>
  * <li>1.5</li>
  * <li>2.0</li>
+ * <li>2.1</li>
  * </ul>
  * </p>
  * 
@@ -119,8 +118,8 @@ public class PostGISDialect implements SQLDialect {
     }
 
     private boolean determineUseLegacyPredicates( String version ) {
-        if ( version == null || version.startsWith( "0." ) || version.startsWith( "1.0" )
-             || version.startsWith( "1.1" ) || version.startsWith( "1.2" ) ) {
+        if ( version == null || version.startsWith( "0." ) || version.startsWith( "1.0" ) || version.startsWith( "1.1" )
+             || version.startsWith( "1.2" ) ) {
             LOG.debug( "PostGIS version is " + version + " -- using legacy (pre-SQL-MM) predicates." );
             return true;
         }

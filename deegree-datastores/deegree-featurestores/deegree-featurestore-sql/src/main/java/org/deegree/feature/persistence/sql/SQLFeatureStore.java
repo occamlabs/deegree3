@@ -564,7 +564,7 @@ public class SQLFeatureStore implements FeatureStore {
         try {
             Connection conn = getConnection();
             conn.setAutoCommit( false );
-            ta = new SQLFeatureStoreTransaction( this, conn, getSchema(), inspectors );
+            ta = new SqlFeatureStoreTransaction( this, conn, getSchema(), inspectors );
         } catch ( SQLException e ) {
             throw new FeatureStoreException( "Unable to acquire JDBC connection for transaction: " + e.getMessage(), e );
         }
@@ -1399,7 +1399,7 @@ public class SQLFeatureStore implements FeatureStore {
     private AbstractWhereBuilder getWhereBuilder( FeatureType ft, OperatorFilter filter, SortProperty[] sortCrit,
                                                   Connection conn )
                                                                           throws FilterEvaluationException, UnmappableException {
-        PropertyNameMapper mapper = new SQLPropertyNameMapper( this, getMapping( ft.getName() ) );
+        PropertyNameMapper mapper = new SqlPropertyNameMapper( this, getMapping( ft.getName() ) );
         return dialect.getWhereBuilder( mapper, filter, sortCrit, allowInMemoryFiltering );
     }
 

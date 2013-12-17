@@ -36,6 +36,7 @@
 package org.deegree.feature.persistence.cache;
 
 import static java.util.Collections.synchronizedMap;
+import static org.apache.commons.io.IOUtils.closeQuietly;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.File;
@@ -144,19 +145,18 @@ public class BBoxPropertiesCache implements BBoxCache {
     @Override
     public synchronized void persist()
                             throws IOException {
-        Properties props = new Properties();
-        for ( String ftName : ftNameToEnvelope.keySet() ) {
-            props.put( ftName, encodePropValue( ftNameToEnvelope.get( ftName ) ) );
-        }
-
         FileOutputStream out = null;
         try {
+            Properties props = new Properties();
+            for ( String ftName : ftNameToEnvelope.keySet() ) {
+                props.put( ftName, encodePropValue( ftNameToEnvelope.get( ftName ) ) );
+            }            
             out = new FileOutputStream( propsFile );
             props.store( out, null );
         } catch ( Throwable t ) {
             LOG.warn( "Unable to store cached envelopes in file '" + propsFile + "': " + t.getMessage() );
         } finally {
-            IOUtils.closeQuietly( out );
+            closeQuietly( out );
         }
     }
 

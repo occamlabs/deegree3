@@ -51,13 +51,13 @@ import org.deegree.sqldialect.filter.UnmappableException;
  * 
  * @version $Revision$, $Date$
  */
-public class SQLPropertyNameMapper implements PropertyNameMapper {
+public class SqlPropertyNameMapper implements PropertyNameMapper {
 
     private final SQLFeatureStore fs;
 
     private final FeatureTypeMapping ftMapping;
 
-    public SQLPropertyNameMapper( SQLFeatureStore fs, FeatureTypeMapping ftMapping ) {
+    public SqlPropertyNameMapper( SQLFeatureStore fs, FeatureTypeMapping ftMapping ) {
         this.fs = fs;
         this.ftMapping = ftMapping;
     }

@@ -106,9 +106,9 @@ import org.slf4j.LoggerFactory;
  * 
  * @version $Revision$, $Date$
  */
-public class SQLFeatureStoreTransaction implements FeatureStoreTransaction {
+public class SqlFeatureStoreTransaction implements FeatureStoreTransaction {
 
-    private static final Logger LOG = LoggerFactory.getLogger( SQLFeatureStoreTransaction.class );
+    private static final Logger LOG = LoggerFactory.getLogger( SqlFeatureStoreTransaction.class );
 
     private final SQLFeatureStore fs;
 
@@ -123,7 +123,7 @@ public class SQLFeatureStoreTransaction implements FeatureStoreTransaction {
     private final SqlFeatureStoreInsertHandler insertHandler;
 
     /**
-     * Creates a new {@link SQLFeatureStoreTransaction} instance.
+     * Creates a new {@link SqlFeatureStoreTransaction} instance.
      * 
      * @param store
      *            corresponding feature store instance, must not be <code>null</code>
@@ -135,7 +135,7 @@ public class SQLFeatureStoreTransaction implements FeatureStoreTransaction {
      * @param inspectors
      *            feature inspectors, must not be <code>null</code>
      */
-    SQLFeatureStoreTransaction( SQLFeatureStore store, Connection conn, MappedAppSchema schema,
+    SqlFeatureStoreTransaction( SQLFeatureStore store, Connection conn, MappedAppSchema schema,
                                 List<FeatureInspector> inspectors ) {
         this.fs = store;
         this.conn = conn;

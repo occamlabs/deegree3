@@ -61,7 +61,7 @@ import org.deegree.feature.persistence.FeatureStoreException;
 import org.deegree.feature.persistence.sql.FeatureTypeMapping;
 import org.deegree.feature.persistence.sql.MappedAppSchema;
 import org.deegree.feature.persistence.sql.SQLFeatureStore;
-import org.deegree.feature.persistence.sql.SQLFeatureStoreTransaction;
+import org.deegree.feature.persistence.sql.SqlFeatureStoreTransaction;
 import org.deegree.feature.persistence.sql.expressions.TableJoin;
 import org.deegree.feature.persistence.sql.id.KeyPropagation;
 import org.deegree.feature.persistence.sql.id.TableDependencies;
@@ -85,7 +85,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Performs inserts in courtesy of the {@link SQLFeatureStoreTransaction}.
+ * Performs inserts in courtesy of the {@link SqlFeatureStoreTransaction}.
  * <p>
  * Important aspects of the implementation:
  * <ul>
