@@ -82,7 +82,7 @@ import org.deegree.feature.Features;
 import org.deegree.feature.persistence.FeatureInspector;
 import org.deegree.feature.persistence.FeatureStore;
 import org.deegree.feature.persistence.FeatureStoreException;
-import org.deegree.feature.persistence.FeatureStoreGMLIdResolver;
+import org.deegree.feature.persistence.FeatureStoreGmlResolver;
 import org.deegree.feature.persistence.FeatureStoreManager;
 import org.deegree.feature.persistence.FeatureStoreTransaction;
 import org.deegree.feature.persistence.cache.BBoxCache;
@@ -178,7 +178,7 @@ public class SQLFeatureStore implements FeatureStore {
 
     private BBoxCache bboxCache;
 
-    private GMLReferenceResolver resolver = new FeatureStoreGMLIdResolver( this );
+    private GMLReferenceResolver resolver = new FeatureStoreGmlResolver( this );
 
     private Map<String, String> nsContext;
 
@@ -513,7 +513,7 @@ public class SQLFeatureStore implements FeatureStore {
                 LOG.debug( "Recreating object '" + id + "' from bytea." );
                 BlobCodec codec = blobMapping.getCodec();
                 geomOrFeature = codec.decode( rs.getBinaryStream( 1 ), getNamespaceContext(), getSchema(),
-                                              blobMapping.getCRS(), new FeatureStoreGMLIdResolver( this ) );
+                                              blobMapping.getCRS(), resolver );
                 if ( getCache() != null ) {
                     getCache().add( geomOrFeature );
                 }
