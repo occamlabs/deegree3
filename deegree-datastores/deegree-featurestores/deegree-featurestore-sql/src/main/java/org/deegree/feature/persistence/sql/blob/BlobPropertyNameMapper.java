@@ -181,9 +181,9 @@ public class BlobPropertyNameMapper implements PropertyNameMapper {
     }
 
     private List<Join> getJoinsToGmlIdentifierTable( TableAliasManager aliasManager, String tableAlias ) {
-        Join join = new Join( blobMapping.getTable().getName(), aliasManager.getRootTableAlias(),
-                              blobMapping.getGMLIdColumn(), blobMapping.getGmlIdentifiersTable().getName(), tableAlias,
-                                "gml_id" );
+        Join join = new Join( blobMapping.getTable().toString(), aliasManager.getRootTableAlias(),
+                              blobMapping.getGMLIdColumn(), blobMapping.getGmlIdentifiersTable().toString(),
+                              tableAlias, "gml_id" );
         return singletonList( join );
     }
 
