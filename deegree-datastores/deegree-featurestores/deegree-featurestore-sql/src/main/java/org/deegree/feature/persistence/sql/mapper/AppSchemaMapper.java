@@ -1,7 +1,6 @@
-//$HeadURL$
 /*----------------------------------------------------------------------------
  This file is part of deegree, http://deegree.org/
- Copyright (C) 2001-2010 by:
+ Copyright (C) 2001-2014 by:
  - Department of Geography, University of Bonn -
  and
  - lat/lon GmbH -
@@ -35,6 +34,8 @@
  ----------------------------------------------------------------------------*/
 package org.deegree.feature.persistence.sql.mapper;
 
+import static java.util.Collections.EMPTY_LIST;
+import static java.util.Collections.emptyList;
 import static org.apache.xerces.xs.XSComplexTypeDefinition.CONTENTTYPE_ELEMENT;
 import static org.apache.xerces.xs.XSComplexTypeDefinition.CONTENTTYPE_EMPTY;
 import static org.deegree.commons.tom.primitive.BaseType.BOOLEAN;
@@ -107,7 +108,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Creates {@link MappedAppSchema} instances from {@link AppSchema}s by inferring a canonical database mapping.
  * 
- * @author <a href="mailto:schneider@lat-lon.de">Markus Schneider</a>
+ * @author <a href="mailto:schneider@occamlabs.de">Markus Schneider</a>
  * @author last edited by: $Author$
  * 
  * @version $Revision$, $Date$
@@ -128,7 +129,7 @@ public class AppSchemaMapper {
 
     private final boolean useIntegerFids;
 
-    private final int MAX_COMPLEXITY_INDEX = 100;
+    private final int maxColumnsPerProperty;
 
     /**
      * Creates a new {@link AppSchemaMapper} instance for the given schema.
@@ -136,19 +137,26 @@ public class AppSchemaMapper {
      * @param appSchema
      *            application schema to be mapped, must not be <code>null</code>
      * @param createBlobMapping
-     *            true, if BLOB mapping should be performed, false otherwise
+     *            <code>true</code>, if a BLOB mapping shall be created, <code>false</code> otherwise
      * @param createRelationalMapping
-     *            true, if relational mapping should be performed, false otherwise
+     *            <code>true</code>, if a relational shall be created, <code>false</code> otherwise
      * @param geometryParams
      *            parameters for storing geometries, must not be <code>null</code>
+     * @param maxLength
+     *            max length of characters per column or table name
+     * @param usePrefixedSQLIdentifiers
+     * @param useIntegerFids
+     * @param maxColumnsPerProperty
+     *            maximum number of columns allowed for mapping of a single property, -1 is unlimited
      */
     public AppSchemaMapper( AppSchema appSchema, boolean createBlobMapping, boolean createRelationalMapping,
                             GeometryStorageParams geometryParams, int maxLength, boolean usePrefixedSQLIdentifiers,
-                            boolean useIntegerFids ) {
+                            boolean useIntegerFids, int maxColumnsPerProperty ) {
 
         this.appSchema = appSchema;
         this.geometryParams = geometryParams;
         this.useIntegerFids = useIntegerFids;
+        this.maxColumnsPerProperty = maxColumnsPerProperty;
 
         List<FeatureType> ftList = appSchema.getFeatureTypes( null, false, false );
         List<FeatureType> blackList = new ArrayList<FeatureType>();
@@ -297,14 +305,14 @@ public class AppSchemaMapper {
                                                          new ArrayList<XSComplexTypeDefinition>(), opt );
                         } else {
                             particles = generateMapping( (XSComplexTypeDefinition) substitution.getTypeDefinition(),
-                                                         propMc, new ArrayList<XSElementDeclaration>(),
+                                                         substitution, propMc, new ArrayList<XSElementDeclaration>(),
                                                          new ArrayList<XSComplexTypeDefinition>(),
                                                          substitution.getNillable() );
                         }
 
                         int complexity = mcManager.getContextCount() - before;
                         LOG.info( "Mapping complexity index of property type '" + eName + "': " + complexity );
-                        if ( complexity > MAX_COMPLEXITY_INDEX ) {
+                        if ( maxColumnsPerProperty > -1 && complexity > maxColumnsPerProperty ) {
                             LOG.warn( "Mapping property type '" + eName + "' exceeds complexity limit: " + complexity );
                             mappings.clear();
                         } else {
@@ -337,7 +345,7 @@ public class AppSchemaMapper {
 
         int complexity = mcManager.getContextCount() - before;
         LOG.debug( "Mapping complexity index of property type '" + pt.getName() + "': " + complexity );
-        if ( complexity > MAX_COMPLEXITY_INDEX ) {
+        if ( maxColumnsPerProperty > -1 && complexity > maxColumnsPerProperty ) {
             LOG.warn( "Mapping property type '" + pt.getName() + "' exceeds complexity limit: " + complexity );
             mappings.clear();
         }
@@ -437,14 +445,12 @@ public class AppSchemaMapper {
             jc = generateJoinChain( mc, propMc );
         }
 
-        List<XSElementDeclaration> parentEls = new ArrayList<XSElementDeclaration>();
-        parentEls.add( pt.getElementDecl() );
-
-        List<XSComplexTypeDefinition> parentCts = new ArrayList<XSComplexTypeDefinition>();
-
         List<Mapping> particles = new ArrayList<Mapping>();
         try {
-            particles = generateMapping( pt.getXSDValueType(), propMc, parentEls, parentCts, pt.isNillable() );
+            List<XSElementDeclaration> parentEls = new ArrayList<XSElementDeclaration>();
+            List<XSComplexTypeDefinition> parentCts = new ArrayList<XSComplexTypeDefinition>();
+            particles = generateMapping( pt.getXSDValueType(), pt.getElementDecl(), propMc, parentEls, parentCts,
+                                         pt.isNillable() );
             return new CompoundMapping( path, pt.getMinOccurs() == 0, particles, jc, pt.getElementDecl() );
         } catch ( Throwable t ) {
             LOG.warn( "Full relational mapping of property '" + pt.getName() + "' failed: " + t.getMessage() );
@@ -502,25 +508,25 @@ public class AppSchemaMapper {
         List<String> toColumns = Collections.singletonList( "attr_gml_id" );
         Map<SQLIdentifier, IDGenerator> keyColumnToIdGenerator = new HashMap<SQLIdentifier, IDGenerator>();
         keyColumnToIdGenerator.put( new SQLIdentifier( "id" ), new AutoIDGenerator() );
-        ftJoin = new TableJoin( fromTable, toTable, fromColumns, toColumns, Collections.EMPTY_LIST, false,
-                                keyColumnToIdGenerator );
+        ftJoin = new TableJoin( fromTable, toTable, fromColumns, toColumns, EMPTY_LIST, false, keyColumnToIdGenerator );
         return ftJoin;
     }
 
-    private List<Mapping> generateMapping( XSComplexTypeDefinition typeDef, MappingContext mc,
-                                           List<XSElementDeclaration> parentEls,
+    private List<Mapping> generateMapping( XSComplexTypeDefinition typeDef, XSElementDeclaration elDecl,
+                                           MappingContext mc, List<XSElementDeclaration> parentEls,
                                            List<XSComplexTypeDefinition> parentCTs, boolean isNillable ) {
 
         if ( typeDef.getName() != null ) {
             for ( XSComplexTypeDefinition ct : parentCTs ) {
                 if ( ct.getName() != null ) {
                     if ( typeDef.getName().equals( ct.getName() ) && typeDef.getNamespace().equals( ct.getNamespace() ) ) {
-                        handleCycle( parentEls, parentCTs );
-                        return Collections.emptyList();
+                        handleCycle( elDecl, parentEls );
+                        return emptyList();
                     }
                 }
             }
         }
+        parentEls.add( elDecl );
         parentCTs.add( typeDef );
 
         List<Mapping> particles = new ArrayList<Mapping>();
@@ -578,16 +584,21 @@ public class AppSchemaMapper {
         return particles;
     }
 
-    private void handleCycle( List<XSElementDeclaration> parentEls, List<XSComplexTypeDefinition> parentCTs ) {
+    private void handleCycle( XSElementDeclaration el, List<XSElementDeclaration> parentEls ) {
         StringBuffer sb = new StringBuffer( "Path: " );
-        for ( XSElementDeclaration qName : parentEls ) {
+        for ( XSElementDeclaration parentEl : parentEls ) {
             sb.append( "{" );
-            sb.append( qName.getNamespace() );
+            sb.append( parentEl.getNamespace() );
             sb.append( "}" );
-            sb.append( qName.getName() );
+            sb.append( parentEl.getName() );
             sb.append( " -> " );
         }
-        throw new RuntimeException( "Detected unhandled cycle '" + sb + "'." );
+        sb.append( "{" );
+        sb.append( el.getNamespace() );
+        sb.append( "}" );
+        sb.append( el.getName() );
+        System.out.println("HUHU:" + sb);
+//        throw new RuntimeException( "Detected element cycle: " + sb );
     }
 
     private List<Mapping> generateMapping( XSComplexTypeDefinition typeDef, MappingContext mc,
@@ -708,12 +719,12 @@ public class AppSchemaMapper {
         if ( elDecl.getScope() == XSConstants.SCOPE_GLOBAL ) {
             for ( XSElementDeclaration el : parentEls ) {
                 if ( elDecl.getName().equals( el.getName() ) && elDecl.getNamespace().equals( el.getNamespace() ) ) {
-                    handleCycle( parentEls, parentCTs );
+                    handleCycle( elDecl, parentEls );
                     return Collections.emptyList();
                 }
             }
         }
-        parentEls.add( elDecl );
+        // parentEls.add( elDecl );
 
         List<Mapping> mappings = new ArrayList<Mapping>();
 
@@ -776,7 +787,7 @@ public class AppSchemaMapper {
 
                 ValueReference path = new ValueReference( getName( elName ), nsContext );
                 if ( typeDef instanceof XSComplexTypeDefinition ) {
-                    List<Mapping> particles = generateMapping( (XSComplexTypeDefinition) typeDef, elMC,
+                    List<Mapping> particles = generateMapping( (XSComplexTypeDefinition) typeDef, substitution, elMC,
                                                                new ArrayList<XSElementDeclaration>( parentEls ),
                                                                new ArrayList<XSComplexTypeDefinition>( parentCTs ),
                                                                substitution.getNillable() );

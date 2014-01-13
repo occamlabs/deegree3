@@ -290,7 +290,7 @@ public class MappingWizardSQL {
             GeometryStorageParams geometryParams = new GeometryStorageParams( storageCrs, storageSrid, DIM_2 );
             AppSchemaMapper mapper = new AppSchemaMapper( appSchema, createBlobMapping, createRelationalMapping,
                                                           geometryParams,
-                                                          Math.min( tableNameLength, columnNameLength ), true, false );
+                                                          Math.min( tableNameLength, columnNameLength ), true, false, 100 );
             mappedSchema = mapper.getMappedSchema();
             SQLFeatureStoreConfigWriter configWriter = new SQLFeatureStoreConfigWriter( mappedSchema );
             File tmpConfigFile = File.createTempFile( "fsconfig", ".xml" );

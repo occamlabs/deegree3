@@ -46,6 +46,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.net.URL;
 
 import javax.xml.stream.XMLInputFactory;
@@ -57,9 +58,11 @@ import org.deegree.workspace.Resource;
 import org.deegree.workspace.ResourceException;
 import org.deegree.workspace.ResourceIdentifier;
 import org.deegree.workspace.ResourceLocation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * File based resource location.
+ * {@link ResourceLocation} backed by a file on the file system.
  * 
  * @author <a href="mailto:schmitz@occamlabs.de">Andreas Schmitz</a>
  * 
@@ -67,12 +70,14 @@ import org.deegree.workspace.ResourceLocation;
  */
 public class DefaultResourceLocation<T extends Resource> implements ResourceLocation<T> {
 
-    private File file;
+    private static Logger LOG = LoggerFactory.getLogger( DefaultResourceManager.class );
+
+    private File location;
 
     private ResourceIdentifier<T> identifier;
 
     public DefaultResourceLocation( File file, ResourceIdentifier<T> identifier ) {
-        this.file = file;
+        this.location = file;
         this.identifier = identifier;
     }
 
@@ -111,21 +116,23 @@ public class DefaultResourceLocation<T extends Resource> implements ResourceLoca
     @Override
     public InputStream getAsStream() {
         try {
-            return new FileInputStream( file );
+            return new FileInputStream( location );
         } catch ( FileNotFoundException e ) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            LOG.error( "Opening of input stream for file '" + location + "' failed: " + e.getMessage() );
         }
         return null;
     }
 
     @Override
     public InputStream resolve( String path ) {
+        URL url = null;
         try {
-            return new FileInputStream( resolveToFile( path ) );
-        } catch ( FileNotFoundException e ) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            url = resolveToUrl( path );
+            if ( url != null ) {
+                return url.openStream();
+            }
+        } catch ( Exception e ) {
+            LOG.error( "Opening of input stream from URL '" + url + "' failed: " + e.getMessage() );
         }
         return null;
     }
@@ -137,50 +144,64 @@ public class DefaultResourceLocation<T extends Resource> implements ResourceLoca
 
     @Override
     public File resolveToFile( String path ) {
-        return new File( file.toURI().resolve( path ) );
+        try {
+            return new File( resolveUrlOrFileOrRelativePath( path ) );
+        } catch ( Exception e ) {
+            LOG.error( "Resolving of path '" + path + "' (location: '" + location + "') to file failed: "
+                                               + e.getMessage(), e );
+        }
+        return null;
+
     }
 
     @Override
     public URL resolveToUrl( String path ) {
         try {
-            try {
-                URL url = new URL( path );
-                if ( url.toURI().isAbsolute() ) {
-                    return url;
-                }
-            } catch ( Exception e ) {
-                // try as relative
-            }
-            return file.toURI().resolve( path ).toURL();
+            return resolveUrlOrFileOrRelativePath( path ).toURL();
         } catch ( Exception e ) {
-            e.printStackTrace();
+            LOG.error( "Resolving of path '" + path + "' (location: '" + location + "') to URL failed: "
+                                               + e.getMessage(), e );
         }
         return null;
     }
 
+    private URI resolveUrlOrFileOrRelativePath( String path ) {
+        try {
+            URL url = new URL( path );
+            return url.toURI();
+        } catch ( Exception e ) {
+            // not a valid URL
+        }
+        File file = new File( path );
+        if ( file.isAbsolute() ) {
+            return file.toURI();
+        }
+        return new File( this.location, path ).toURI();
+    }
+
     public File getFile() {
-        return file;
+        return location;
     }
 
     @Override
     public void deactivate() {
-        File f = new File( file.getParentFile(), identifier.getId() + ".ignore" );
-        file.renameTo( f );
-        file = f;
+        File f = new File( location.getParentFile(), identifier.getId() + ".ignore" );
+        location.renameTo( f );
+        location = f;
     }
 
     @Override
     public void activate() {
-        File f = new File( file.getParentFile(), identifier.getId() + ".xml" );
-        file.renameTo( f );
-        file = f;
+        File f = new File( location.getParentFile(), identifier.getId() + ".xml" );
+        location.renameTo( f );
+        location = f;
     }
 
     @Override
     public void setContent( InputStream in ) {
         try {
-            file.getParentFile().mkdirs();
-            FileUtils.copyInputStreamToFile( in, file );
+            location.getParentFile().mkdirs();
+            FileUtils.copyInputStreamToFile( in, location );
         } catch ( IOException e ) {
             throw new ResourceException( e.getLocalizedMessage(), e );
         }

@@ -219,7 +219,7 @@ public class SQLFeatureStoreTOPPStatesTest {
         ICRS crs = CRSManager.getCRSRef( "EPSG:4326" );
         GeometryStorageParams storageParams = new GeometryStorageParams( crs, dialect.getUndefinedSrid(), DIM_2 );
         AppSchemaMapper mapper = new AppSchemaMapper( appSchema, false, true, storageParams,
-                                                      dialect.getMaxTableNameLength(), false, true );
+                                                      dialect.getMaxTableNameLength(), false, true, -1 );
         MappedAppSchema mappedSchema = mapper.getMappedSchema();
 
         // create tables
