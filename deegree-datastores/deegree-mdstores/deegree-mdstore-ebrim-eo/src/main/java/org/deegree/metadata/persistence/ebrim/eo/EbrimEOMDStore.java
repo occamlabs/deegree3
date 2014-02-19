@@ -418,13 +418,13 @@ public class EbrimEOMDStore implements MetadataStore<RegistryObject> {
             int i = 1;
             if ( wb.getWhere() != null ) {
                 for ( SQLArgument argument : wb.getWhere().getArguments() ) {
-                    argument.setArgument( stmt, i++ );
+                    i += argument.setPreparedStatementArguments( stmt, i );
                 }
             }
 
             if ( wb.getOrderBy() != null ) {
                 for ( SQLArgument argument : wb.getOrderBy().getArguments() ) {
-                    argument.setArgument( stmt, i++ );
+                    i += argument.setPreparedStatementArguments( stmt, i );
                 }
             }
 
@@ -500,7 +500,7 @@ public class EbrimEOMDStore implements MetadataStore<RegistryObject> {
             int i = 1;
             if ( wb.getWhere() != null ) {
                 for ( SQLArgument argument : wb.getWhere().getArguments() ) {
-                    argument.setArgument( stmt, i++ );
+                    i += argument.setPreparedStatementArguments( stmt, i );
                 }
             }
 

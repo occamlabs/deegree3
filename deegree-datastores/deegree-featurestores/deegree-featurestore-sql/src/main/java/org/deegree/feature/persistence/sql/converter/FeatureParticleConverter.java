@@ -117,8 +117,9 @@ public class FeatureParticleConverter implements ParticleConverter<Feature> {
     }
 
     @Override
-    public void setParticle( PreparedStatement stmt, Feature particle, int paramIndex )
+    public int setParticle( PreparedStatement stmt, Feature particle, int paramIndex )
                             throws SQLException {
         // TODO currently hardcoded in InsertRowManager and related classes
+        return 1;
     }
 }

@@ -254,13 +254,14 @@ public class DefaultPrimitiveConverter implements PrimitiveParticleConverter {
     }
 
     @Override
-    public void setParticle( PreparedStatement stmt, PrimitiveValue particle, int colIndex )
+    public int setParticle( PreparedStatement stmt, PrimitiveValue particle, int colIndex )
                             throws SQLException {
         Object value = particle.getValue();
         if ( value != null ) {
             value = toSqlValue( value );
         }
         stmt.setObject( colIndex, value );
+        return 1;
     }
 
     public Object toSqlValue( Object input ) {

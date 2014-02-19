@@ -1,7 +1,6 @@
-//$HeadURL$
 /*----------------------------------------------------------------------------
  This file is part of deegree, http://deegree.org/
- Copyright (C) 2001-2011 by:
+ Copyright (C) 2001-2014 by:
  - Department of Geography, University of Bonn -
  and
  - lat/lon GmbH -
@@ -43,10 +42,9 @@ import org.deegree.commons.tom.TypedObjectNode;
 /**
  * Helper class for delayed calls to {@link ParticleConverter#setParticle(PreparedStatement, TypedObjectNode, int)}.
  * 
- * @author <a href="mailto:schneider@lat-lon.de">Markus Schneider</a>
- * @author last edited by: $Author$
+ * @author <a href="mailto:schneider@occamlabs.de">Markus Schneider</a>
  * 
- * @version $Revision$, $Date$
+ * @since 3.4
  */
 public class ParticleConversion<T extends TypedObjectNode> {
 
@@ -59,8 +57,18 @@ public class ParticleConversion<T extends TypedObjectNode> {
         this.particle = particle;
     }
 
-    public void setParticle( PreparedStatement stmt, int paramIndex )
+    /**
+     * Sets the SQL parameters in the <code>PreparedStatement</code>.
+     * 
+     * @param stmt
+     *            prepared statement, must not be <code>null</code>
+     * @param firstSqlParamIndex
+     *            index of the first SQL parameter in the statement
+     * @return number of SQL prepared statement arguments that the particle corresponds to
+     * @throws SQLException
+     */
+    public int setSqlParameters( PreparedStatement stmt, int firstSqlParamIndex )
                             throws SQLException {
-        converter.setParticle( stmt, particle, paramIndex );
+        return converter.setParticle( stmt, particle, firstSqlParamIndex );
     }
 }

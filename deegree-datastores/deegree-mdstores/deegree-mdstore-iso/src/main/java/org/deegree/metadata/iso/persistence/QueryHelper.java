@@ -179,13 +179,13 @@ class QueryHelper extends SqlHelper {
             int i = 1;
             if ( builder.getWhere() != null ) {
                 for ( SQLArgument o : builder.getWhere().getArguments() ) {
-                    o.setArgument( preparedStatement, i++ );
+                    i += o.setPreparedStatementArguments( preparedStatement, i );
                 }
             }
 
             if ( builder.getOrderBy() != null ) {
                 for ( SQLArgument o : builder.getOrderBy().getArguments() ) {
-                    o.setArgument( preparedStatement, i++ );
+                    i += o.setPreparedStatementArguments( preparedStatement, i );
                 }
             }
             LOG.debug( preparedStatement.toString() );
@@ -233,7 +233,7 @@ class QueryHelper extends SqlHelper {
             int i = 1;
             if ( builder.getWhere() != null ) {
                 for ( SQLArgument o : builder.getWhere().getArguments() ) {
-                    o.setArgument( preparedStatement, i++ );
+                    i += o.setPreparedStatementArguments( preparedStatement, i );
                 }
             }
             LOG.debug( preparedStatement.toString() );

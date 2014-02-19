@@ -144,7 +144,7 @@ public class InsertRow extends TransactionRow {
                                + entry.getValue().getClass() + ")" );
                     if ( entry.getValue() instanceof ParticleConversion<?> ) {
                         ParticleConversion<?> conversion = (ParticleConversion<?>) entry.getValue();
-                        conversion.setParticle( stmt, columnId++ );
+                        columnId += conversion.setSqlParameters( stmt, columnId );
                     } else {
                         stmt.setObject( columnId++, entry.getValue() );
                     }

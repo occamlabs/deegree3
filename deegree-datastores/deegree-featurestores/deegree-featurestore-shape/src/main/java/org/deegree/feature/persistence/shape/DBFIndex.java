@@ -134,7 +134,7 @@ public class DBFIndex {
 
                 int i = 1;
                 for ( SQLArgument lit : generated.getArguments() ) {
-                    lit.setArgument( stmt, i++ );
+                    i += lit.setPreparedStatementArguments( stmt, i );
                     // TODO what about ElementNode?
                     // Object o = lit.getValue();
                     // if ( o instanceof PrimitiveValue ) {

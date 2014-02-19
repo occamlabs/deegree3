@@ -209,7 +209,7 @@ public class EbrimEOMDStoreTransaction implements MetadataStoreTransaction {
             int i = 1;
             if ( wb.getWhere() != null ) {
                 for ( SQLArgument argument : wb.getWhere().getArguments() ) {
-                    argument.setArgument( stm, i++ );
+                    i += argument.setPreparedStatementArguments( stm, i );
                 }
             }
             LOG.debug( "Execute: " + stm.toString() );
@@ -314,8 +314,7 @@ public class EbrimEOMDStoreTransaction implements MetadataStoreTransaction {
             case _date:
                 try {
                     ir.addPreparedArgument( new SQLIdentifier( slot.getColumn() ),
-                                            new Timestamp(
-                                                           ( parseDateTime( slotValue ).getTimeInMilliseconds() ) ) );
+                                            new Timestamp( ( parseDateTime( slotValue ).getTimeInMilliseconds() ) ) );
                 } catch ( IllegalArgumentException e ) {
                     String msg = "Could not parse as Date:" + slotValue;
                     LOG.debug( msg, e );

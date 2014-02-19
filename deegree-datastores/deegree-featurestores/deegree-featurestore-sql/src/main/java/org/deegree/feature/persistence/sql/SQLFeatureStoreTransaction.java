@@ -826,8 +826,7 @@ public class SQLFeatureStoreTransaction implements FeatureStoreTransaction {
                                             FeatureTypeMapping ftMapping, PreparedStatement stmt, IdFilter filter,
                                             FIDMapping fidMapping )
                             throws SQLException {
-        int i = 1;
-
+        int sqlArgumentIndex = 1;
         for ( ParsedPropertyReplacement replacement : replacementProps ) {
             Property replacementProp = replacement.getNewValue();
             QName propName = replacementProp.getType().getName();
@@ -843,21 +842,21 @@ public class SQLFeatureStoreTransaction implements FeatureStoreTransaction {
                         continue;
                     }
                     PrimitiveValue value = (PrimitiveValue) replacementProp.getValue();
-                    converter.setParticle( stmt, value, i++ );
+                    sqlArgumentIndex += converter.setParticle( stmt, value, sqlArgumentIndex );
                 } else if ( mapping instanceof GeometryMapping ) {
                     MappingExpression me = ( (GeometryMapping) mapping ).getMapping();
                     if ( !( me instanceof DBField ) ) {
                         continue;
                     }
                     Geometry value = (Geometry) replacementProp.getValue();
-                    converter.setParticle( stmt, value, i++ );
+                    sqlArgumentIndex += converter.setParticle( stmt, value, sqlArgumentIndex );
                 }
             }
         }
 
         for ( String id : filter.getMatchingIds() ) {
             IdAnalysis analysis = schema.analyzeId( id );
-            int j = i;
+            int j = sqlArgumentIndex;
             for ( String fidKernel : analysis.getIdKernels() ) {
                 PrimitiveValue value = new PrimitiveValue( fidKernel, new PrimitiveType( fidMapping.getColumnType() ) );
                 Object sqlValue = SQLValueMangler.internalToSQL( value );
