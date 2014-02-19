@@ -126,7 +126,7 @@ public class OracleGeometryConverter implements GeometryParticleConverter {
     }
 
     @Override
-    public void setParticle( PreparedStatement stmt, Geometry particle, int paramIndex )
+    public int setParticle( PreparedStatement stmt, Geometry particle, int paramIndex )
                             throws SQLException {
         try {
             if ( particle == null ) {
@@ -148,6 +148,7 @@ public class OracleGeometryConverter implements GeometryParticleConverter {
             t.printStackTrace();
             throw new IllegalArgumentException();
         }
+        return 1;
     }
 
     private OracleConnection getOracleConnection( Connection conn )

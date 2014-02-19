@@ -1,7 +1,6 @@
-//$HeadURL$
 /*----------------------------------------------------------------------------
  This file is part of deegree, http://deegree.org/
- Copyright (C) 2001-2011 by:
+ Copyright (C) 2001-2014 by:
  - Department of Geography, University of Bonn -
  and
  - lat/lon GmbH -
@@ -45,10 +44,9 @@ import org.deegree.commons.tom.TypedObjectNode;
  * Implementations convert particles between {@link TypedObjectNode} instances and SQL argument / parameter objects in
  * {@link PreparedStatement} / {@link ResultSet} instances.
  * 
- * @author <a href="mailto:schneider@lat-lon.de">Markus Schneider</a>
- * @author last edited by: $Author$
+ * @author <a href="mailto:schneider@occamlabs.de">Markus Schneider</a>
  * 
- * @version $Revision$, $Date$
+ * @since 3.4
  */
 public interface ParticleConverter<T extends TypedObjectNode> {
 
@@ -74,10 +72,10 @@ public interface ParticleConverter<T extends TypedObjectNode> {
                             throws SQLException;
 
     /**
-     * Returns a {@link PreparedStatement} fragment for setting the given particle value in an SQL statement.
+     * Returns a {@link PreparedStatement} fragment for setting the given particle value in a SQL statement.
      * <p>
      * The value may be set in a literal SQL fashion (e.g. '2007-08-09') or as a {@link PreparedStatement} placeholder
-     * ('?').
+     * ('?'). It can also consist of a several placeholders or a combination.
      * </p>
      * 
      * @param particle
@@ -87,15 +85,17 @@ public interface ParticleConverter<T extends TypedObjectNode> {
     public String getSetSnippet( T particle );
 
     /**
-     * Converts the given particle and sets the designated SQL parameter in the given {@link PreparedStatement}.
+     * Converts the given particle and sets the designated SQL parameter placeholders in the given
+     * {@link PreparedStatement}.
      * 
      * @param stmt
      *            prepared statement, never <code>null</code>
      * @param particle
      *            particle value, can be <code>null</<code>
-     * @param paramIndex
-     *            index of the SQL parameter in the statement
+     * @param firstSqlParamIndex
+     *            index of the first SQL parameter in the statement
+     * @return number of SQL prepared statement arguments that the particle corresponds to
      */
-    public void setParticle( PreparedStatement stmt, T particle, int paramIndex )
+    public int setParticle( PreparedStatement stmt, T particle, int firstSqlParamIndex )
                             throws SQLException;
 }

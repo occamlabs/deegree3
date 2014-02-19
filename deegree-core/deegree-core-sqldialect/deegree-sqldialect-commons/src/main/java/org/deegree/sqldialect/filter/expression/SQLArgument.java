@@ -105,17 +105,26 @@ public class SQLArgument implements SQLExpression {
         this.isSpatial = true;
     }
 
-    public void setArgument( PreparedStatement stmt, int paramIndex )
+    /**
+     * Converts the given particle and sets the designated SQL parameter placeholders in the given
+     * {@link PreparedStatement}.
+     * 
+     * @param stmt
+     *            statement, can be <code>null</<code>
+     * @param firstSqlParamIndex
+     *            index of the first SQL parameter in the statement
+     * @return number of SQL prepared statement arguments that the SQLArgument corresponds to
+     */
+    public int setPreparedStatementArguments( PreparedStatement stmt, int firstSqlParamIndex )
                             throws SQLException {
-
+        ParticleConverter<?> converter = this.converter;
         if ( converter == null ) {
             LOG.warn( "No inferred particle converter. Treating as STRING value." );
-            new DefaultPrimitiveConverter( new PrimitiveType( STRING ), null, false ).setParticle( stmt,
-                                                                                                   (PrimitiveValue) value,
-                                                                                                   paramIndex );
-        } else {
-            ( (ParticleConverter<TypedObjectNode>) this.converter ).setParticle( stmt, value, paramIndex );
+            converter = new DefaultPrimitiveConverter( new PrimitiveType( STRING ), null, false );
         }
+        @SuppressWarnings("unchecked")
+        ParticleConverter<TypedObjectNode> typedConverter = (ParticleConverter<TypedObjectNode>) this.converter;
+        return typedConverter.setParticle( stmt, value, firstSqlParamIndex );
     }
 
     @Override
@@ -184,8 +193,8 @@ public class SQLArgument implements SQLExpression {
     public ParticleConverter<? extends TypedObjectNode> getConverter() {
         return converter;
     }
-    
-    public TypedObjectNode getValue () {
+
+    public TypedObjectNode getValue() {
         return value;
     }
 }

@@ -160,12 +160,12 @@ class TransactionHelper extends SqlHelper {
             int i = 1;
             if ( builder.getWhere() != null ) {
                 for ( SQLArgument o : builder.getWhere().getArguments() ) {
-                    o.setArgument( stmt, i++ );
+                    i += o.setPreparedStatementArguments( stmt, i );
                 }
             }
             if ( builder.getOrderBy() != null ) {
                 for ( SQLArgument o : builder.getOrderBy().getArguments() ) {
-                    o.setArgument( stmt, i++ );
+                    i += o.setPreparedStatementArguments( stmt, i );
                 }
             }
             LOG.debug( Messages.getMessage( "INFO_TA_DELETE_FIND", stmt.toString() ) );

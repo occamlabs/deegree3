@@ -125,11 +125,11 @@ public class MSSQLGeometryConverter implements GeometryParticleConverter {
     }
 
     @Override
-    public void setParticle( PreparedStatement stmt, Geometry particle, int paramIndex )
+    public int setParticle( PreparedStatement stmt, Geometry particle, int paramIndex )
                             throws SQLException {
         if ( particle == null ) {
             stmt.setObject( paramIndex, null );
-            return;
+            return 1;
         }
         particle = getCompatibleGeometry( particle );
         if ( is2d ) {
@@ -141,6 +141,7 @@ public class MSSQLGeometryConverter implements GeometryParticleConverter {
         } else {
             stmt.setString( paramIndex, WKTWriter.write( particle ) );
         }
+        return 1;
     }
 
     @Override

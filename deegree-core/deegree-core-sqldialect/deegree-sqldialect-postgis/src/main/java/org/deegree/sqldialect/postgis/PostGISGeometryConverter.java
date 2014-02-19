@@ -125,7 +125,7 @@ public class PostGISGeometryConverter implements GeometryParticleConverter {
     }
 
     @Override
-    public void setParticle( PreparedStatement stmt, Geometry particle, int paramIndex )
+    public int setParticle( PreparedStatement stmt, Geometry particle, int paramIndex )
                             throws SQLException {
         byte[] wkb = null;
         if ( particle != null ) {
@@ -137,6 +137,7 @@ public class PostGISGeometryConverter implements GeometryParticleConverter {
             }
         }
         stmt.setBytes( paramIndex, wkb );
+        return 1;
     }
 
     private Geometry getCompatibleGeometry( Geometry literal )
