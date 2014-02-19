@@ -35,6 +35,8 @@
  ----------------------------------------------------------------------------*/
 package org.deegree.sqldialect.oracle;
 
+import static oracle.sql.ArrayDescriptor.createDescriptor;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -42,10 +44,13 @@ import java.sql.SQLException;
 import java.sql.Types;
 
 import oracle.jdbc.OracleConnection;
+import oracle.sql.ARRAY;
+import oracle.sql.ArrayDescriptor;
 import oracle.sql.STRUCT;
 
 import org.apache.commons.dbcp.DelegatingConnection;
 import org.deegree.cs.coordinatesystems.ICRS;
+import org.deegree.geometry.Envelope;
 import org.deegree.geometry.Geometry;
 import org.deegree.geometry.GeometryTransformer;
 import org.deegree.geometry.utils.GeometryParticleConverter;
@@ -106,8 +111,15 @@ public class OracleGeometryConverter implements GeometryParticleConverter {
     }
 
     @Override
-    public String getSetSnippet( Geometry particle ) {
-        return "?";
+    public String getSetSnippet( final Geometry particle ) {
+        if ( setAsStruct( particle ) ) {
+            return "?";
+        }
+        return "MDSYS.SDO_GEOMETRY(?,?,NULL,?,?)";
+    }
+
+    private boolean setAsStruct( final Geometry particle ) {
+        return particle instanceof Envelope;
     }
 
     @Override
@@ -128,27 +140,58 @@ public class OracleGeometryConverter implements GeometryParticleConverter {
     @Override
     public int setParticle( PreparedStatement stmt, Geometry particle, int paramIndex )
                             throws SQLException {
+        int numParams = 1;
         try {
             if ( particle == null ) {
                 stmt.setNull( paramIndex, Types.STRUCT, "MDSYS.SDO_GEOMETRY" );
             } else {
                 Geometry compatible = getCompatibleGeometry( particle );
-                // TODO clarify if this was only a wkt/wkb requirement ?!
-                // (background Envelope -> Optimized Rectangles in Oracle are preferred and faster for SDO_RELATE
-                // filters )
-                //
-                // if ( compatible instanceof Envelope ) {
-                // compatible = compatible.getConvexHull();
-                // }
                 OracleConnection ocon = getOracleConnection( stmt.getConnection() );
-                Object struct = new SDOGeometryConverter().fromGeometry( ocon, isrid, compatible, true );
-                stmt.setObject( paramIndex, struct );
+                if ( compatible instanceof Envelope ) {
+                    numParams = setUsingArrays( stmt, paramIndex, (Envelope) compatible, ocon );
+                } else {
+                    numParams = setUsingStruct( stmt, paramIndex, compatible, ocon );
+                }
             }
         } catch ( Throwable t ) {
             t.printStackTrace();
             throw new IllegalArgumentException();
         }
+        return numParams;
+    }
+
+    private int setUsingStruct( final PreparedStatement stmt, final int paramIndex, final Geometry compatible,
+                                final OracleConnection ocon )
+                            throws SQLException {
+        Object struct = new SDOGeometryConverter().fromGeometry( ocon, isrid, compatible, true );
+        stmt.setObject( paramIndex, struct );
         return 1;
+    }
+
+    private int setUsingArrays( final PreparedStatement stmt, final int paramIndex, final Envelope env,
+                                final OracleConnection conn )
+                            throws SQLException {
+        int i = paramIndex;
+        stmt.setInt( i++, 2003 );
+        stmt.setInt( i++, isrid );
+        stmt.setObject( i++, getElemInfoArrayForEnvelope( conn ) );
+        stmt.setObject( i, getOrdinateArrayForEnvelope( conn, env ) );
+        return 4;
+    }
+
+    private ARRAY getElemInfoArrayForEnvelope( final Connection conn )
+                            throws SQLException {
+        final ArrayDescriptor descriptor = createDescriptor( "MDSYS.SDO_ELEM_INFO_ARRAY", conn );
+        final Integer[] elements = new Integer[] { 1, 1003, 3 };
+        return new ARRAY( descriptor, conn, elements );
+    }
+
+    private ARRAY getOrdinateArrayForEnvelope( final Connection conn, final Envelope env )
+                            throws SQLException {
+        final ArrayDescriptor descriptor = createDescriptor( "MDSYS.SDO_ORDINATE_ARRAY", conn );
+        final Double[] elements = new Double[] { env.getMin().get0(), env.getMin().get1(), env.getMax().get0(),
+                                                env.getMax().get1() };
+        return new ARRAY( descriptor, conn, elements );
     }
 
     private OracleConnection getOracleConnection( Connection conn )
