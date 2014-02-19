@@ -112,13 +112,13 @@ public class OracleGeometryConverter implements GeometryParticleConverter {
 
     @Override
     public String getSetSnippet( final Geometry particle ) {
-        if ( setAsStruct( particle ) ) {
-            return "?";
+        if ( setAsArrays( particle ) ) {
+            return "MDSYS.SDO_GEOMETRY(?,?,NULL,?,?)";
         }
-        return "MDSYS.SDO_GEOMETRY(?,?,NULL,?,?)";
+        return "?";
     }
 
-    private boolean setAsStruct( final Geometry particle ) {
+    private boolean setAsArrays( final Geometry particle ) {
         return particle instanceof Envelope;
     }
 
