@@ -38,6 +38,7 @@ import static javax.faces.application.FacesMessage.SEVERITY_ERROR;
 import static javax.faces.application.FacesMessage.SEVERITY_INFO;
 import static javax.faces.application.FacesMessage.SEVERITY_WARN;
 import static javax.faces.context.FacesContext.getCurrentInstance;
+import static org.deegree.workspace.WorkspaceUtils.reinitializeChain;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.ByteArrayInputStream;
@@ -63,7 +64,6 @@ import org.deegree.services.controller.OGCFrontController;
 import org.deegree.services.metadata.provider.OWSMetadataProviderProvider;
 import org.deegree.workspace.ResourceMetadata;
 import org.deegree.workspace.Workspace;
-import org.deegree.workspace.WorkspaceUtils;
 import org.deegree.workspace.standard.AbstractResourceProvider;
 import org.deegree.workspace.standard.DefaultWorkspace;
 import org.slf4j.Logger;
@@ -202,43 +202,6 @@ public class XmlEditorBean implements Serializable {
         this.resourceProviderClass = providerClass;
     }
 
-    private void saveFile() {
-        try {
-            if ( resourceProviderClass == null ) {
-                FileUtils.write( new File( fileName ), content );
-                return;
-            }
-
-            Workspace workspace = OGCFrontController.getServiceWorkspace().getNewWorkspace();
-            Class<?> cls = workspace.getModuleClassLoader().loadClass( resourceProviderClass );
-            ResourceMetadata<?> md = workspace.getResourceMetadata( (Class) cls, id );
-
-            workspace.destroy( md.getIdentifier() );
-
-            md.getLocation().setContent( IOUtils.toInputStream( content ) );
-            // special handling because of non-identity between id and filename:
-            if ( resourceProviderClass.equals( OWSMetadataProviderProvider.class.getCanonicalName() ) ) {
-                if ( workspace instanceof DefaultWorkspace ) {
-                    File file = new File( ( (DefaultWorkspace) workspace ).getLocation(), "services" );
-                    file = new File( file, md.getIdentifier().getId() + "_metadata.xml" );
-                    FileUtils.write( file, content );
-                } else {
-                    LOG.warn( "Could not persist metadata configuration." );
-                }
-            } else {
-                workspace.getLocationHandler().persist( md.getLocation() );
-            }
-
-            workspace.getLocationHandler().activate( md.getLocation() );
-            WorkspaceUtils.reinitializeChain( workspace, md.getIdentifier() );
-        } catch ( Exception t ) {
-            t.printStackTrace();
-            FacesMessage fm = new FacesMessage( SEVERITY_ERROR, "Unable to activate resource: " + t.getMessage(), null );
-            FacesContext.getCurrentInstance().addMessage( null, fm );
-            return;
-        }
-    }
-
     private void activate() {
         try {
             if ( resourceProviderClass == null ) {
@@ -246,12 +209,9 @@ public class XmlEditorBean implements Serializable {
                 return;
             }
 
-            Workspace workspace = OGCFrontController.getServiceWorkspace().getNewWorkspace();
-            Class<?> cls = workspace.getModuleClassLoader().loadClass( resourceProviderClass );
-            ResourceMetadata<?> md = workspace.getResourceMetadata( (Class) cls, id );
-
-            workspace.destroy( md.getIdentifier() );
-
+            final Workspace workspace = OGCFrontController.getServiceWorkspace().getNewWorkspace();
+            final Class<?> cls = workspace.getModuleClassLoader().loadClass( resourceProviderClass );
+            final ResourceMetadata<?> md = workspace.getResourceMetadata( (Class) cls, id );
             md.getLocation().setContent( IOUtils.toInputStream( content ) );
             // special handling because of non-identity between id and filename:
             if ( resourceProviderClass.equals( OWSMetadataProviderProvider.class.getCanonicalName() ) ) {
@@ -267,9 +227,8 @@ public class XmlEditorBean implements Serializable {
             }
 
             workspace.getLocationHandler().activate( md.getLocation() );
-            WorkspaceUtils.reinitializeChain( workspace, md.getIdentifier() );
+            reinitializeChain( workspace, md.getIdentifier() );
         } catch ( Exception t ) {
-            t.printStackTrace();
             FacesMessage fm = new FacesMessage( SEVERITY_ERROR, "Unable to activate resource: " + t.getMessage(), null );
             FacesContext.getCurrentInstance().addMessage( null, fm );
             return;
@@ -298,8 +257,8 @@ public class XmlEditorBean implements Serializable {
 
     private String toString( SchemaValidationEvent event ) {
         XMLParseException e = event.getException();
-        return "<a href=\"javascript:jumpTo(" + e.getLineNumber() + "," + e.getColumnNumber() + ")\">Error near line " + e.getLineNumber()
-               + ", column " + e.getColumnNumber() + "</a>: " + e.getLocalizedMessage();
+        return "<a href=\"javascript:jumpTo(" + e.getLineNumber() + "," + e.getColumnNumber() + ")\">Error near line "
+               + e.getLineNumber() + ", column " + e.getColumnNumber() + "</a>: " + e.getLocalizedMessage();
     }
 
     public String validate() {

@@ -83,8 +83,9 @@ public class WorkspaceUtils {
         collectDependents( list, node );
         ResourceGraph g = new ResourceGraph( list );
         list = g.toSortedList();
-        workspace.destroy( list.get( 0 ).getIdentifier() );
+        workspace.destroy( id );
         for ( ResourceMetadata<? extends Resource> md : list ) {
+            workspace.add( md.getLocation() );
             workspace.init( md.getIdentifier(), null );
         }
     }
