@@ -17,7 +17,7 @@
   <parent>
     <groupId>org.deegree</groupId>
     <artifactId>deegree-tests</artifactId>
-    <version>3.4-pre2-SNAPSHOT</version>
+    <version>3.4-pre11-SNAPSHOT</version>
   </parent>
 
   <repositories>
@@ -32,7 +32,7 @@
       </snapshots>
     </repository>
   </repositories>
-
+ 
   <build>
     <testResources>
       <testResource>
@@ -45,7 +45,6 @@
       </testResource>
     </testResources>
 
-
     <plugins>
       <plugin>
         <groupId>org.deegree</groupId>
@@ -57,47 +56,23 @@
               <goal>attach-workspace</goal>
             </goals>
           </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.deegree</groupId>
-        <artifactId>deegree-maven-plugin</artifactId>
-        <executions>
           <execution>
             <id>workspace-inplace</id>
             <phase>validate</phase>
             <goals>
               <goal>workspace-inplace</goal>
             </goals>
-          </execution>
+          </execution>          
         </executions>
       </plugin>
-
-
-
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-plugin</artifactId>
+        <artifactId>maven-failsafe-plugin</artifactId>
         <configuration>
-          <skip>true</skip>
-          <testFailureIgnore>true</testFailureIgnore>
-          <includes>
-            <include>**/*IT.java</include>
-          </includes>
-          <argLine>-Xmx1024m -Xss128m -XX:-UseGCOverheadLimit -Xincgc -DcswUrl=${cswUrl}</argLine>
+          <systemPropertyVariables>
+            <cswUrl>${cswUrl}</cswUrl>
+          </systemPropertyVariables>
         </configuration>
-        <executions>
-          <execution>
-            <id>integration-test</id>
-            <phase>integration-test</phase>
-            <goals>
-              <goal>test</goal>
-            </goals>
-            <configuration>
-              <skip>false</skip>
-            </configuration>
-          </execution>
-        </executions>
       </plugin>
     </plugins>
   </build>
@@ -107,7 +82,7 @@
       <id>memorystore</id>
       <activation>
         <property>
-          <name>memory</name>
+          <name>!sql</name>
         </property>
       </activation>
       <dependencies>
@@ -123,7 +98,7 @@
       <id>sqlstore</id>
       <activation>
         <property>
-          <name>!memory</name>
+          <name>sql</name>
         </property>
       </activation>
       <dependencies>
@@ -161,7 +136,6 @@
                   </resources>
                 </configuration>
               </execution>
-
               <execution>
                 <id>copy-jdbc2</id>
                 <phase>generate-resources</phase>

@@ -67,7 +67,7 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
 /**
- * <code>WMSSimilarityIntegrationTest</code>
+ * <code>WmsSimilarityIT</code>
  * 
  * @author <a href="mailto:schmitz@occamlabs.de">Andreas Schmitz</a>
  * @author last edited by: $Author: mschneider $
@@ -76,7 +76,7 @@ import org.junit.runners.Parameterized.Parameters;
  */
 
 @RunWith(Parameterized.class)
-public class WMSSimilarityIntegrationTest {
+public class WmsSimilarityIT {
 
     private static int numFailed = 0;
 
@@ -86,7 +86,7 @@ public class WMSSimilarityIntegrationTest {
 
     private String name;
 
-    public WMSSimilarityIntegrationTest( Object wasXml, String request, List<byte[]> response, String name ) {
+    public WmsSimilarityIT( Object wasXml, String request, List<byte[]> response, String name ) {
         // we only use .kvp for WMS
         this.request = request;
         this.name = name;

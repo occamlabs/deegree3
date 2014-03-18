@@ -63,7 +63,7 @@ import org.junit.runners.Parameterized.Parameters;
 import org.slf4j.Logger;
 
 /**
- * <code>RemoteWMSIntegrationTest</code>
+ * <code>RemoteWmsIT</code>
  * 
  * @author <a href="mailto:schmitz@occamlabs.de">Andreas Schmitz</a>
  * @author last edited by: $Author: mschneider $
@@ -72,9 +72,9 @@ import org.slf4j.Logger;
  */
 
 @RunWith(Parameterized.class)
-public class RemoteWMSIntegrationTest {
+public class RemoteWmsIT {
 
-    private static final Logger LOG = getLogger( RemoteWMSIntegrationTest.class );
+    private static final Logger LOG = getLogger( RemoteWmsIT.class );
 
     private static int numFailed = 0;
 
@@ -84,7 +84,7 @@ public class RemoteWMSIntegrationTest {
 
     private String name;
 
-    public RemoteWMSIntegrationTest( Object wasXml, String request, List<byte[]> response, String name ) {
+    public RemoteWmsIT( Object wasXml, String request, List<byte[]> response, String name ) {
         // we only use .kvp for WMS
         this.request = request;
         this.response = response;

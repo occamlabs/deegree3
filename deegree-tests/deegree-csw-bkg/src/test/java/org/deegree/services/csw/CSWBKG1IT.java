@@ -44,8 +44,8 @@ public class CSWBKG1IT {
     private String resultSnippet;
 
     private final boolean isCSWAvailable;
-    
-    public CSWBKG1IT( String testLabel, String resultSnippet, boolean isCSWAvailable) {
+
+    public CSWBKG1IT( String testLabel, String resultSnippet, boolean isCSWAvailable ) {
         this.testLabel = testLabel;
         this.resultSnippet = resultSnippet;
         this.isCSWAvailable = isCSWAvailable;
@@ -84,16 +84,16 @@ public class CSWBKG1IT {
 
     private static boolean isCSWAvailable() {
         String url = System.getProperty( "cswUrl" );
-        System.out.println("Check if CSW to test with URL '" + url + "' is available!");
+        System.out.println( "Check if CSW to test with URL '" + url + "' is available!" );
         try {
             InputStream postBody = CSWBKG1IT.class.getResourceAsStream( "testGetRecordsRequest.xml" );
-            XMLAdapter resp = HttpUtils.post( HttpUtils.XML, url, postBody, null );
+            InputStream responseStream = HttpUtils.post( HttpUtils.STREAM, url, postBody, null );
+            XMLAdapter responseXml = new XMLAdapter( responseStream );
             NamespaceBindings nsContext = CommonNamespaces.getNamespaceContext();
             nsContext.addNamespace( CSW_202_PREFIX, CSWConstants.CSW_202_NS );
-            OMElement element = resp.getElement( resp.getRootElement(), new XPath( "/" + CSW_202_PREFIX
-                                                                                   + ":GetRecordsResponse/"
-                                                                                   + CSW_202_PREFIX + ":SearchResults",
-                                                                                   nsContext ) );
+            OMElement element = responseXml.getElement( responseXml.getRootElement(),
+                                                        new XPath( "/" + CSW_202_PREFIX + ":GetRecordsResponse/"
+                                                                   + CSW_202_PREFIX + ":SearchResults", nsContext ) );
             if ( element != null ) {
                 return true;
             }

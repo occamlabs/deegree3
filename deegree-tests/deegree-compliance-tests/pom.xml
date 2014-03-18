@@ -63,28 +63,17 @@
 
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-plugin</artifactId>
+        <artifactId>maven-failsafe-plugin</artifactId>
         <configuration>
-          <skip>true</skip>
-          <testFailureIgnore>true</testFailureIgnore>
           <includes>
             <include>**/${testPattern}.java</include>
-          </includes>
-          <argLine>-Xmx1024m -Xss128m -XX:-UseGCOverheadLimit -Xincgc -DserviceUrl=${serviceUrl}/services</argLine>
+          </includes>          
+          <systemPropertyVariables>
+            <serviceUrl>${serviceUrl}/services</serviceUrl>
+          </systemPropertyVariables>
         </configuration>
-        <executions>
-          <execution>
-            <id>integration-test</id>
-            <phase>integration-test</phase>
-            <goals>
-              <goal>test</goal>
-            </goals>
-            <configuration>
-              <skip>false</skip>
-            </configuration>
-          </execution>
-        </executions>
       </plugin>
+
     </plugins>
   </build>
 
@@ -111,7 +100,6 @@
               </execution>
             </executions>
           </plugin>
-
           <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>tomcat-maven-plugin</artifactId>
