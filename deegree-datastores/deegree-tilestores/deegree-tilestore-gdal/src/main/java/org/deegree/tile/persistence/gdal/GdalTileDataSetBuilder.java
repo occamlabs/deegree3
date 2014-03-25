@@ -28,6 +28,7 @@
 package org.deegree.tile.persistence.gdal;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -60,7 +61,7 @@ class GdalTileDataSetBuilder {
     }
 
     TileDataSet buildTileDataSet( GdalTileStoreJaxb.TileDataSet cfg, ResourceLocation<TileStore> location,
-                                  Envelope gdalEnvelope ) {
+                                  Envelope gdalEnvelope ) throws IOException {
         String filename = cfg.getFile();
         String imageFormat = cfg.getImageFormat();
         String tmsId = cfg.getTileMatrixSetId();

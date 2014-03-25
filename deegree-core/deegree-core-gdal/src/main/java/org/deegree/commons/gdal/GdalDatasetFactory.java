@@ -29,7 +29,7 @@ package org.deegree.commons.gdal;
 
 import java.io.File;
 
-import org.apache.commons.pool.KeyedPoolableObjectFactory;
+import org.deegree.commons.gdal.pool.KeyedResourceFactory;
 
 /**
  * Used by {@link GdalDatasetThreadPoolCache} to create new {@link GdalDataset} instances.
@@ -38,7 +38,7 @@ import org.apache.commons.pool.KeyedPoolableObjectFactory;
  * 
  * @since 3.4
  */
-class GdalDatasetFactory implements KeyedPoolableObjectFactory<File, GdalDataset> {
+class GdalDatasetFactory implements KeyedResourceFactory<GdalDataset> {
 
     private final GdalDatasetPool pool;
 
@@ -47,32 +47,13 @@ class GdalDatasetFactory implements KeyedPoolableObjectFactory<File, GdalDataset
     }
 
     @Override
-    public GdalDataset makeObject( File key )
-                            throws Exception {
-        return new GdalDataset( key, pool.getCrs( key ) );
-    }
-
-    @Override
-    public void destroyObject( File key, GdalDataset obj )
-                            throws Exception {
-        obj.detach();
-    }
-
-    @Override
-    public boolean validateObject( File key, GdalDataset obj ) {
-        return true;
-    }
-
-    @Override
-    public void activateObject( File key, GdalDataset obj )
-                            throws Exception {
-        // nothing to do        
-    }
-
-    @Override
-    public void passivateObject( File key, GdalDataset obj )
-                            throws Exception {
-        // nothing to do
+    public GdalDataset create( final String key ) {
+        final File file = new File( key );
+        try {
+            return new GdalDataset( file, pool.getCrs( file ) );
+        } catch ( Exception e ) {
+            throw new RuntimeException( e.getMessage() );
+        }
     }
 
 }

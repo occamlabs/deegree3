@@ -47,6 +47,7 @@ import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.IOException;
 
+import org.deegree.commons.gdal.pool.KeyedResource;
 import org.deegree.cs.coordinatesystems.ICRS;
 import org.deegree.cs.exceptions.UnknownCRSException;
 import org.deegree.geometry.Envelope;
@@ -66,13 +67,15 @@ import org.slf4j.Logger;
  * 
  * @since 3.4
  */
-public class GdalDataset {
+public class GdalDataset implements KeyedResource {
 
     private static final Logger LOG = getLogger( GdalDataset.class );
 
     private final File file;
 
     private final ICRS crs;
+
+    private final Dataset dataset;
 
     private final Envelope datasetEnvelope;
 
@@ -88,8 +91,6 @@ public class GdalDataset {
 
     private final double unitsPerPixelY;
 
-    private Dataset dataset;
-
     /**
      * Creates a new {@link GdalDataset} from the given file (which must be supported by GDAL).
      * 
@@ -103,7 +104,7 @@ public class GdalDataset {
     public GdalDataset( File file, ICRS crs ) throws UnknownCRSException, IOException {
         this.file = file.getCanonicalFile();
         this.crs = crs;
-        attach();
+        dataset = gdal.Open( file.getPath() );
         datasetEnvelope = readEnvelope();
         width = datasetEnvelope.getSpan0();
         height = datasetEnvelope.getSpan1();
@@ -139,17 +140,15 @@ public class GdalDataset {
         return new DefaultEnvelope( null, crs, null, min, max );
     }
 
-    void detach() {
-        if ( dataset != null ) {
-            dataset.delete();
-            dataset = null;
-        }
+    @Override
+    public void close()
+                            throws IOException {
+        dataset.delete();
     }
 
-    void attach() {
-        if ( dataset == null ) {
-            dataset = gdal.Open( file.getPath() );
-        }
+    @Override
+    public String getKey() {
+        return file.toString();
     }
 
     public Dataset getUnderlyingDataset() {
@@ -170,9 +169,9 @@ public class GdalDataset {
     }
 
     /**
-     * Returns the datasets's extent.
+     * Returns the dataset's extent.
      * 
-     * @return the datasets's extent, never, <code>null</code>
+     * @return the dataset's extent, never <code>null</code>
      */
     public Envelope getEnvelope() {
         return datasetEnvelope;
@@ -314,7 +313,6 @@ public class GdalDataset {
                     LOG.error( "GDAL ReadRaster failed: " + regionMinX + "," + regionMinY + "," + regionPixelsX + ","
                                + regionPixelsY + "," + targetWidth + "," + targetHeight + "," + bandBytes.length + ","
                                + datasetPixelsX + "," + datasetPixelsY );
-                    detach();
                     return bands;
                 }
             }
