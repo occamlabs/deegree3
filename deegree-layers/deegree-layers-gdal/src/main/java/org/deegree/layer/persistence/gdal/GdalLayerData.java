@@ -167,6 +167,15 @@ class GdalLayerData implements LayerData {
             for ( int i = 0; i < 3; i++ ) {
                 compose( composedRegion[i], overlay[i], alpha );
             }
+        } else if ( composedRegion.length == 3 && overlay.length == 3 ) {
+            final int length = composedRegion[0].length;
+            for ( int i = 0; i < length; i++ ) {
+                if ( composedRegion[0][i] == -1 && composedRegion[1][i] == -1 && composedRegion[2][i] == -1 ) {
+                    composedRegion[0][i] = overlay[0][i];
+                    composedRegion[1][i] = overlay[1][i];
+                    composedRegion[2][i] = overlay[2][i];
+                }
+            }
         }
     }
 
@@ -224,7 +233,6 @@ class GdalLayerData implements LayerData {
                     regions.add( dataset.extractRegionAsByteArray( bbox, width, height, true ) );
                 } catch ( Exception e ) {
                     LOG.error( "Error extracting region from dataset: " + e.getMessage(), e );
-                    System.out.println(bbox);
                 } finally {
                     if ( dataset != null ) {
                         try {

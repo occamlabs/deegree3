@@ -27,11 +27,18 @@
 ----------------------------------------------------------------------------*/
 package org.deegree.tile.persistence.merge;
 
+import static java.awt.Color.WHITE;
 import static java.awt.image.BufferedImage.TYPE_3BYTE_BGR;
-import static org.slf4j.LoggerFactory.getLogger;
 
+import java.awt.Color;
 import java.awt.Graphics;
+import java.awt.Image;
+import java.awt.Toolkit;
 import java.awt.image.BufferedImage;
+import java.awt.image.FilteredImageSource;
+import java.awt.image.ImageFilter;
+import java.awt.image.ImageProducer;
+import java.awt.image.RGBImageFilter;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -45,7 +52,6 @@ import org.deegree.feature.FeatureCollection;
 import org.deegree.geometry.Envelope;
 import org.deegree.tile.Tile;
 import org.deegree.tile.TileIOException;
-import org.slf4j.Logger;
 
 /**
  * {@link Tile} implementation used by {@link MergingTileStore}.
@@ -57,18 +63,15 @@ import org.slf4j.Logger;
  */
 class MergingTile implements Tile {
 
-    private static final Logger LOG = getLogger( MergingTile.class );
-
     private final List<Tile> tiles;
 
-    MergingTile( List<Tile> tiles ) {
+    MergingTile( final List<Tile> tiles ) {
         this.tiles = tiles;
     }
 
     @Override
     public BufferedImage getAsImage()
                             throws TileIOException {
-        LOG.debug( "Merging tiles" );
         Iterator<Tile> itr = tiles.iterator();
         Tile firstTile = itr.next();
         BufferedImage img = firstTile.getAsImage();
@@ -76,15 +79,32 @@ class MergingTile implements Tile {
         while ( itr.hasNext() ) {
             Tile nextTile = itr.next();
             BufferedImage nextImage = nextTile.getAsImage();
-            g.drawImage( nextImage, 0, 0, null );
+            if ( nextImage.getColorModel().hasAlpha() ) {
+                g.drawImage( nextImage, 0, 0, null );
+            } else {
+                g.drawImage( makeColorTranslucent( nextImage, WHITE ), 0, 0, null );
+            }
         }
         return img;
+    }
+
+    private Image makeColorTranslucent( final BufferedImage image, final Color translucentColor ) {
+        final int transparentRgb = translucentColor.getRGB();
+        final ImageFilter filter = new RGBImageFilter() {
+            public final int filterRGB( final int x, final int y, final int rgb ) {
+                if ( rgb == transparentRgb ) {
+                    return Color.TRANSLUCENT;
+                }
+                return rgb;
+            }
+        };
+        final ImageProducer ip = new FilteredImageSource( image.getSource(), filter );
+        return Toolkit.getDefaultToolkit().createImage( ip );
     }
 
     @Override
     public InputStream getAsStream()
                             throws TileIOException {
-        LOG.debug( "Writing image" );
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         try {
             BufferedImage img = getAsImage();
@@ -98,7 +118,6 @@ class MergingTile implements Tile {
         } catch ( IOException e ) {
             throw new TileIOException( e );
         }
-        LOG.debug( "Output size: " + output.size() );
         return new ByteArrayInputStream( output.toByteArray() );
     }
 
