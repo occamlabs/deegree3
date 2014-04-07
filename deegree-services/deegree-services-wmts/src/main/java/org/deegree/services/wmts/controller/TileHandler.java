@@ -131,6 +131,7 @@ class TileHandler {
             if ( in == null ) {
                 throw new OWSException( "Tile yielded no data.", NO_APPLICABLE_CODE );
             }
+            response.setContentType( format );
             copy( in, response.getOutputStream() );
         } catch ( Throwable e ) {
             throw new OWSException( e.getMessage(), e, NO_APPLICABLE_CODE );
