@@ -29,6 +29,8 @@ package org.deegree.layer.persistence.gdal;
 
 import static java.awt.color.ColorSpace.CS_sRGB;
 import static java.awt.image.DataBuffer.TYPE_BYTE;
+import static org.deegree.cs.components.Axis.AO_EAST;
+import static org.deegree.cs.components.Axis.AO_WEST;
 import static org.gdal.gdalconst.gdalconstConstants.CE_None;
 import static org.gdal.gdalconst.gdalconstConstants.GDT_Byte;
 import static org.gdal.osr.CoordinateTransformation.CreateCoordinateTransformation;
@@ -51,6 +53,7 @@ import java.util.List;
 import org.deegree.commons.gdal.GdalDataset;
 import org.deegree.commons.gdal.GdalDatasetPool;
 import org.deegree.commons.gdal.GdalSettings;
+import org.deegree.cs.CRSUtils;
 import org.deegree.cs.coordinatesystems.ICRS;
 import org.deegree.feature.FeatureCollection;
 import org.deegree.geometry.Envelope;
@@ -121,8 +124,8 @@ class GdalLayerData implements LayerData {
     }
 
     private BufferedImage extractAndReprojectRegion( ICRS nativeCrs ) {
-        int requestEpsgCode = Integer.parseInt( bbox.getCoordinateSystem().getCode().getCode() );
-        int nativeEpsgCode = Integer.parseInt( nativeCrs.getCode().getCode() );
+        int requestEpsgCode = CRSUtils.getEpsgCode( bbox.getCoordinateSystem() );
+        int nativeEpsgCode = CRSUtils.getEpsgCode( nativeCrs );
         SpatialReference requestSr = gdalSettings.getCrsAsWkt( requestEpsgCode );
         SpatialReference nativeSr = gdalSettings.getCrsAsWkt( nativeEpsgCode );
         Envelope nativeBbox = transform( bbox, requestSr, nativeSr );
@@ -308,17 +311,12 @@ class GdalLayerData implements LayerData {
         return points;
     }
 
-    private boolean isXy( ICRS crs ) {
+    private boolean isXy( final ICRS crs ) {
         if ( crs == null ) {
             return true;
         }
-        // TODO implement using CRS API
-        String code = crs.getCode().getCode();
-        if ( "3034".equals( code ) || "3035".equals( code ) || "3043".equals( code ) || "3044".equals( code )
-             || "4326".equals( code ) || "4258".equals( code ) || "31466".equals( code ) || "31467".equals( code ) ) {
-            return false;
-        }
-        return true;
+        final int axisOrientation = crs.getAxis()[0].getOrientation();
+        return axisOrientation == AO_WEST || axisOrientation == AO_EAST;
     }
 
     private BufferedImage toImage( byte[][] bands, int xSize, int ySize, boolean removeTransparency ) {
