@@ -3,6 +3,7 @@
   <artifactId>deegree-webservices</artifactId>
   <packaging>war</packaging>
   <name>deegree-webservices</name>
+  <version>3.4-pre10-ows10-0.2-SNAPSHOT</version>
   <description>Webapp that includes deegree WMS, WFS, CSW, WPS, common datastore modules and service administration console</description>
 
   <properties>
@@ -17,8 +18,8 @@
 
   <repositories>
     <repository>
-      <id>deegree-repo</id>
-      <url>http://repo.deegree.org/content/groups/public</url>
+      <id>mclick-repo</id>
+      <url>https://jenkins.occamlabs.de/nexus/content/groups/mclick/</url>
       <releases>
         <updatePolicy>never</updatePolicy>
       </releases>
@@ -26,7 +27,28 @@
         <enabled>true</enabled>
       </snapshots>
     </repository>
+    <repository>
+      <id>deegree-repo</id>
+      <url>http://repo.deegree.org/content/groups/public</url>
+      <releases>
+        <updatePolicy>never</updatePolicy>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
   </repositories>
+
+  <distributionManagement>
+    <repository>
+      <id>mclick-releases</id>
+      <url>https://jenkins.occamlabs.de/nexus/content/repositories/mclick-releases/</url>
+    </repository>
+    <snapshotRepository>
+      <id>mclick-snapshots</id>
+      <url>https://jenkins.occamlabs.de/nexus/content/repositories/mclick-snapshots/</url>
+    </snapshotRepository>
+  </distributionManagement>
 
   <build>
     <plugins>
@@ -108,6 +130,7 @@
                   <includeGroupIds>org.deegree</includeGroupIds>
                   <includeArtifactIds>deegree-jsf-console</includeArtifactIds>
                   <outputDirectory>src/main/webapp</outputDirectory>
+                  <excludes>**/web.xml</excludes>
                 </configuration>
               </execution>
               <execution>
@@ -181,12 +204,12 @@
     <dependency>
       <groupId>org.deegree</groupId>
       <artifactId>deegree-tomcat</artifactId>
-      <version>${project.version}</version>
+      <version>3.4-pre10</version>
     </dependency>
     <dependency>
       <groupId>org.deegree</groupId>
       <artifactId>deegree-jsf-console</artifactId>
-      <version>${project.version}</version>
+      <version>3.4-pre10</version>
     </dependency>    
     <!-- Dependencies provided by servlet container -->
     <dependency>
@@ -208,4 +231,3 @@
   </dependencies>
 
 </project>
-
