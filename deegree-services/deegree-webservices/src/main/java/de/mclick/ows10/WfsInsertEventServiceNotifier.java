@@ -1,11 +1,15 @@
 package de.mclick.ows10;
 
+import static javax.xml.XMLConstants.DEFAULT_NS_PREFIX;
 import static javax.xml.stream.XMLOutputFactory.IS_REPAIRING_NAMESPACES;
+import static javax.xml.stream.XMLStreamConstants.CDATA;
+import static javax.xml.stream.XMLStreamConstants.CHARACTERS;
 import static javax.xml.stream.XMLStreamConstants.END_DOCUMENT;
+import static javax.xml.stream.XMLStreamConstants.END_ELEMENT;
+import static javax.xml.stream.XMLStreamConstants.START_ELEMENT;
 import static org.apache.commons.io.FileUtils.deleteQuietly;
 import static org.apache.http.auth.AuthScope.ANY;
 import static org.apache.http.entity.ContentType.TEXT_XML;
-import static org.deegree.commons.xml.stax.XMLStreamUtils.copy;
 import static org.deegree.commons.xml.stax.XMLStreamUtils.nextElement;
 import static org.deegree.commons.xml.stax.XMLStreamUtils.skipStartDocument;
 import static org.deegree.protocol.wfs.WFSConstants.WFS_200_NS;
@@ -14,6 +18,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 
 import javax.servlet.Filter;
@@ -28,12 +33,14 @@ import javax.xml.namespace.QName;
 import javax.xml.stream.FactoryConfigurationError;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLOutputFactory;
+import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import javax.xml.stream.XMLStreamWriter;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -52,9 +59,9 @@ public class WfsInsertEventServiceNotifier implements Filter {
 
     private static final QName WFS_200_TRANSACTION_RESPONSE = new QName( WFS_200_NS, "TransactionResponse" );
 
-    private static final QName WFS_200_TOTAL_INSERTED = new QName( WFS_200_NS, "totalInserted" );
-
     private static final QName WFS_200_INSERT = new QName( WFS_200_NS, "Insert" );
+
+    private static final QName WFS_200_REPLACE = new QName( WFS_200_NS, "Replace" );
 
     private static final String NS_SOAP = "http://www.w3.org/2003/05/soap-envelope";
 
@@ -150,7 +157,7 @@ public class WfsInsertEventServiceNotifier implements Filter {
                     requestPayloadBuffer.close();
                     responsePayloadBuffer.close();
                     if ( isNotifyingRequired( responsePayloadBuffer ) ) {
-                        notifyEventService( requestPayloadBuffer );
+                        sendNotificationMessagesToEventService( requestPayloadBuffer );
                     }
                 } else {
                     LOG.info( "Not buffering response: Not a WFS transaction request" );
@@ -205,23 +212,7 @@ public class WfsInsertEventServiceNotifier implements Filter {
             skipStartDocument( xmlStream );
             if ( xmlStream.isStartElement() && WFS_200_TRANSACTION_RESPONSE.equals( xmlStream.getName() ) ) {
                 LOG.info( "Detected WFS 2.0.0 transaction response" );
-                while ( xmlStream.getEventType() != END_DOCUMENT ) {
-                    nextElement( xmlStream );
-                    if ( xmlStream.isStartElement() && WFS_200_TOTAL_INSERTED.equals( xmlStream.getName() ) ) {
-                        final String numInsertedString = xmlStream.getElementText();
-                        if ( numInsertedString != null ) {
-                            int numInserted = Integer.parseInt( numInsertedString.trim() );
-                            if ( numInserted > 0 ) {
-                                LOG.info( "Inserted features: " + numInserted );
-                                return true;
-                            } else {
-                                return false;
-                            }
-                        } else {
-                            return false;
-                        }
-                    }
-                }
+                return true;
             }
         } finally {
             if ( xmlStream != null ) {
@@ -232,91 +223,25 @@ public class WfsInsertEventServiceNotifier implements Filter {
         return false;
     }
 
-    private void notifyEventService( StreamBufferStore requestPayloadBuffer )
+    private void sendNotificationMessagesToEventService( StreamBufferStore requestPayloadBuffer )
                             throws XMLStreamException, FactoryConfigurationError, IOException {
 
-        LOG.info( "Notifying Event Service" );
-        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        final XMLOutputFactory of = XMLOutputFactory.newInstance();
-        of.setProperty( IS_REPAIRING_NAMESPACES, "true" );
-        final XMLStreamWriter xmlWriter = of.createXMLStreamWriter( bos );
-
-        try {
-            xmlWriter.writeStartDocument( "UTF-8", "1.0" );
-            xmlWriter.writeStartElement( "soap", "Envelope", NS_SOAP );
-            xmlWriter.writeNamespace( "soap", NS_SOAP );
-            xmlWriter.writeNamespace( "wsa", NS_WSA );
-            xmlWriter.writeNamespace( "wsnt", NS_WSNT );
-
-            xmlWriter.writeStartElement( "soap", "Header", NS_SOAP );
-            writeElement( xmlWriter, "wsa", "To", NS_WSA, urlBroker );
-            writeElement( xmlWriter, "wsa", "Action", NS_WSA, ACTION_NOTIFY );
-            final String messageId = "uuid:" + UUID.randomUUID();
-            writeElement( xmlWriter, "wsa", "MessageID", NS_WSA, messageId );
-            xmlWriter.writeStartElement( "wsa", "From", NS_WSA );
-            writeElement( xmlWriter, "wsa", "Address", NS_WSA, ROLE_ANONYMOUS );
-            xmlWriter.writeEndElement();
-            xmlWriter.writeEndElement();
-
-            xmlWriter.writeStartElement( "soap", "Body", NS_SOAP );
-            xmlWriter.writeStartElement( "wsnt", "Notify", NS_WSNT );
-            xmlWriter.writeStartElement( "wsnt", "NotificationMessage", NS_WSNT );
-            xmlWriter.writeStartElement( "wsnt", "Topic", NS_WSNT );
-            xmlWriter.writeAttribute( "Dialect", "http://docs.oasis-open.org/wsn/t-1/TopicExpression/Simple" );
-            xmlWriter.writeCharacters( "aviation" );
-            xmlWriter.writeEndElement();
-            xmlWriter.writeStartElement( "wsnt", "Message", NS_WSNT );
-            copyGmlFeatures( requestPayloadBuffer, xmlWriter );
-            xmlWriter.writeEndElement();
-            xmlWriter.writeEndElement();
-            xmlWriter.writeEndElement();
-            xmlWriter.writeEndElement();
-
-            xmlWriter.writeEndElement();
-            xmlWriter.writeEndDocument();
-
-            LOG.info( bos.toString() );
-            if ( LOG.isDebugEnabled() ) {
-                LOG.debug( bos.toString() );
-            }
-
-            final DefaultHttpClient httpClient = new DefaultHttpClient();
-            httpClient.getCredentialsProvider().setCredentials( ANY,
-                                                                new UsernamePasswordCredentials( httpUserName,
-                                                                                                 httpPassword ) );
-            final HttpPost httpPost = new HttpPost( urlBroker );
-            httpPost.setEntity( new ByteArrayEntity( bos.toByteArray(), TEXT_XML ) );
-            final HttpResponse httpResponse = httpClient.execute( httpPost );
-            if ( httpResponse.getStatusLine().getStatusCode() != 204 ) {
-                LOG.error( "Notifying of Event Service failed: " + httpResponse.getStatusLine().getStatusCode() + ": "
-                           + httpResponse.getStatusLine().getReasonPhrase() );
-            } else {
-                LOG.info( "Event Service notified successfully" );
-            }
-        } finally {
-            if ( xmlWriter != null ) {
-                xmlWriter.close();
-                bos.close();
-            }
-        }
-    }
-
-    private void copyGmlFeatures( final StreamBufferStore requestPayloadBuffer, final XMLStreamWriter xmlWriter )
-                            throws XMLStreamException, FactoryConfigurationError, IOException {
+        LOG.info( "Sending notification messages to Event Service" );
         final InputStream inputStream = requestPayloadBuffer.getInputStream();
         final XMLStreamReader xmlReader = XMLInputFactory.newInstance().createXMLStreamReader( inputStream );
         try {
             skipStartDocument( xmlReader );
             while ( xmlReader.getEventType() != END_DOCUMENT ) {
-                if ( xmlReader.isStartElement() && WFS_200_INSERT.equals( xmlReader.getName() ) ) {
-                    LOG.info( "Detected WFS 2.0.0 insert element" );
-                    nextElement( xmlReader );
-                    while ( !( xmlReader.isEndElement() && WFS_200_INSERT.equals( xmlReader.getName() ) ) ) {
-                        if ( xmlReader.isStartElement() ) {
-                            copy( xmlWriter, xmlReader );
-                        } else {
-                            nextElement( xmlReader );
-                        }
+                if ( xmlReader.isStartElement() ) {
+                    QName elName = xmlReader.getName();
+                    if ( WFS_200_INSERT.equals( elName ) ) {
+                        LOG.info( "Detected WFS 2.0.0 Insert element" );
+                        sendNotificationForInsert( xmlReader );
+                    } else if ( WFS_200_REPLACE.equals( elName ) ) {
+                        LOG.info( "Detected WFS 2.0.0 Replace element" );
+                        sendNotificationForReplace( xmlReader );
+                    } else {
+                        xmlReader.next();
                     }
                 } else {
                     xmlReader.next();
@@ -330,12 +255,212 @@ public class WfsInsertEventServiceNotifier implements Filter {
         }
     }
 
+    private void sendNotificationForInsert( final XMLStreamReader xmlReader )
+                            throws XMLStreamException, IOException {
+        nextElement( xmlReader );
+        if ( xmlReader.isStartElement() ) {
+            final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            final XMLOutputFactory of = XMLOutputFactory.newInstance();
+            of.setProperty( IS_REPAIRING_NAMESPACES, "true" );
+            final XMLStreamWriter xmlWriter = of.createXMLStreamWriter( bos );
+            try {
+                writeNotificationStart( xmlWriter );
+                while ( xmlReader.isStartElement() ) {
+                    writeElement( xmlWriter, xmlReader );
+                    nextElement( xmlReader );
+                }
+                writeNotificationEnd( xmlWriter );
+                xmlWriter.flush();
+                sendMessageToEventService( bos );
+            } finally {
+                if ( xmlWriter != null ) {
+                    xmlWriter.close();
+                    bos.close();
+                }
+            }
+        }
+    }
+
+    private void sendNotificationForReplace( final XMLStreamReader xmlReader )
+                            throws NoSuchElementException, XMLStreamException, IOException {
+        nextElement( xmlReader );
+        if ( xmlReader.isStartElement() ) {
+            final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            final XMLOutputFactory of = XMLOutputFactory.newInstance();
+            of.setProperty( IS_REPAIRING_NAMESPACES, "true" );
+            final XMLStreamWriter xmlWriter = of.createXMLStreamWriter( bos );
+            try {
+                writeNotificationStart( xmlWriter );
+                writeElement( xmlWriter, xmlReader );
+                writeNotificationEnd( xmlWriter );
+                xmlWriter.flush();
+                sendMessageToEventService( bos );
+            } finally {
+                if ( xmlWriter != null ) {
+                    xmlWriter.close();
+                    bos.close();
+                }
+            }
+        }
+    }
+
+    private void writeNotificationStart( final XMLStreamWriter xmlWriter )
+                            throws XMLStreamException {
+        xmlWriter.writeStartDocument( "UTF-8", "1.0" );
+        xmlWriter.writeStartElement( "soap", "Envelope", NS_SOAP );
+        xmlWriter.writeNamespace( "soap", NS_SOAP );
+        xmlWriter.writeNamespace( "wsa", NS_WSA );
+        xmlWriter.writeNamespace( "wsnt", NS_WSNT );
+
+        xmlWriter.writeStartElement( "soap", "Header", NS_SOAP );
+        writeElement( xmlWriter, "wsa", "To", NS_WSA, urlBroker );
+        writeElement( xmlWriter, "wsa", "Action", NS_WSA, ACTION_NOTIFY );
+        final String messageId = "uuid:" + UUID.randomUUID();
+        writeElement( xmlWriter, "wsa", "MessageID", NS_WSA, messageId );
+        xmlWriter.writeStartElement( "wsa", "From", NS_WSA );
+        writeElement( xmlWriter, "wsa", "Address", NS_WSA, ROLE_ANONYMOUS );
+        xmlWriter.writeEndElement();
+        xmlWriter.writeEndElement();
+
+        xmlWriter.writeStartElement( "soap", "Body", NS_SOAP );
+        xmlWriter.writeStartElement( "wsnt", "Notify", NS_WSNT );
+        xmlWriter.writeStartElement( "wsnt", "NotificationMessage", NS_WSNT );
+        xmlWriter.writeStartElement( "wsnt", "Topic", NS_WSNT );
+        xmlWriter.writeAttribute( "Dialect", "http://docs.oasis-open.org/wsn/t-1/TopicExpression/Simple" );
+        xmlWriter.writeCharacters( "aviation" );
+        xmlWriter.writeEndElement();
+        xmlWriter.writeStartElement( "wsnt", "Message", NS_WSNT );
+    }
+
+    private void writeNotificationEnd( final XMLStreamWriter xmlWriter )
+                            throws XMLStreamException {
+        xmlWriter.writeEndElement();
+        xmlWriter.writeEndElement();
+        xmlWriter.writeEndElement();
+        xmlWriter.writeEndElement();
+        xmlWriter.writeEndElement();
+        xmlWriter.writeEndDocument();
+    }
+
+    private void sendMessageToEventService( final ByteArrayOutputStream bos ) throws ClientProtocolException, IOException {
+        if ( LOG.isDebugEnabled() ) {
+            LOG.debug( bos.toString() );
+        }
+        final DefaultHttpClient httpClient = new DefaultHttpClient();
+        httpClient.getCredentialsProvider().setCredentials( ANY,
+                                                            new UsernamePasswordCredentials( httpUserName, httpPassword ) );
+        final HttpPost httpPost = new HttpPost( urlBroker );
+        httpPost.setEntity( new ByteArrayEntity( bos.toByteArray(), TEXT_XML ) );
+        final HttpResponse httpResponse = httpClient.execute( httpPost );
+        if ( httpResponse.getStatusLine().getStatusCode() != 204 ) {
+            LOG.error( "Notifying of Event Service failed: " + httpResponse.getStatusLine().getStatusCode() + ": "
+                       + httpResponse.getStatusLine().getReasonPhrase() );
+        } else {
+            LOG.info( "Event Service notified successfully" );
+        }
+    }
+
     private void writeElement( final XMLStreamWriter xmlWriter, final String prefix, final String localName,
                                final String ns, final String text )
                             throws XMLStreamException {
         xmlWriter.writeStartElement( prefix, localName, ns );
         xmlWriter.writeCharacters( text );
         xmlWriter.writeEndElement();
+    }
+
+    private void writeElement( XMLStreamWriter writer, XMLStreamReader inStream )
+                            throws XMLStreamException {
+
+        if ( inStream.getEventType() != XMLStreamConstants.START_ELEMENT ) {
+            throw new XMLStreamException( "Input stream does not point to a START_ELEMENT event." );
+        }
+        int openElements = 0;
+        boolean firstRun = true;
+        while ( firstRun || openElements > 0 ) {
+            firstRun = false;
+            int eventType = inStream.getEventType();
+
+            switch ( eventType ) {
+            case CDATA: {
+                writer.writeCData( inStream.getText() );
+                break;
+            }
+            case CHARACTERS: {
+                String s = new String( inStream.getTextCharacters(), inStream.getTextStart(), inStream.getTextLength() );
+                s = s.trim();
+                if ( !s.isEmpty() ) {
+                    writer.writeCharacters( s );
+                }
+                break;
+            }
+            case END_ELEMENT: {
+                writer.writeEndElement();
+                openElements--;
+                break;
+            }
+            case START_ELEMENT: {
+                String prefix = inStream.getPrefix();
+                String namespaceURI = inStream.getNamespaceURI();
+                if ( "".equals( namespaceURI ) && ( prefix == null || DEFAULT_NS_PREFIX.equals( prefix ) ) ) {
+                    writer.writeStartElement( inStream.getLocalName() );
+                } else {
+                    if ( prefix == null || DEFAULT_NS_PREFIX.equals( prefix ) ) {
+                        writer.writeStartElement( DEFAULT_NS_PREFIX, inStream.getLocalName(), namespaceURI );
+                    } else {
+                        writer.writeStartElement( prefix, inStream.getLocalName(), namespaceURI );
+                    }
+                }
+
+                // copy all namespace bindings
+                for ( int i = 0; i < inStream.getNamespaceCount(); i++ ) {
+                    String nsPrefix = inStream.getNamespacePrefix( i );
+                    String nsURI = inStream.getNamespaceURI( i );
+                    if ( nsPrefix != null && nsURI != null ) {
+                        writer.writeNamespace( nsPrefix, nsURI );
+                    } else if ( nsPrefix == null ) {
+                        writer.writeDefaultNamespace( nsURI );
+                    }
+                }
+
+                if ( namespaceURI != null ) {
+                    ensureBinding( writer, prefix, namespaceURI );
+                }
+
+                // copy all attributes
+                for ( int i = 0; i < inStream.getAttributeCount(); i++ ) {
+                    String localName = inStream.getAttributeLocalName( i );
+                    String nsPrefix = inStream.getAttributePrefix( i );
+                    String value = inStream.getAttributeValue( i );
+                    String nsURI = inStream.getAttributeNamespace( i );
+                    if ( nsURI == null || "".equals( nsURI ) ) {
+                        writer.writeAttribute( localName, value );
+                    } else {
+                        ensureBinding( writer, nsPrefix, nsURI );
+                        writer.writeAttribute( nsPrefix, nsURI, localName, value );
+                    }
+                }
+
+                openElements++;
+                break;
+            }
+            default: {
+                break;
+            }
+            }
+            if ( openElements > 0 ) {
+                inStream.next();
+            }
+        }
+    }
+
+    private void ensureBinding( XMLStreamWriter writer, String prefix, String namespaceURI )
+                            throws XMLStreamException {
+        String boundPrefix = writer.getPrefix( namespaceURI );
+        if ( prefix == null && !"".equals( boundPrefix ) ) {
+            writer.writeDefaultNamespace( namespaceURI );
+        } else if ( prefix != null && !prefix.equals( writer.getPrefix( namespaceURI ) ) ) {
+            writer.writeNamespace( prefix, namespaceURI );
+        }
     }
 
     @Override

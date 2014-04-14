@@ -3,7 +3,7 @@
   <artifactId>deegree-webservices</artifactId>
   <packaging>war</packaging>
   <name>deegree-webservices</name>
-  <version>3.4-pre11-SNAPSHOT-ows10-0.2-SNAPSHOT</version>
+  <version>3.4-pre11-SNAPSHOT-ows10-0.3</version>
   <description>Webapp that includes deegree WMS, WFS, CSW, WPS, common datastore modules and service administration console</description>
 
   <properties>
@@ -69,33 +69,6 @@
                   <to>target/deegree-tomcat/conf/tomcat-users.xml</to>
                 </file>
               </files>
-            </configuration>
-          </execution>
-          <execution>
-            <id>assemble-console</id>
-            <goals>
-              <goal>assemble-console</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <artifactId>maven-assembly-plugin</artifactId>
-        <configuration>
-          <descriptors>
-            <descriptor>assembly.xml</descriptor>
-          </descriptors>
-        </configuration>
-        <executions>
-          <execution>
-            <id>assemble-tomcat</id>
-            <phase>package</phase>
-            <goals>
-              <goal>single</goal>
-            </goals>
-            <configuration>
-              <appendAssemblyId>false</appendAssemblyId>
-              <ignoreMissingDescriptor>true</ignoreMissingDescriptor>
             </configuration>
           </execution>
         </executions>
