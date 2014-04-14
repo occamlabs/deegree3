@@ -3,7 +3,7 @@
   <artifactId>deegree-webservices</artifactId>
   <packaging>war</packaging>
   <name>deegree-webservices</name>
-  <version>3.4-pre11-SNAPSHOT-ows10-0.5</version>
+  <version>3.4-pre11-SNAPSHOT-ows10-0.6</version>
   <description>Webapp that includes deegree WMS, WFS, CSW, WPS, common datastore modules and service administration console</description>
 
   <properties>
