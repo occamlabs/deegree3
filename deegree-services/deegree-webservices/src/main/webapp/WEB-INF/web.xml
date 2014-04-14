@@ -23,7 +23,7 @@
   </filter>
   <filter-mapping>
     <filter-name>Event Service Notifier</filter-name>
-    <url-pattern>/*</url-pattern>
+    <url-pattern>/services/wfs_fixm</url-pattern>
   </filter-mapping>
 
   <servlet>
