@@ -4,7 +4,7 @@
   <groupId>org.deegree</groupId>
   <artifactId>deegree</artifactId>
   <packaging>pom</packaging>
-  <version>3.4-pre13-SNAPSHOT</version>
+  <version>3.4-pre12-GEODAN-2</version>
   <name>deegree</name>
   <description>Framework for OGC Web Service implementations and geospatial applications</description>
   <url>http://www.deegree.org/</url>
@@ -31,14 +31,14 @@
 
   <distributionManagement>
     <repository>
-      <id>deegree-releases</id>
-      <url>http://repo.deegree.org/content/repositories/releases/</url>
+      <id>geodan-releases</id>
+      <url>https://jenkins.occamlabs.de/nexus/content/repositories/geodan-releases</url>
     </repository>
     <snapshotRepository>
-      <id>deegree-snapshots</id>
-      <url>http://repo.deegree.org/content/repositories/snapshots/</url>
+      <id>geodan-snapshots</id>
+      <url>https://jenkins.occamlabs.de/nexus/content/repositories/geodan-snapshots</url>
     </snapshotRepository>
-    <site>
+   <site>
       <id>apidoc.deegree.org</id>
 <!--
       <url>scp://apidoc.deegree.org/var/www/apidoc.deegree.org/${project.version}/</url>
