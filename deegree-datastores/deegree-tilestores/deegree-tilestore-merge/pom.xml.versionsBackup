@@ -1,9 +1,9 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <artifactId>deegree-services-csw</artifactId>
+  <artifactId>deegree-tilestore-merge</artifactId>
+  <name>deegree-tilestore-merge</name>
   <packaging>jar</packaging>
-  <name>deegree-services-csw</name>
-  <description>Catalogue Service for the Web (CSW) implementation - Querying and modifying of metadata records for geospatial services and datasets</description>
+  <description>Tile store implementation merges different other tile stores into one</description>
 
   <properties>
     <deegree.module.status>ok</deegree.module.status>
@@ -11,8 +11,8 @@
 
   <parent>
     <groupId>org.deegree</groupId>
-    <artifactId>deegree-services</artifactId>
-    <version>3.4-pre13-GEODAN-3</version>
+    <artifactId>deegree-tilestores</artifactId>
+    <version>3.4-pre14-GEODAN-3</version>
   </parent>
 
   <repositories>
@@ -40,30 +40,18 @@
   <dependencies>
     <dependency>
       <groupId>org.deegree</groupId>
-      <artifactId>deegree-mdstore-commons</artifactId>
+      <artifactId>deegree-tilestore-commons</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.deegree</groupId>
-      <artifactId>deegree-services-commons</artifactId>
+      <artifactId>deegree-core-coverage</artifactId>
       <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>javax.servlet</groupId>
-      <artifactId>servlet-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>commons-fileupload</groupId>
-      <artifactId>commons-fileupload</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>de.odysseus.staxon</groupId>
-      <artifactId>staxon</artifactId>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
     </dependency>
   </dependencies>
-
 </project>
+

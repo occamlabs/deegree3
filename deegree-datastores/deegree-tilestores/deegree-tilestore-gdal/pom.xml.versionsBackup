@@ -1,18 +1,14 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <artifactId>deegree-featurestore-simplesql</artifactId>
+  <groupId>org.deegree</groupId>
+  <artifactId>deegree-tilestore-gdal</artifactId>
   <packaging>jar</packaging>
-  <name>deegree-featurestore-simplesql</name>
-  <description>Feature store implementation for retrieving features from SQL databases, configuration based on SELECT statements</description>
-
-  <properties>
-    <deegree.module.status>ok</deegree.module.status>
-  </properties>
+  <description>Tile store implementation that accesses raster files via GDAL (http://www.gdal.org)</description>  
 
   <parent>
     <groupId>org.deegree</groupId>
-    <artifactId>deegree-featurestores</artifactId>
-    <version>3.4-pre13-GEODAN-3</version>
+    <artifactId>deegree-tilestores</artifactId>
+    <version>3.4-pre14-GEODAN-3</version>
   </parent>
 
   <repositories>
@@ -37,23 +33,29 @@
     </plugins>
   </build>
 
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.deegree</groupId>
+        <artifactId>deegree-tilestore-commons</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.deegree</groupId>
+        <artifactId>deegree-core-gdal</artifactId>
+        <version>${project.version}</version>
+      </dependency>      
+    </dependencies>
+  </dependencyManagement>
+
   <dependencies>
     <dependency>
       <groupId>org.deegree</groupId>
-      <artifactId>deegree-featurestore-commons</artifactId>
-      <version>${project.version}</version>
+      <artifactId>deegree-tilestore-commons</artifactId>
     </dependency>
     <dependency>
       <groupId>org.deegree</groupId>
-      <artifactId>deegree-sqldialect-postgis</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.deegree</groupId>
-      <artifactId>deegree-core-db</artifactId>
-      <version>${project.version}</version>
+      <artifactId>deegree-core-gdal</artifactId>
     </dependency>
   </dependencies>
-
 </project>
-
