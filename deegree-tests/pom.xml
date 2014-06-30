@@ -8,7 +8,7 @@
   <parent>
     <groupId>org.deegree</groupId>
     <artifactId>deegree</artifactId>
-    <version>3.3.7-pgr-1</version>
+    <version>3.3.11-SNAPSHOT</version>
   </parent>
 
   <repositories>
@@ -86,7 +86,9 @@
     <module>deegree-compliance-tests</module>
     <module>deegree-wms-similarity-tests</module>
     <module>deegree-wms-tiling-tests</module>
+<!--
     <module>deegree-wms-remoteows-tests</module>
+-->
     <module>deegree-wmts-tests</module>
   </modules>
 

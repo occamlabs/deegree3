@@ -42,6 +42,7 @@ import static org.deegree.commons.utils.CollectionUtils.removeDuplicates;
 import static org.deegree.commons.utils.MapUtils.DEFAULT_PIXEL_SIZE;
 import static org.deegree.rendering.r2d.RenderHelper.calcScaleWMS130;
 import static org.deegree.rendering.r2d.context.MapOptionsHelper.insertMissingOptions;
+import static org.deegree.theme.Themes.getAllLayers;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.awt.Color;
@@ -111,14 +112,14 @@ public class MapService {
     private static final Logger LOG = getLogger( MapService.class );
 
     /**
-     * 
+     *
      */
     public HashMap<String, Layer> layers;
 
     private Layer root;
 
     /**
-     * 
+     *
      */
     public StyleRegistry registry;
 
@@ -126,7 +127,7 @@ public class MapService {
 
     MapOptions defaultLayerOptions;
 
-    private LinkedList<LayerUpdater> dynamics = new LinkedList<LayerUpdater>();
+    private final LinkedList<LayerUpdater> dynamics = new LinkedList<LayerUpdater>();
 
     /**
      * The current update sequence.
@@ -141,9 +142,9 @@ public class MapService {
 
     HashMap<String, Theme> themeMap;
 
-    private GetLegendHandler getLegendHandler;
+    private final GetLegendHandler getLegendHandler;
 
-    private OldStyleMapService oldStyleMapService;
+    private final OldStyleMapService oldStyleMapService;
 
     /**
      * @param conf
@@ -317,7 +318,6 @@ public class MapService {
         Iterator<StyleRef> styleItr = gm.getStyles().iterator();
         MapOptionsMaps options = gm.getRenderingOptions();
         List<MapOptions> mapOptions = new ArrayList<MapOptions>();
-        List<LayerData> list = new ArrayList<LayerData>();
 
         double scale = gm.getScale();
 
@@ -339,23 +339,48 @@ public class MapService {
 
         ScaleFunction.getCurrentScaleValue().set( scale );
 
-        for ( LayerRef lr : gm.getLayers() ) {
-            LayerQuery query = queryIter.next();
-            for ( org.deegree.layer.Layer l : Themes.getAllLayers( themeMap.get( lr.getName() ) ) ) {
-                if ( l.getMetadata().getScaleDenominators().first > scale
-                     || l.getMetadata().getScaleDenominators().second < scale ) {
-                    continue;
-                }
-                list.add( l.mapQuery( query, headers ) );
-            }
-        }
+        List<LayerData> layerDataList = checkStyleValidAndBuildLayerDataList( gm, headers, scale, queryIter );
         Iterator<MapOptions> optIter = mapOptions.iterator();
-        for ( LayerData d : list ) {
+        for ( LayerData d : layerDataList ) {
             ctx.applyOptions( optIter.next() );
             d.render( ctx );
         }
 
         ScaleFunction.getCurrentScaleValue().remove();
+    }
+
+    private List<LayerData> checkStyleValidAndBuildLayerDataList( org.deegree.protocol.wms.ops.GetMap gm,
+                                                                  List<String> headers, double scale,
+                                                                  ListIterator<LayerQuery> queryIter )
+                            throws OWSException {
+        List<LayerData> layerDataList = new ArrayList<LayerData>();
+        for ( LayerRef lr : gm.getLayers() ) {
+            LayerQuery query = queryIter.next();
+            List<org.deegree.layer.Layer> layers = getAllLayers( themeMap.get( lr.getName() ) );
+            assertStyleApplicableForAtLeastOneLayer( layers, query.getStyle(), lr.getName() );
+            for ( org.deegree.layer.Layer layer : layers ) {
+                if ( layer.getMetadata().getScaleDenominators().first > scale
+                     || layer.getMetadata().getScaleDenominators().second < scale ) {
+                    continue;
+                }
+                if ( layer.isStyleApplicable( query.getStyle() ) ) {
+                    layerDataList.add( layer.mapQuery( query, headers ) );
+                }
+            }
+        }
+        return layerDataList;
+    }
+
+    private void assertStyleApplicableForAtLeastOneLayer( List<org.deegree.layer.Layer> layers, StyleRef style,
+                                                          String name )
+                            throws OWSException {
+        for ( org.deegree.layer.Layer layer : layers ) {
+            if ( layer.isStyleApplicable( style ) ) {
+                return;
+            }
+        }
+        throw new OWSException( "Style " + style.getName() + " is not defined for layer " + name + ".",
+                                "StyleNotDefined", "styles" );
     }
 
     private LayerQuery buildQuery( StyleRef style, LayerRef lr, MapOptionsMaps options, List<MapOptions> mapOptions,
@@ -422,10 +447,19 @@ public class MapService {
             LayerRef lr = layerItr.next();
             StyleRef sr = styleItr.next();
             OperatorFilter f = filterItr == null ? null : filterItr.next();
-
+            int layerRadius = 0;
+            for ( org.deegree.layer.Layer l : Themes.getAllLayers( themeMap.get( lr.getName() ) ) ) {
+                if ( l.getMetadata().getMapOptions() != null
+                     && l.getMetadata().getMapOptions().getFeatureInfoRadius() != 1 ) {
+                    layerRadius = l.getMetadata().getMapOptions().getFeatureInfoRadius();
+                } else {
+                    layerRadius = defaultLayerOptions.getFeatureInfoRadius();
+                }
+            }
             LayerQuery query = new LayerQuery( gfi.getEnvelope(), gfi.getWidth(), gfi.getHeight(), gfi.getX(),
                                                gfi.getY(), gfi.getFeatureCount(), f, sr, gfi.getParameterMap(),
-                                               gfi.getDimensions(), new MapOptionsMaps(), gfi.getEnvelope() );
+                                               gfi.getDimensions(), new MapOptionsMaps(), gfi.getEnvelope(),
+                                               layerRadius );
             queries.add( query );
         }
         return queries;
