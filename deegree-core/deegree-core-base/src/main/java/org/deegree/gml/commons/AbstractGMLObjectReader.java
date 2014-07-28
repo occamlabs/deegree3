@@ -48,6 +48,8 @@ import static org.apache.xerces.xs.XSTypeDefinition.SIMPLE_TYPE;
 import static org.deegree.commons.tom.primitive.BaseType.BOOLEAN;
 import static org.deegree.commons.xml.CommonNamespaces.XLNNS;
 import static org.deegree.commons.xml.CommonNamespaces.XSINS;
+import static org.deegree.commons.xml.stax.XMLStreamUtils.nextElement;
+import static org.deegree.commons.xml.stax.XMLStreamUtils.require;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -344,22 +346,27 @@ public abstract class AbstractGMLObjectReader extends XMLAdapter {
     private Property parseEnvelopeProperty( XMLStreamReaderWrapper xmlStream, EnvelopePropertyType propDecl, ICRS crs )
                             throws NoSuchElementException, XMLStreamException, XMLParsingException {
 
-        QName propName = xmlStream.getName();
-        Map<QName, PrimitiveValue> attrs = parseAttributes( xmlStream, propDecl.getElementDecl() );
-        boolean isNilled = attrs.containsKey( XSI_NIL ) && (Boolean) attrs.get( XSI_NIL ).getValue();
-        Property property = null;
+        final QName propName = xmlStream.getName();
+        final Map<QName, PrimitiveValue> attrs = parseAttributes( xmlStream, propDecl.getElementDecl() );
+        final boolean isNilled = attrs.containsKey( XSI_NIL ) && (Boolean) attrs.get( XSI_NIL ).getValue();
         Envelope env = null;
-        xmlStream.nextTag();
-        if ( xmlStream.getName().equals( new QName( gmlNs, "Null" ) ) ) {
-            // TODO extract
-            XMLStreamUtils.skipElement( xmlStream );
-        } else if ( xmlStream.getName().equals( new QName( gmlNs, "null" ) ) ) {
-            // GML 2 uses "null" instead of "Null"
-            // TODO
-            XMLStreamUtils.skipElement( xmlStream );
-        } else {
-            env = gmlStreamReader.getGeometryReader().parseEnvelope( xmlStream, crs );
+        Property property = null;
+        if ( isNilled ) {
             property = new GenericProperty( propDecl, propName, env, isNilled );
+        } else {
+            nextElement( xmlStream );
+            require( xmlStream, START_ELEMENT );
+            if ( xmlStream.getName().equals( new QName( gmlNs, "Null" ) ) ) {
+                // TODO extract
+                XMLStreamUtils.skipElement( xmlStream );
+            } else if ( xmlStream.getName().equals( new QName( gmlNs, "null" ) ) ) {
+                // GML 2 uses "null" instead of "Null"
+                // TODO
+                XMLStreamUtils.skipElement( xmlStream );
+            } else {
+                env = gmlStreamReader.getGeometryReader().parseEnvelope( xmlStream, crs );
+                property = new GenericProperty( propDecl, propName, env, isNilled );
+            }
         }
         xmlStream.nextTag();
         return property;
