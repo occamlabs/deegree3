@@ -50,6 +50,7 @@ import org.deegree.protocol.wfs.getpropertyvalue.GetPropertyValue;
 import org.deegree.protocol.wfs.query.Query;
 import org.deegree.protocol.wfs.query.StandardPresentationParams;
 import org.deegree.protocol.wfs.query.xml.QueryXMLAdapter;
+import org.deegree.protocol.wfs.query.xml.Wfs200QueryXmlAdapter;
 
 /**
  * Adapter between XML <code>GetPropertyValue</code> requests and {@link GetPropertyValue} objects.
@@ -58,17 +59,17 @@ import org.deegree.protocol.wfs.query.xml.QueryXMLAdapter;
  * <ul>
  * <li>2.0.0</li>
  * </ul>
- * 
+ *
  * @author <a href="mailto:schneider@lat-lon.de">Markus Schneider</a>
  * @author last edited by: $Author$
- * 
+ *
  * @version $Revision$, $Date$
  */
 public class GetPropertyValueXMLAdapter extends QueryXMLAdapter {
 
     /**
      * Parses a <code>GetPropertyValue</code> element into a {@link GetPropertyValue} object.
-     * 
+     *
      * @return parsed {@link GetPropertyValue} request, never <code>null</code>
      * @throws OWSException
      */
@@ -91,7 +92,7 @@ public class GetPropertyValueXMLAdapter extends QueryXMLAdapter {
 
     /**
      * Parses a WFS 2.0.0 <code>GetPropertyValue</code> document into a {@link GetPropertyValue} object.
-     * 
+     *
      * @return corresponding GetPropertyValue instance, never <code>null</code>
      * @throws OWSException
      */
@@ -124,8 +125,7 @@ public class GetPropertyValueXMLAdapter extends QueryXMLAdapter {
 
         // <xsd:element ref="fes:AbstractQueryExpression" maxOccurs="unbounded"/>
         OMElement queryEl = getRequiredElement( rootElement, new XPath( "*", nsContext ) );
-        Query query = parseAbstractQuery200( queryEl );
-
+        final Query query = new Wfs200QueryXmlAdapter().parse( queryEl );
         return new GetPropertyValue( VERSION_200, handle, presentationParams, resolveParams, valueReference,
                                      resolvePath, query );
     }

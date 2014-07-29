@@ -67,14 +67,14 @@ import org.deegree.protocol.wfs.getfeature.TypeName;
 import org.deegree.protocol.wfs.lockfeature.LockFeature;
 import org.deegree.protocol.wfs.query.FilterQuery;
 import org.deegree.protocol.wfs.query.Query;
-import org.deegree.protocol.wfs.query.xml.QueryXMLAdapter;
+import org.deegree.protocol.wfs.query.xml.Wfs200QueryXmlAdapter;
 
 /**
  * Adapter between XML <code>LockFeature</code> requests and {@link LockFeature} objects.
- * 
+ *
  * @author <a href="mailto:schneider@lat-lon.de">Markus Schneider</a>
  * @author last edited by: $Author$
- * 
+ *
  * @version $Revision$, $Date$
  */
 public class LockFeatureXMLAdapter extends AbstractWFSRequestXMLAdapter {
@@ -88,7 +88,7 @@ public class LockFeatureXMLAdapter extends AbstractWFSRequestXMLAdapter {
      * <li>WFS 1.1.0</li>
      * <li>WFS 2.0.0</li>
      * </ul>
-     * 
+     *
      * @return parsed {@link LockFeature} request
      * @throws Exception
      * @throws XMLParsingException
@@ -120,7 +120,7 @@ public class LockFeatureXMLAdapter extends AbstractWFSRequestXMLAdapter {
 
     /**
      * Parses a WFS 1.0.0 <code>LockFeature</code> document into a {@link LockFeature} object.
-     * 
+     *
      * @return corresponding {@link LockFeature} instance
      */
     @SuppressWarnings("boxing")
@@ -170,7 +170,7 @@ public class LockFeatureXMLAdapter extends AbstractWFSRequestXMLAdapter {
 
     /**
      * Parses a WFS 1.1.0 <code>LockFeature</code> document into a {@link LockFeature} object.
-     * 
+     *
      * @return corresponding {@link LockFeature} instance
      */
     @SuppressWarnings("boxing")
@@ -218,7 +218,7 @@ public class LockFeatureXMLAdapter extends AbstractWFSRequestXMLAdapter {
 
     /**
      * Parses a WFS 2.0.0 <code>LockFeature</code> document into a {@link LockFeature} object.
-     * 
+     *
      * @return corresponding {@link LockFeature} instance
      * @throws OWSException
      */
@@ -235,11 +235,10 @@ public class LockFeatureXMLAdapter extends AbstractWFSRequestXMLAdapter {
         List<Query> queries = new ArrayList<Query>();
         @SuppressWarnings("unchecked")
         Iterator<OMElement> childElIter = rootElement.getChildElements();
-        QueryXMLAdapter queryXMLAdapter = new QueryXMLAdapter();
-        queryXMLAdapter.setRootElement( rootElement );
+        final Wfs200QueryXmlAdapter queryXMLAdapter = new Wfs200QueryXmlAdapter();
         while ( childElIter.hasNext() ) {
             OMElement childEl = childElIter.next();
-            Query query = queryXMLAdapter.parseAbstractQuery200( childEl );
+            Query query = queryXMLAdapter.parse( childEl );
             queries.add( query );
         }
 

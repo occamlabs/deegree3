@@ -74,6 +74,7 @@ import org.deegree.protocol.wfs.query.FilterQuery;
 import org.deegree.protocol.wfs.query.Query;
 import org.deegree.protocol.wfs.query.StandardPresentationParams;
 import org.deegree.protocol.wfs.query.xml.QueryXMLAdapter;
+import org.deegree.protocol.wfs.query.xml.Wfs200QueryXmlAdapter;
 
 /**
  * Adapter between XML <code>GetFeature</code> requests and {@link GetFeature} objects.
@@ -85,11 +86,11 @@ import org.deegree.protocol.wfs.query.xml.QueryXMLAdapter;
  * <li>2.0.0</li>
  * </ul>
  * </p>
- * 
+ *
  * @author <a href="mailto:schneider@lat-lon.de">Markus Schneider</a>
  * @author <a href="mailto:ionita@lat-lon.de">Andrei Ionita</a>
  * @author last edited by: $Author$
- * 
+ *
  * @version $Revision$, $Date$
  */
 public class GetFeatureXMLAdapter extends QueryXMLAdapter {
@@ -104,7 +105,7 @@ public class GetFeatureXMLAdapter extends QueryXMLAdapter {
      * <li>2.0.0</li>
      * </ul>
      * </p>
-     * 
+     *
      * @return parsed {@link GetFeature} request, never <code>null</code>
      * @throws Exception
      * @throws XMLParsingException
@@ -135,7 +136,7 @@ public class GetFeatureXMLAdapter extends QueryXMLAdapter {
 
     /**
      * Parses a WFS 1.0.0 <code>GetFeature</code> document into a {@link GetFeature} object.
-     * 
+     *
      * @return a GetFeature instance
      */
     public GetFeature parse100() {
@@ -206,7 +207,7 @@ public class GetFeatureXMLAdapter extends QueryXMLAdapter {
 
     /**
      * Parses a WFS 1.1.0 <code>GetFeature</code> document into a {@link GetFeature} object.
-     * 
+     *
      * @return a GetFeature instance
      */
     public GetFeature parse110() {
@@ -253,9 +254,8 @@ public class GetFeatureXMLAdapter extends QueryXMLAdapter {
                 } catch ( NumberFormatException e ) {
                     // TODO string provided as time in minutes is not an integer
                 }
-                PropertyName xlinkPropName = new PropertyName( xlinkProperty,
-                                                                       new ResolveParams( null, xlinkDepth,
-                                                                                          resolveTimeout ), null );
+                PropertyName xlinkPropName = new PropertyName( xlinkProperty, new ResolveParams( null, xlinkDepth,
+                                                                                                 resolveTimeout ), null );
                 propNames.add( xlinkPropName );
             }
 
@@ -342,7 +342,7 @@ public class GetFeatureXMLAdapter extends QueryXMLAdapter {
 
     /**
      * Parses a WFS 2.0.0 <code>GetFeature</code> document into a {@link GetFeature} object.
-     * 
+     *
      * @return corresponding GetFeature instance, never <code>null</code>
      * @throws OWSException
      */
@@ -362,7 +362,7 @@ public class GetFeatureXMLAdapter extends QueryXMLAdapter {
         List<OMElement> queryElements = getRequiredElements( rootElement, new XPath( "*", nsContext ) );
         List<Query> queries = new ArrayList<Query>( queryElements.size() );
         for ( OMElement queryEl : queryElements ) {
-            queries.add( parseAbstractQuery200( queryEl ) );
+            queries.add( new Wfs200QueryXmlAdapter().parse( queryEl ) );
         }
 
         return new GetFeature( VERSION_200, handle, presentationParams, resolveParams, queries );

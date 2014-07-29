@@ -54,7 +54,7 @@ public class TimeSliceProjection implements ProjectionClause {
 
     private final Filter timeSliceFilter;
 
-    private final Boolean includeCancelled;
+    private final Boolean includeCanceled;
 
     private final Boolean includeCorrected;
 
@@ -65,7 +65,7 @@ public class TimeSliceProjection implements ProjectionClause {
      *            time instant or time period to be considered, can be <code>null</code> (consider all time slices)
      * @param timeSliceFilter
      *            filter for restricting the time slices, can be <code>null</code> (no filter)
-     * @param includeCancelled
+     * @param includeCanceled
      *            <code>true</code>, if cancelled time slices shall be included, can be <code>null</code> (=
      *            <code>false</code>)
      * @param includeCorrected
@@ -73,10 +73,10 @@ public class TimeSliceProjection implements ProjectionClause {
      *            <code>false</code>)
      */
     public TimeSliceProjection( final Object relevantTime, final Filter timeSliceFilter,
-                                final Boolean includeCancelled, final Boolean includeCorrected ) {
+                                final Boolean includeCanceled, final Boolean includeCorrected ) {
         this.relevantTime = relevantTime;
         this.timeSliceFilter = timeSliceFilter;
-        this.includeCancelled = includeCancelled;
+        this.includeCanceled = includeCanceled;
         this.includeCorrected = includeCorrected;
     }
 
@@ -104,8 +104,8 @@ public class TimeSliceProjection implements ProjectionClause {
      * @return <code>true</code>, if cancelled time slices shall be included, can be <code>null</code> (=
      *         <code>false</code>)
      */
-    public Boolean getIncludeCancelled() {
-        return includeCancelled;
+    public Boolean getIncludeCanceled() {
+        return includeCanceled;
     }
 
     /**

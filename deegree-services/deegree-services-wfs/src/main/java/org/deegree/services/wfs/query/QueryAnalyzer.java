@@ -92,7 +92,7 @@ import org.deegree.protocol.wfs.query.BBoxQuery;
 import org.deegree.protocol.wfs.query.FeatureIdQuery;
 import org.deegree.protocol.wfs.query.FilterQuery;
 import org.deegree.protocol.wfs.query.StoredQuery;
-import org.deegree.protocol.wfs.query.xml.QueryXMLAdapter;
+import org.deegree.protocol.wfs.query.xml.Wfs200QueryXmlAdapter;
 import org.deegree.protocol.wfs.storedquery.QueryExpressionText;
 import org.deegree.protocol.wfs.storedquery.StoredQueryDefinition;
 import org.deegree.protocol.wfs.storedquery.xml.StoredQueryDefinitionXMLAdapter;
@@ -108,10 +108,10 @@ import org.slf4j.LoggerFactory;
  * <p>
  * Also performs some normalizing on the values of {@link ValueReference}s. TODO describe strategy
  * </p>
- * 
+ *
  * @author <a href="mailto:schneider@lat-lon.de">Markus Schneider</a>
  * @author last edited by: $Author$
- * 
+ *
  * @version $Revision$, $Date$
  */
 public class QueryAnalyzer {
@@ -140,7 +140,7 @@ public class QueryAnalyzer {
 
     /**
      * Creates a new {@link QueryAnalyzer}.
-     * 
+     *
      * @param wfsQueries
      *            queries be performed, must not be <code>null</code>
      * @param service
@@ -230,9 +230,10 @@ public class QueryAnalyzer {
             StoredQueryDefinitionXMLAdapter parser = new StoredQueryDefinitionXMLAdapter();
             parser.load( new StringReader( templ ), "http://www.deegree.org/none" );
             StoredQueryDefinition def = parser.parse();
+            final Wfs200QueryXmlAdapter queryParser = new Wfs200QueryXmlAdapter();
             for ( QueryExpressionText text : def.getQueryExpressionTextEls() ) {
                 for ( OMElement elem : text.getChildEls() ) {
-                    org.deegree.protocol.wfs.query.Query q = new QueryXMLAdapter().parseAbstractQuery200( elem );
+                    org.deegree.protocol.wfs.query.Query q = queryParser.parse( elem );
                     if ( q instanceof AdHocQuery ) {
                         list.add( new Pair<AdHocQuery, org.deegree.protocol.wfs.query.Query>( (AdHocQuery) q, query ) );
                     }
@@ -294,7 +295,7 @@ public class QueryAnalyzer {
 
     /**
      * Returns all {@link FeatureType}s that may be returned in the response to the request.
-     * 
+     *
      * @return list of requested feature types, or <code>null</code> if any of the feature types served by the WFS could
      *         be returned (happens only for KVP-request with feature ids and without typenames)
      */
@@ -304,7 +305,7 @@ public class QueryAnalyzer {
 
     /**
      * Returns the feature store queries that have to performed for this request.
-     * 
+     *
      * @return the feature store queries that have to performed, never <code>null</code>
      */
     public Map<FeatureStore, List<Query>> getQueries() {
@@ -313,7 +314,7 @@ public class QueryAnalyzer {
 
     /**
      * Returns the original <code>GetFeature</code> query that the given query was derived from.
-     * 
+     *
      * @param query
      * @return
      */
@@ -323,9 +324,9 @@ public class QueryAnalyzer {
 
     /**
      * Returns the crs that the returned geometries should have.
-     * 
+     *
      * TODO what about multiple queries with different CRS
-     * 
+     *
      * @return the crs, or <code>null</code> (use native crs)
      */
     public ICRS getRequestedCRS() {
@@ -334,9 +335,9 @@ public class QueryAnalyzer {
 
     /**
      * Returns the specific XLink-behaviour for features properties.
-     * 
+     *
      * TODO what about multiple queries that specify different sets of properties
-     * 
+     *
      * @return specific XLink-behaviour or <code>null</code> (no specific behaviour)
      */
     public List<ProjectionClause> getProjections() {
@@ -350,7 +351,7 @@ public class QueryAnalyzer {
      * Incorrectly or un-qualified feature type or property names are repaired. These often stem from WFS 1.0.0
      * KVP-requests (which doesn't have a namespace parameter) or broken clients.
      * </p>
-     * 
+     *
      * @param wfsQuery
      *            query to be validated, must not be <code>null</code>
      * @return the feature store query, using only correctly fully qualified feature / property names
@@ -496,14 +497,13 @@ public class QueryAnalyzer {
 
     /**
      * Returns whether the propName has to be considered for re-qualification.
-     * 
+     *
      * @param propName
      * @return
      */
     private boolean isPrefixedAndBound( ValueReference propName ) {
         QName name = propName.getAsQName();
-        return !name.getPrefix().equals( DEFAULT_NS_PREFIX )
-               && !name.getNamespaceURI().equals( "" );
+        return !name.getPrefix().equals( DEFAULT_NS_PREFIX ) && !name.getNamespaceURI().equals( "" );
     }
 
     /**
@@ -512,7 +512,7 @@ public class QueryAnalyzer {
      * <p>
      * This types of propertynames especially occurs in WFS 1.0.0 requests.
      * </p>
-     * 
+     *
      * @param propName
      *            property name to be repaired, must be "simple", i.e. contain only of a QName
      * @param typeName
