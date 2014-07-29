@@ -64,8 +64,8 @@ import org.deegree.filter.Filter;
 import org.deegree.filter.expression.ValueReference;
 import org.deegree.filter.projection.ProjectionClause;
 import org.deegree.filter.projection.PropertyName;
-import org.deegree.filter.projection.TimeSliceProjection;
 import org.deegree.filter.sort.SortProperty;
+import org.deegree.filter.te.TimeSliceProjection;
 import org.deegree.filter.xml.Filter200XMLDecoder;
 import org.deegree.protocol.wfs.AbstractWFSRequestXMLAdapter;
 import org.deegree.protocol.wfs.getfeature.ResultType;
@@ -421,7 +421,7 @@ public class QueryXMLAdapter extends AbstractWFSRequestXMLAdapter {
             }
         }
 
-        return new TimeSliceProjection( filter );
+        return new TimeSliceProjection( null, filter, null, null );
     }
 
     // <xsd:element name="StoredQuery" type="wfs:StoredQueryType" substitutionGroup="fes:AbstractQueryExpression"/>

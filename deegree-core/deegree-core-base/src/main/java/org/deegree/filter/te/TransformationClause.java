@@ -1,7 +1,6 @@
-//$HeadURL$
 /*----------------------------------------------------------------------------
  This file is part of deegree, http://deegree.org/
- Copyright (C) 2001-2012 by:
+ Copyright (C) 2001-2014 by:
  Department of Geography, University of Bonn
  and
  lat/lon GmbH
@@ -33,27 +32,18 @@
 
  e-mail: info@deegree.org
  ----------------------------------------------------------------------------*/
-package org.deegree.filter.projection;
-
-import org.deegree.filter.Filter;
+package org.deegree.filter.te;
 
 /**
- * {@link ProjectionClause} for projecting time-varying objects.
- * 
- * @author <a href="mailto:schneider@lat-lon.de">Markus Schneider</a>
- * @author last edited by: $Author: schneider $
- * 
- * @version $Revision: $, $Date: $
+ * Marker interface for query clauses that modify features.
+ * <p>
+ * Defined in OGC Web Feature Service (WFS) Temporality Extension discussion paper (OGC 12-027r3).
+ * </p>
+ *
+ * @author <a href="mailto:schneider@occamlabs.de">Markus Schneider</a>
+ *
+ * @since 3.4
  */
-public class TimeSliceProjection implements ProjectionClause {
-
-    private final Filter timeSliceFilter;
-
-    public TimeSliceProjection( Filter timeSliceFilter ) {
-        this.timeSliceFilter = timeSliceFilter;
-    }
-
-    public Filter getTimeSliceFilter() {
-        return timeSliceFilter;
-    }
+public interface TransformationClause {
+    // marker interface
 }

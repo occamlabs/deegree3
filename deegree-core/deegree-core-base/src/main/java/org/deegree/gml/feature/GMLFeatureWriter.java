@@ -90,7 +90,7 @@ import org.deegree.filter.Filter;
 import org.deegree.filter.FilterEvaluationException;
 import org.deegree.filter.projection.ProjectionClause;
 import org.deegree.filter.projection.PropertyName;
-import org.deegree.filter.projection.TimeSliceProjection;
+import org.deegree.filter.te.TimeSliceProjection;
 import org.deegree.geometry.Envelope;
 import org.deegree.geometry.Geometry;
 import org.deegree.gml.GMLStreamWriter;

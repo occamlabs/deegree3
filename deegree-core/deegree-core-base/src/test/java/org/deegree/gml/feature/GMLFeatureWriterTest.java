@@ -36,7 +36,6 @@
 
 package org.deegree.gml.feature;
 
-import static junit.framework.Assert.assertEquals;
 import static org.deegree.commons.xml.CommonNamespaces.GML3_2_NS;
 import static org.deegree.filter.MatchAction.ALL;
 import static org.deegree.gml.GMLInputFactory.createGMLStreamReader;
@@ -44,6 +43,7 @@ import static org.deegree.gml.GMLOutputFactory.createGMLStreamWriter;
 import static org.deegree.gml.GMLVersion.GML_2;
 import static org.deegree.gml.GMLVersion.GML_31;
 import static org.deegree.gml.GMLVersion.GML_32;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -79,7 +79,7 @@ import org.deegree.filter.comparison.PropertyIsEqualTo;
 import org.deegree.filter.expression.Literal;
 import org.deegree.filter.expression.ValueReference;
 import org.deegree.filter.projection.ProjectionClause;
-import org.deegree.filter.projection.TimeSliceProjection;
+import org.deegree.filter.te.TimeSliceProjection;
 import org.deegree.gml.GMLInputFactory;
 import org.deegree.gml.GMLOutputFactory;
 import org.deegree.gml.GMLStreamReader;
@@ -88,15 +88,14 @@ import org.deegree.gml.GMLVersion;
 import org.deegree.gml.schema.GMLAppSchemaReader;
 import org.deegree.junit.XMLAssert;
 import org.deegree.junit.XMLMemoryStreamWriter;
-import org.junit.Assert;
 import org.junit.Test;
 
 /**
  * Exports the features in the Philosophers example and validates them against the corresponding schema.
- * 
+ *
  * @author <a href="mailto:ionita@lat-lon.de">Andrei Ionita</a>
  * @author last edited by: $Author: ionita $
- * 
+ *
  * @version $Revision: $, $Date: $
  */
 public class GMLFeatureWriterTest {
@@ -343,7 +342,7 @@ public class GMLFeatureWriterTest {
         GMLStreamWriter gmlwriter = createGMLStreamWriter( GML_32, writer );
         gmlwriter.setNamespaceBindings( gmlReader.getAppSchema().getNamespaceBindings() );
         List<ProjectionClause> projections = new ArrayList<ProjectionClause>();
-        projections.add( new TimeSliceProjection( timeSliceFilter ) );
+        projections.add( new TimeSliceProjection( null, timeSliceFilter, null, null ) );
         gmlwriter.setProjections( projections );
         gmlwriter.write( f );
         gmlwriter.close();
@@ -354,7 +353,7 @@ public class GMLFeatureWriterTest {
         assertFalse( memoryWriter.toString().contains( "rsts206" ) );
         assertTrue( memoryWriter.toString().contains( "rsts207" ) );
     }
-    
+
     @Test
     public void testAIXM51RouteSegmentTimeSliceProjection2()
                             throws XMLStreamException, FactoryConfigurationError, IOException, ClassCastException,
@@ -377,7 +376,7 @@ public class GMLFeatureWriterTest {
         GMLStreamWriter gmlwriter = createGMLStreamWriter( GML_32, writer );
         gmlwriter.setNamespaceBindings( gmlReader.getAppSchema().getNamespaceBindings() );
         List<ProjectionClause> projections = new ArrayList<ProjectionClause>();
-        projections.add( new TimeSliceProjection( timeSliceFilter ) );
+        projections.add( new TimeSliceProjection( null, timeSliceFilter, null, null ) );
         gmlwriter.setProjections( projections );
         gmlwriter.write( f );
         gmlwriter.close();

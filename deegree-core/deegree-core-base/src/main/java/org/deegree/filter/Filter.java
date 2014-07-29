@@ -53,7 +53,7 @@ package org.deegree.filter;
  * 
  * @version $Revision:$, $Date:$
  */
-public interface Filter {
+public interface Filter extends SelectionClause {
 
     /**
      * Convenience enum type for discriminating the different filter types.
