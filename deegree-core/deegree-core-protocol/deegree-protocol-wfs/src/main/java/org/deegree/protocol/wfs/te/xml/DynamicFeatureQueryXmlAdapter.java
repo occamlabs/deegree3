@@ -34,7 +34,8 @@
  ----------------------------------------------------------------------------*/
 package org.deegree.protocol.wfs.te.xml;
 
-import static org.deegree.protocol.wfs.te.xml.TemporalityExtension100.WFS_TE_10_NS;
+import static org.deegree.protocol.wfs.te.TemporalityExtension100.FES_TE_10_NS;
+import static org.deegree.protocol.wfs.te.TemporalityExtension100.WFS_TE_10_NS;
 
 import java.util.List;
 
@@ -43,12 +44,13 @@ import javax.xml.namespace.QName;
 import org.apache.axiom.om.OMElement;
 import org.deegree.commons.ows.exception.OWSException;
 import org.deegree.cs.coordinatesystems.ICRS;
-import org.deegree.filter.Filter;
+import org.deegree.filter.SelectionClause;
 import org.deegree.filter.projection.ProjectionClause;
 import org.deegree.filter.sort.SortProperty;
 import org.deegree.filter.te.TransformationClause;
 import org.deegree.protocol.wfs.getfeature.TypeName;
 import org.deegree.protocol.wfs.query.xml.QueryXMLAdapter;
+import org.deegree.protocol.wfs.te.DynamicFeatureQuery;
 
 /**
  * AXIOM-based parser for <code>wfs-te:DynamicFeatureQuery</code> elements (OGC 12-027r3).
@@ -59,7 +61,9 @@ import org.deegree.protocol.wfs.query.xml.QueryXMLAdapter;
  */
 public class DynamicFeatureQueryXmlAdapter extends QueryXMLAdapter {
 
-    private static final QName SNAPSHOT_GENERATION = new QName( WFS_TE_10_NS, "SnapshotGeneration" );
+    private static final QName TRANSFORMATION = new QName( WFS_TE_10_NS, "transformation" );
+
+    private static final QName DYNAMIC_FEATURE_FILTER = new QName( FES_TE_10_NS, "DynamicFeatureFilter" );
 
     /**
      * Parses the given <code>wfs-te:DynamicFeatureQuery</code> element.
@@ -83,22 +87,31 @@ public class DynamicFeatureQueryXmlAdapter extends QueryXMLAdapter {
         // <xsd:element ref="fes:AbstractProjectionClause" minOccurs="0" maxOccurs="unbounded"/>
         final List<ProjectionClause> projectionClauses = parseProjectionClauses200( queryEl );
         // <xsd:element ref="fes:AbstractSelectionClause" minOccurs="0"/>
-        final Filter filter = parseFilter200IfPresent( queryEl );
+        final SelectionClause selectionClause = parseSelectionClauseIfPresent( queryEl );
         // <xsd:element ref="fes:AbstractSortingClause" minOccurs="0"/>
         final List<SortProperty> sortProps = parseSortBy200( queryEl );
         final ProjectionClause[] projection = projectionClauses.toArray( new ProjectionClause[projectionClauses.size()] );
         final SortProperty[] sortPropsArray = sortProps.toArray( new SortProperty[sortProps.size()] );
         // <element minOccurs="0" name="transformation" type="wfste:AbstractTransformationClausePropertyType"/>
-        final TransformationClause transformation = parseAbstractTransformationClauseIfPresent( queryEl );
-        return new DynamicFeatureQuery( handle, typeNames, featureVersion, crs, projection, sortPropsArray, filter,
+        final TransformationClause transformation = parseTransformationIfPresent( queryEl );
+        return new DynamicFeatureQuery( handle, typeNames, featureVersion, crs, projection, sortPropsArray, selectionClause,
                                         transformation );
     }
 
-    private TransformationClause parseAbstractTransformationClauseIfPresent( final OMElement queryEl ) {
-        final OMElement snapshotGenerationEl = queryEl.getFirstChildWithName( SNAPSHOT_GENERATION );
-        if ( snapshotGenerationEl == null ) {
+    private SelectionClause parseSelectionClauseIfPresent( final OMElement queryEl ) {
+        final OMElement dynamicFeatureFilterEl = queryEl.getFirstChildWithName( DYNAMIC_FEATURE_FILTER );
+        if ( dynamicFeatureFilterEl == null ) {
+            return parseFilter200IfPresent( queryEl );
+        }
+        return new DynamicFeatureFilterXmlAdapter().parse( dynamicFeatureFilterEl );
+    }
+
+    private TransformationClause parseTransformationIfPresent( final OMElement queryEl ) {
+        final OMElement transformEl = queryEl.getFirstChildWithName( TRANSFORMATION );
+        if ( transformEl == null ) {
             return null;
         }
-        return new SnapshotGenerationXmlAdapter().parse( snapshotGenerationEl );
+        final OMElement childEl = getRequiredChildElement( transformEl );
+        return new SnapshotGenerationXmlAdapter().parse( childEl );
     }
 }

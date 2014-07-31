@@ -34,13 +34,14 @@
  ----------------------------------------------------------------------------*/
 package org.deegree.protocol.wfs.te.xml;
 
-import static org.deegree.protocol.wfs.te.xml.TemporalityExtension100.FES_TE_10_NS;
+import static org.deegree.protocol.wfs.te.TemporalityExtension100.WFS_TE_10_NS;
 
 import javax.xml.namespace.QName;
 
 import org.apache.axiom.om.OMElement;
 import org.deegree.commons.xml.XMLAdapter;
 import org.deegree.filter.te.SnapshotGeneration;
+import org.deegree.time.primitive.TimeGeometricPrimitive;
 
 /**
  * AXIOM-based parser for <code>wfs-te:SnapshotGeneration</code> elements (OGC 12-027r3).
@@ -51,7 +52,7 @@ import org.deegree.filter.te.SnapshotGeneration;
  */
 public class SnapshotGenerationXmlAdapter extends XMLAdapter {
 
-    private static final QName SNAPSHOT_TIME = new QName( FES_TE_10_NS, "snapshotTime" );
+    private static final QName SNAPSHOT_TIME = new QName( WFS_TE_10_NS, "snapshotTime" );
 
     private static final QName EVALUATE_SCHEDULES = new QName( "evaluateSchedules" );
 
@@ -64,13 +65,13 @@ public class SnapshotGenerationXmlAdapter extends XMLAdapter {
      */
     public SnapshotGeneration parse( final OMElement snapshotGenerationEl ) {
         // <element name="snapshotTime">
-        final Object snapshotTime = parseRequiredSnapshotTime( snapshotGenerationEl );
+        final TimeGeometricPrimitive snapshotTime = parseRequiredSnapshotTime( snapshotGenerationEl );
         // <attribute default="false" name="evaluateSchedules" type="boolean"/>
         final Boolean evaluateSchedules = getAttributeAsBoolean( snapshotGenerationEl, EVALUATE_SCHEDULES, null );
         return new SnapshotGeneration( evaluateSchedules, snapshotTime );
     }
 
-    private Object parseRequiredSnapshotTime( final OMElement timeSliceProjectionEl ) {
+    private TimeGeometricPrimitive parseRequiredSnapshotTime( final OMElement timeSliceProjectionEl ) {
         final OMElement relevantTimeEl = getRequiredChildElement( timeSliceProjectionEl, SNAPSHOT_TIME );
         final OMElement childEl = getRequiredChildElement( relevantTimeEl );
         return new GmlAbstractTimeGeometricXmlAdapter().parse( childEl );

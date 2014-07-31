@@ -34,7 +34,17 @@
  ----------------------------------------------------------------------------*/
 package org.deegree.protocol.wfs.te.xml;
 
+import static org.deegree.gml.GMLInputFactory.createGMLStreamReader;
+import static org.deegree.gml.GMLVersion.GML_32;
+
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
+
 import org.apache.axiom.om.OMElement;
+import org.deegree.commons.xml.XMLParsingException;
+import org.deegree.gml.GMLStreamReader;
+import org.deegree.time.gml.GmlTimeGeometricPrimitiveReader;
+import org.deegree.time.primitive.TimeGeometricPrimitive;
 
 /**
  * AXIOM-based parser for <code>gml:AbstractTimeGeometricPrimitive</code> elements.
@@ -43,9 +53,15 @@ import org.apache.axiom.om.OMElement;
  *
  * @since 3.4
  */
-public class GmlAbstractTimeGeometricXmlAdapter {
+class GmlAbstractTimeGeometricXmlAdapter {
 
-    public Object parse( final OMElement el ) {
-        return null;
+    TimeGeometricPrimitive parse( final OMElement el ) {
+        final XMLStreamReader xmlStream = el.getXMLStreamReaderWithoutCaching();
+        try {
+            final GMLStreamReader gmlStream = createGMLStreamReader( GML_32, xmlStream );
+            return new GmlTimeGeometricPrimitiveReader( gmlStream ).read( xmlStream );
+        } catch ( XMLStreamException e ) {
+            throw new XMLParsingException( e.getMessage() );
+        }
     }
 }

@@ -32,25 +32,26 @@
 
  e-mail: info@deegree.org
 ----------------------------------------------------------------------------*/
-package org.deegree.protocol.wfs.te.xml;
+package org.deegree.protocol.wfs.te;
 
 import org.deegree.cs.coordinatesystems.ICRS;
-import org.deegree.filter.Filter;
+import org.deegree.filter.SelectionClause;
 import org.deegree.filter.projection.ProjectionClause;
 import org.deegree.filter.sort.SortProperty;
 import org.deegree.filter.te.TransformationClause;
 import org.deegree.protocol.wfs.getfeature.TypeName;
 import org.deegree.protocol.wfs.query.AdHocQuery;
-import org.deegree.protocol.wfs.query.FilterQuery;
 
 /**
- * {@link AdHocQuery} with special support for time-varying features.
+ * {@link AdHocQuery} with special support for filtering and transforming time-varying features.
  *
  * @author <a href="mailto:schneider@occamlabs.de">Markus Schneider</a>
  *
  * @since 3.4
  */
-public class DynamicFeatureQuery extends FilterQuery {
+public class DynamicFeatureQuery extends AdHocQuery {
+
+    private final SelectionClause selectionClause;
 
     private final TransformationClause transformation;
 
@@ -69,17 +70,27 @@ public class DynamicFeatureQuery extends FilterQuery {
      *            limits the properties of the features that should be retrieved, may be <code>null</code>
      * @param sortBy
      *            properties whose values should be used to order the result set may be <code>null</code>
-     * @param filter
-     *            filter constraint, may be <code>null</code>
+     * @param selectionClause
+     *            filter constraints, may be <code>null</code>
      * @param transformation
      *            transformation to be applied to the feature instances, may be <code>null</code> (no transformation)
      */
     public DynamicFeatureQuery( final String handle, final TypeName[] typeNames, final String featureVersion,
                                 final ICRS srsName, final ProjectionClause[] projectionClauses,
-                                final SortProperty[] sortBy, final Filter filter,
+                                final SortProperty[] sortBy, final SelectionClause selectionClause,
                                 final TransformationClause transformation ) {
-        super( handle, typeNames, featureVersion, srsName, projectionClauses, sortBy, filter );
+        super( handle, typeNames, featureVersion, srsName, projectionClauses, sortBy );
+        this.selectionClause = selectionClause;
         this.transformation = transformation;
+    }
+
+    /**
+     * Returns the filter constraint.
+     *
+     * @return the filter constraint, may be <code>null</code> (no filtering)
+     */
+    public SelectionClause getSelectionClause() {
+        return selectionClause;
     }
 
     /**

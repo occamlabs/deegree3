@@ -35,7 +35,7 @@
 package org.deegree.protocol.wfs.query.xml;
 
 import static org.deegree.protocol.wfs.WFSConstants.WFS_200_NS;
-import static org.deegree.protocol.wfs.te.xml.TemporalityExtension100.WFS_TE_10_NS;
+import static org.deegree.protocol.wfs.te.TemporalityExtension100.WFS_TE_10_NS;
 
 import java.util.HashSet;
 import java.util.Set;

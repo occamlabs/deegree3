@@ -34,7 +34,7 @@
  ----------------------------------------------------------------------------*/
 package org.deegree.protocol.wfs.te.xml;
 
-import static org.deegree.protocol.wfs.te.xml.TemporalityExtension100.FES_TE_10_NS;
+import static org.deegree.protocol.wfs.te.TemporalityExtension100.FES_TE_10_NS;
 
 import javax.xml.namespace.QName;
 
@@ -42,6 +42,7 @@ import org.apache.axiom.om.OMElement;
 import org.deegree.filter.Filter;
 import org.deegree.filter.te.DynamicFeatureFilter;
 import org.deegree.protocol.wfs.query.xml.QueryXMLAdapter;
+import org.deegree.time.primitive.TimeGeometricPrimitive;
 
 /**
  * AXIOM-based parser for <code>fes-te:DynamicFeatureFilter</code> elements (OGC 12-027r3).
@@ -69,13 +70,13 @@ public class DynamicFeatureFilterXmlAdapter extends QueryXMLAdapter {
         // <attribute default="false" name="evaluateSchedules" type="boolean"/>
         final Boolean evaluateSchedules = getAttributeAsBoolean( dynamicFeatureFilterEl, EVALUATE_SCHEDULES, null );
         // <element minOccurs="0" name="timeIndicator">
-        final Object timeIndicator = parseTimeIndicatorIfPresent( dynamicFeatureFilterEl );
+        final TimeGeometricPrimitive timeIndicator = parseTimeIndicatorIfPresent( dynamicFeatureFilterEl );
         // <element name="featureFilter">
         final Filter featureFilter = parseRequiredFeatureFilter( dynamicFeatureFilterEl );
         return new DynamicFeatureFilter( evaluateSchedules, featureFilter, timeIndicator );
     }
 
-    private Object parseTimeIndicatorIfPresent( final OMElement dynamicFeatureFilterEl ) {
+    private TimeGeometricPrimitive parseTimeIndicatorIfPresent( final OMElement dynamicFeatureFilterEl ) {
         final OMElement timeIndicatorEl = dynamicFeatureFilterEl.getFirstChildWithName( TIME_INDICATOR );
         if ( timeIndicatorEl == null ) {
             return null;

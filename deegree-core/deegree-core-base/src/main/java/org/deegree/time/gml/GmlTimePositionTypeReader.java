@@ -71,7 +71,7 @@ public class GmlTimePositionTypeReader {
         // <attribute name="indeterminatePosition" type="gml:TimeIndeterminateValueType"/>
         final IndeterminateValue indeterminatePosition = parseIndeterminateValueIfPresent( xmlStream );
         // gml:TimePositionUnion
-        final String timePositionUnion = xmlStream.getElementText();
+        final String timePositionUnion = xmlStream.getElementText().trim();
         return new TimePosition( frame, calendarEraName, indeterminatePosition, timePositionUnion );
     }
 

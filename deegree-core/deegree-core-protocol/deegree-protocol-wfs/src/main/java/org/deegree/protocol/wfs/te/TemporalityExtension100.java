@@ -32,7 +32,7 @@
 
  e-mail: info@deegree.org
  ----------------------------------------------------------------------------*/
-package org.deegree.protocol.wfs.te.xml;
+package org.deegree.protocol.wfs.te;
 
 public class TemporalityExtension100 {
 

@@ -34,7 +34,7 @@
  ----------------------------------------------------------------------------*/
 package org.deegree.protocol.wfs.te.xml;
 
-import static org.deegree.protocol.wfs.te.xml.TemporalityExtension100.WFS_TE_10_NS;
+import static org.deegree.protocol.wfs.te.TemporalityExtension100.WFS_TE_10_NS;
 
 import javax.xml.namespace.QName;
 

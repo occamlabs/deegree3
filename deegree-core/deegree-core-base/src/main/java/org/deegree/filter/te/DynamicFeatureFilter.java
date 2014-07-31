@@ -36,6 +36,7 @@ package org.deegree.filter.te;
 
 import org.deegree.filter.Filter;
 import org.deegree.filter.SelectionClause;
+import org.deegree.time.primitive.TimeGeometricPrimitive;
 
 /**
  * {@link SelectionClause} for evaluating {@link Filter} constraints at a given point in time or a time period.
@@ -47,14 +48,13 @@ import org.deegree.filter.SelectionClause;
  *
  * @since 3.4
  */
-public class DynamicFeatureFilter implements TransformationClause {
+public class DynamicFeatureFilter implements SelectionClause {
 
     private final Boolean evaluateSchedules;
 
     private final Filter featureFilter;
 
-    // gml:AbstractTimeGeometricPrimitive
-    private final Object timeIndicator;
+    private final TimeGeometricPrimitive timeIndicator;
 
     /**
      * Creates a new {@link DynamicFeatureFilter} instance.
@@ -67,7 +67,8 @@ public class DynamicFeatureFilter implements TransformationClause {
      * @param timeIndicator
      *            time instant or time period when the {@link #featureFilter} is to be applied, can be <code>null</code>
      */
-    public DynamicFeatureFilter( final Boolean evaluateSchedules, final Filter featureFilter, final Object timeIndicator ) {
+    public DynamicFeatureFilter( final Boolean evaluateSchedules, final Filter featureFilter,
+                                 final TimeGeometricPrimitive timeIndicator ) {
         this.evaluateSchedules = evaluateSchedules;
         this.featureFilter = featureFilter;
         this.timeIndicator = timeIndicator;
@@ -97,7 +98,7 @@ public class DynamicFeatureFilter implements TransformationClause {
      *
      * @return point in time or the time period when the filter is to be applied, can be <code>null</code>
      */
-    public Object getTimeIndicator() {
+    public TimeGeometricPrimitive getTimeIndicator() {
         return timeIndicator;
     }
 }

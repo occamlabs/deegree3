@@ -34,6 +34,8 @@
  ----------------------------------------------------------------------------*/
 package org.deegree.filter.te;
 
+import org.deegree.time.primitive.TimeGeometricPrimitive;
+
 /**
  * {@link TransformationClause} for generating SNAPSHOT timeslices.
  * <p>
@@ -48,8 +50,7 @@ public class SnapshotGeneration implements TransformationClause {
 
     private final Boolean evaluateSchedule;
 
-    // gml:AbstractTimeGeometricPrimitive
-    private final Object snapshotTime;
+    private final TimeGeometricPrimitive snapshotTime;
 
     /**
      * Creates a new {@link TransformationClause} instance.
@@ -60,7 +61,7 @@ public class SnapshotGeneration implements TransformationClause {
      * @param snapshotTime
      *            time instant or time period of the SNAPSHOT timeslices, must not be <code>null</code>
      */
-    public SnapshotGeneration( final Boolean evaluateSchedule, final Object snapshotTime ) {
+    public SnapshotGeneration( final Boolean evaluateSchedule, final TimeGeometricPrimitive snapshotTime ) {
         this.snapshotTime = snapshotTime;
         this.evaluateSchedule = evaluateSchedule;
     }
@@ -80,7 +81,7 @@ public class SnapshotGeneration implements TransformationClause {
      *
      * @return time instant or time period of the SNAPSHOT timeslices, never <code>null</code>
      */
-    public Object getSnapshotTime() {
+    public TimeGeometricPrimitive getSnapshotTime() {
         return snapshotTime;
     }
 }

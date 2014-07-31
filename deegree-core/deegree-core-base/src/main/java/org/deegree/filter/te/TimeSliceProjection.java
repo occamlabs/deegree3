@@ -36,6 +36,7 @@ package org.deegree.filter.te;
 
 import org.deegree.filter.Filter;
 import org.deegree.filter.projection.ProjectionClause;
+import org.deegree.time.primitive.TimeGeometricPrimitive;
 
 /**
  * {@link ProjectionClause} for limiting the time slices of a feature.
@@ -49,8 +50,7 @@ import org.deegree.filter.projection.ProjectionClause;
  */
 public class TimeSliceProjection implements ProjectionClause {
 
-    // gml:AbstractTimeGeometricPrimitive
-    private final Object relevantTime;
+    private final TimeGeometricPrimitive relevantTime;
 
     private final Filter timeSliceFilter;
 
@@ -72,7 +72,7 @@ public class TimeSliceProjection implements ProjectionClause {
      *            <code>true</code>, if corrected time slices shall be included, can be <code>null</code> (=
      *            <code>false</code>)
      */
-    public TimeSliceProjection( final Object relevantTime, final Filter timeSliceFilter,
+    public TimeSliceProjection( final TimeGeometricPrimitive relevantTime, final Filter timeSliceFilter,
                                 final Boolean includeCanceled, final Boolean includeCorrected ) {
         this.relevantTime = relevantTime;
         this.timeSliceFilter = timeSliceFilter;
@@ -85,7 +85,7 @@ public class TimeSliceProjection implements ProjectionClause {
      *
      * @return time instant or time period to be considered, can be <code>null</code> (consider all time slices)
      */
-    public Object getRelevantTime() {
+    public TimeGeometricPrimitive getRelevantTime() {
         return relevantTime;
     }
 

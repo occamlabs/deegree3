@@ -34,7 +34,7 @@
  ----------------------------------------------------------------------------*/
 package org.deegree.protocol.wfs.te.xml;
 
-import static org.deegree.protocol.wfs.te.xml.TemporalityExtension100.WFS_TE_10_NS;
+import static org.deegree.protocol.wfs.te.TemporalityExtension100.WFS_TE_10_NS;
 
 import javax.xml.namespace.QName;
 
@@ -42,6 +42,7 @@ import org.apache.axiom.om.OMElement;
 import org.deegree.filter.Filter;
 import org.deegree.filter.te.TimeSliceProjection;
 import org.deegree.protocol.wfs.query.xml.QueryXMLAdapter;
+import org.deegree.time.primitive.TimeGeometricPrimitive;
 
 /**
  * AXIOM-based parser for <code>wfs-te:TimeSliceProjection</code> elements (OGC 12-027r3).
@@ -69,7 +70,7 @@ public class TimeSliceProjectionXmlAdapter extends QueryXMLAdapter {
      */
     public TimeSliceProjection parse( final OMElement timeSliceProjectionEl ) {
         // xsd: <element minOccurs="0" name="relevantTime">
-        final Object relevantTime = parseRelevantTimeIfPresent( timeSliceProjectionEl );
+        final TimeGeometricPrimitive relevantTime = parseRelevantTimeIfPresent( timeSliceProjectionEl );
         // xsd: <element minOccurs="0" name="timeSliceFilter">
         final Filter filter = parseTimeSliceFilterIfPresent( timeSliceProjectionEl );
         // xsd: <attribute default="false" name="includeCanceled" type="boolean"/>
@@ -79,7 +80,7 @@ public class TimeSliceProjectionXmlAdapter extends QueryXMLAdapter {
         return new TimeSliceProjection( relevantTime, filter, includeCanceled, includeCorrected );
     }
 
-    private Object parseRelevantTimeIfPresent( final OMElement timeSliceProjectionEl ) {
+    private TimeGeometricPrimitive parseRelevantTimeIfPresent( final OMElement timeSliceProjectionEl ) {
         final OMElement relevantTimeEl = timeSliceProjectionEl.getFirstChildWithName( RELEVANT_TIME );
         if ( relevantTimeEl == null ) {
             return null;

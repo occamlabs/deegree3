@@ -54,7 +54,6 @@ import javax.xml.namespace.QName;
 import junit.framework.TestCase;
 
 import org.deegree.commons.xml.XMLAdapter;
-import org.deegree.filter.Filter;
 import org.deegree.filter.IdFilter;
 import org.deegree.filter.Operator;
 import org.deegree.filter.OperatorFilter;
@@ -70,7 +69,6 @@ import org.deegree.filter.logical.LogicalOperator;
 import org.deegree.filter.projection.ProjectionClause;
 import org.deegree.filter.projection.PropertyName;
 import org.deegree.filter.spatial.Within;
-import org.deegree.filter.te.TimeSliceProjection;
 import org.deegree.geometry.Envelope;
 import org.deegree.protocol.wfs.getfeature.GetFeature;
 import org.deegree.protocol.wfs.getfeature.TypeName;
@@ -80,10 +78,10 @@ import org.junit.Test;
 
 /**
  * Test class for the GetFeatureXMLAdapter.
- * 
+ *
  * @author <a href="mailto:ionita@lat-lon.de">Andrei Ionita</a>
  * @author last edited by: $Author$
- * 
+ *
  * @version $Revision$, $Date$
  */
 public class GetFeatureXMLAdapterTest extends TestCase {
@@ -897,20 +895,6 @@ public class GetFeatureXMLAdapterTest extends TestCase {
     public void test200Example19()
                             throws Exception {
         GetFeature request = parseExample( "wfs200/example19.xml" );
-    }
-
-    public void testTemporalityExtension100Example4()
-                            throws Exception {
-        GetFeature request = parseExample( "te100/example4.xml" );
-        List<Query> queries = request.getQueries();
-        assertEquals( 1, queries.size() );
-        FilterQuery query = (FilterQuery) queries.get( 0 );
-        assertEquals( 1, query.getProjectionClauses().length );
-        TimeSliceProjection projectionClause = (TimeSliceProjection) query.getProjectionClauses()[0];
-        Filter timeSliceFilter = projectionClause.getTimeSliceFilter();
-        assertNotNull( timeSliceFilter );
-        Filter filter = query.getFilter();
-        assertNotNull( filter );
     }
 
     private GetFeature parseExample( String resourceName )
