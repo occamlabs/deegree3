@@ -49,7 +49,6 @@ import javax.xml.stream.XMLStreamReader;
 
 import org.deegree.commons.tom.ReferenceResolver;
 import org.deegree.commons.tom.gml.property.Property;
-import org.deegree.commons.xml.stax.XMLStreamUtils;
 import org.deegree.gml.GMLStreamReader;
 import org.deegree.time.primitive.GenericTimePeriod;
 import org.deegree.time.primitive.RelatedTime;
