@@ -1079,7 +1079,7 @@ public class GML3GeometryReader extends GML3GeometryBaseReader implements GMLGeo
         Point point = null;
         GMLObjectType type = getType( xmlStream );
         QName elName = xmlStream.getName();
-        String gid = parseGeometryId( xmlStream );
+        String gid = parseGmlId( xmlStream );
         ICRS crs = determineActiveCRS( xmlStream, defaultCRS );
         List<Property> props = readStandardProperties( xmlStream, type, crs );
 
@@ -1146,7 +1146,7 @@ public class GML3GeometryReader extends GML3GeometryBaseReader implements GMLGeo
     public LineString parseLineString( XMLStreamReaderWrapper xmlStream, ICRS defaultCRS )
                             throws XMLStreamException, XMLParsingException, UnknownCRSException {
 
-        String gid = parseGeometryId( xmlStream );
+        String gid = parseGmlId( xmlStream );
         ICRS crs = determineActiveCRS( xmlStream, defaultCRS );
         QName elName = xmlStream.getName();
         GMLObjectType type = getType( xmlStream );
@@ -1221,7 +1221,7 @@ public class GML3GeometryReader extends GML3GeometryBaseReader implements GMLGeo
 
         QName elName = xmlStream.getName();
         GMLObjectType type = getType( xmlStream );
-        String gid = parseGeometryId( xmlStream );
+        String gid = parseGmlId( xmlStream );
         ICRS crs = determineActiveCRS( xmlStream, defaultCRS );
         List<Property> props = readStandardProperties( xmlStream, type, crs );
 
@@ -1264,7 +1264,7 @@ public class GML3GeometryReader extends GML3GeometryBaseReader implements GMLGeo
 
         QName elName = xmlStream.getName();
         GMLObjectType type = getType( xmlStream );
-        String gid = parseGeometryId( xmlStream );
+        String gid = parseGmlId( xmlStream );
         boolean isReversed = !parseOrientation( xmlStream );
         ICRS crs = determineActiveCRS( xmlStream, defaultCRS );
         List<Property> props = readStandardProperties( xmlStream, type, crs );
@@ -1305,7 +1305,7 @@ public class GML3GeometryReader extends GML3GeometryBaseReader implements GMLGeo
 
         QName elName = xmlStream.getName();
         GMLObjectType type = getType( xmlStream );
-        String gid = parseGeometryId( xmlStream );
+        String gid = parseGmlId( xmlStream );
         ICRS crs = determineActiveCRS( xmlStream, defaultCRS );
         List<Property> props = readStandardProperties( xmlStream, type, crs );
 
@@ -1346,7 +1346,7 @@ public class GML3GeometryReader extends GML3GeometryBaseReader implements GMLGeo
 
         QName elName = xmlStream.getName();
         GMLObjectType type = getType( xmlStream );
-        String gid = parseGeometryId( xmlStream );
+        String gid = parseGmlId( xmlStream );
         ICRS crs = determineActiveCRS( xmlStream, defaultCRS );
         List<Property> props = readStandardProperties( xmlStream, type, crs );
 
@@ -1394,7 +1394,7 @@ public class GML3GeometryReader extends GML3GeometryBaseReader implements GMLGeo
 
         QName elName = xmlStream.getName();
         GMLObjectType type = getType( xmlStream );
-        String gid = parseGeometryId( xmlStream );
+        String gid = parseGmlId( xmlStream );
         ICRS crs = determineActiveCRS( xmlStream, defaultCRS );
         List<Property> props = readStandardProperties( xmlStream, type, crs );
 
@@ -1483,7 +1483,7 @@ public class GML3GeometryReader extends GML3GeometryBaseReader implements GMLGeo
 
         QName elName = xmlStream.getName();
         GMLObjectType type = getType( xmlStream );
-        String gid = parseGeometryId( xmlStream );
+        String gid = parseGmlId( xmlStream );
         ICRS crs = determineActiveCRS( xmlStream, defaultCRS );
         List<Property> props = readStandardProperties( xmlStream, type, crs );
 
@@ -1543,7 +1543,7 @@ public class GML3GeometryReader extends GML3GeometryBaseReader implements GMLGeo
 
         QName elName = xmlStream.getName();
         GMLObjectType type = getType( xmlStream );
-        String gid = parseGeometryId( xmlStream );
+        String gid = parseGmlId( xmlStream );
         ICRS crs = determineActiveCRS( xmlStream, defaultCRS );
         List<Property> props = readStandardProperties( xmlStream, type, crs );
 
@@ -1587,7 +1587,7 @@ public class GML3GeometryReader extends GML3GeometryBaseReader implements GMLGeo
 
         QName elName = xmlStream.getName();
         GMLObjectType type = getType( xmlStream );
-        String gid = parseGeometryId( xmlStream );
+        String gid = parseGmlId( xmlStream );
         ICRS crs = determineActiveCRS( xmlStream, defaultCRS );
         List<Property> props = readStandardProperties( xmlStream, type, crs );
 
@@ -1635,7 +1635,7 @@ public class GML3GeometryReader extends GML3GeometryBaseReader implements GMLGeo
 
         QName elName = xmlStream.getName();
         GMLObjectType type = getType( xmlStream );
-        String gid = parseGeometryId( xmlStream );
+        String gid = parseGmlId( xmlStream );
         ICRS crs = determineActiveCRS( xmlStream, defaultCRS );
         List<Property> props = readStandardProperties( xmlStream, type, crs );
 
@@ -1744,7 +1744,7 @@ public class GML3GeometryReader extends GML3GeometryBaseReader implements GMLGeo
 
         QName elName = xmlStream.getName();
         GMLObjectType type = getType( xmlStream );
-        String gid = parseGeometryId( xmlStream );
+        String gid = parseGmlId( xmlStream );
         boolean isReversed = !parseOrientation( xmlStream );
         ICRS crs = determineActiveCRS( xmlStream, defaultCRS );
         List<Property> props = readStandardProperties( xmlStream, type, crs );
@@ -1786,7 +1786,7 @@ public class GML3GeometryReader extends GML3GeometryBaseReader implements GMLGeo
 
         QName elName = xmlStream.getName();
         GMLObjectType type = getType( xmlStream );
-        String gid = parseGeometryId( xmlStream );
+        String gid = parseGmlId( xmlStream );
         ICRS crs = determineActiveCRS( xmlStream, defaultCRS );
         List<Property> props = readStandardProperties( xmlStream, type, crs );
 
@@ -1846,7 +1846,7 @@ public class GML3GeometryReader extends GML3GeometryBaseReader implements GMLGeo
 
         QName elName = xmlStream.getName();
         GMLObjectType type = getType( xmlStream );
-        String gid = parseGeometryId( xmlStream );
+        String gid = parseGmlId( xmlStream );
         ICRS crs = determineActiveCRS( xmlStream, defaultCRS );
         List<Property> props = readStandardProperties( xmlStream, type, crs );
 
@@ -1890,7 +1890,7 @@ public class GML3GeometryReader extends GML3GeometryBaseReader implements GMLGeo
 
         QName elName = xmlStream.getName();
         GMLObjectType type = getType( xmlStream );
-        String gid = parseGeometryId( xmlStream );
+        String gid = parseGmlId( xmlStream );
         ICRS crs = determineActiveCRS( xmlStream, defaultCRS );
         List<Property> props = readStandardProperties( xmlStream, type, crs );
 
@@ -1934,7 +1934,7 @@ public class GML3GeometryReader extends GML3GeometryBaseReader implements GMLGeo
 
         QName elName = xmlStream.getName();
         GMLObjectType type = getType( xmlStream );
-        String gid = parseGeometryId( xmlStream );
+        String gid = parseGmlId( xmlStream );
         ICRS crs = determineActiveCRS( xmlStream, defaultCRS );
         List<Property> props = readStandardProperties( xmlStream, type, crs );
 
@@ -1978,7 +1978,7 @@ public class GML3GeometryReader extends GML3GeometryBaseReader implements GMLGeo
 
         QName elName = xmlStream.getName();
         GMLObjectType type = getType( xmlStream );
-        String gid = parseGeometryId( xmlStream );
+        String gid = parseGmlId( xmlStream );
         ICRS crs = determineActiveCRS( xmlStream, defaultCRS );
         List<Property> props = readStandardProperties( xmlStream, type, crs );
 
@@ -2023,7 +2023,7 @@ public class GML3GeometryReader extends GML3GeometryBaseReader implements GMLGeo
 
         QName elName = xmlStream.getName();
         GMLObjectType type = getType( xmlStream );
-        String gid = parseGeometryId( xmlStream );
+        String gid = parseGmlId( xmlStream );
         ICRS crs = determineActiveCRS( xmlStream, defaultCRS );
         List<Property> props = readStandardProperties( xmlStream, type, crs );
 
@@ -2083,7 +2083,7 @@ public class GML3GeometryReader extends GML3GeometryBaseReader implements GMLGeo
 
         QName elName = xmlStream.getName();
         GMLObjectType type = getType( xmlStream );
-        String gid = parseGeometryId( xmlStream );
+        String gid = parseGmlId( xmlStream );
         ICRS crs = determineActiveCRS( xmlStream, defaultCRS );
         List<Property> props = readStandardProperties( xmlStream, type, crs );
 
@@ -2142,7 +2142,7 @@ public class GML3GeometryReader extends GML3GeometryBaseReader implements GMLGeo
 
         QName elName = xmlStream.getName();
         GMLObjectType type = getType( xmlStream );
-        String gid = parseGeometryId( xmlStream );
+        String gid = parseGmlId( xmlStream );
         ICRS crs = determineActiveCRS( xmlStream, defaultCRS );
         List<Property> props = readStandardProperties( xmlStream, type, crs );
 
@@ -2194,7 +2194,7 @@ public class GML3GeometryReader extends GML3GeometryBaseReader implements GMLGeo
 
         QName elName = xmlStream.getName();
         GMLObjectType type = getType( xmlStream );
-        String gid = parseGeometryId( xmlStream );
+        String gid = parseGmlId( xmlStream );
         ICRS crs = determineActiveCRS( xmlStream, defaultCRS );
         List<Property> props = readStandardProperties( xmlStream, type, crs );
 
@@ -2253,7 +2253,7 @@ public class GML3GeometryReader extends GML3GeometryBaseReader implements GMLGeo
 
         QName elName = xmlStream.getName();
         GMLObjectType type = getType( xmlStream );
-        String gid = parseGeometryId( xmlStream );
+        String gid = parseGmlId( xmlStream );
         ICRS crs = determineActiveCRS( xmlStream, defaultCRS );
         List<Property> props = readStandardProperties( xmlStream, type, crs );
 
@@ -2305,7 +2305,7 @@ public class GML3GeometryReader extends GML3GeometryBaseReader implements GMLGeo
 
         QName elName = xmlStream.getName();
         GMLObjectType type = getType( xmlStream );
-        String gid = parseGeometryId( xmlStream );
+        String gid = parseGmlId( xmlStream );
         ICRS crs = determineActiveCRS( xmlStream, defaultCRS );
         List<Property> props = readStandardProperties( xmlStream, type, crs );
 
@@ -2364,7 +2364,7 @@ public class GML3GeometryReader extends GML3GeometryBaseReader implements GMLGeo
 
         QName elName = xmlStream.getName();
         GMLObjectType type = getType( xmlStream );
-        String gid = parseGeometryId( xmlStream );
+        String gid = parseGmlId( xmlStream );
         ICRS crs = determineActiveCRS( xmlStream, defaultCRS );
         List<Property> props = readStandardProperties( xmlStream, type, crs );
 
@@ -2875,7 +2875,7 @@ public class GML3GeometryReader extends GML3GeometryBaseReader implements GMLGeo
      * 
      * @return the geometry id, or "" (empty string) if neither a 'gml:id' nor a 'gid' attribute is present
      */
-    private String parseGeometryId( XMLStreamReaderWrapper xmlStream ) {
+    private String parseGmlId( XMLStreamReaderWrapper xmlStream ) {
 
         String gid = xmlStream.getAttributeValue( gmlNs, GMLID );
         if ( gid == null ) {

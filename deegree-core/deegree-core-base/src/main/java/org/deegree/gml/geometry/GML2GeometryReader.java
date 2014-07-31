@@ -316,7 +316,7 @@ public class GML2GeometryReader extends AbstractGMLObjectReader implements GMLGe
      */
     public MultiPolygon parseMultiPolygon( XMLStreamReaderWrapper xmlStream, ICRS defaultCRS )
                             throws XMLStreamException {
-        String gid = parseGeometryId( xmlStream );
+        String gid = parseGmlId( xmlStream );
         ICRS crs = determineActiveCRS( xmlStream, defaultCRS );
         xmlStream.nextTag();
 
@@ -387,7 +387,7 @@ public class GML2GeometryReader extends AbstractGMLObjectReader implements GMLGe
      */
     public MultiLineString parseMultiLineString( XMLStreamReaderWrapper xmlStream, ICRS defaultCRS )
                             throws XMLStreamException {
-        String gid = parseGeometryId( xmlStream );
+        String gid = parseGmlId( xmlStream );
         ICRS crs = determineActiveCRS( xmlStream, defaultCRS );
         xmlStream.nextTag();
 
@@ -459,7 +459,7 @@ public class GML2GeometryReader extends AbstractGMLObjectReader implements GMLGe
      */
     public MultiPoint parseMultiPoint( XMLStreamReaderWrapper xmlStream, ICRS defaultCRS )
                             throws XMLStreamException {
-        String gid = parseGeometryId( xmlStream );
+        String gid = parseGmlId( xmlStream );
         ICRS crs = determineActiveCRS( xmlStream, defaultCRS );
         xmlStream.nextTag();
 
@@ -530,7 +530,7 @@ public class GML2GeometryReader extends AbstractGMLObjectReader implements GMLGe
      */
     public MultiGeometry<Geometry> parseMultiGeometry( XMLStreamReaderWrapper xmlStream, ICRS defaultCRS )
                             throws XMLStreamException {
-        String gid = parseGeometryId( xmlStream );
+        String gid = parseGmlId( xmlStream );
         ICRS crs = determineActiveCRS( xmlStream, defaultCRS );
         xmlStream.nextTag();
 
@@ -649,7 +649,7 @@ public class GML2GeometryReader extends AbstractGMLObjectReader implements GMLGe
      */
     public LineString parseLineString( XMLStreamReaderWrapper xmlStream, ICRS defaultCRS )
                             throws XMLStreamException {
-        String gid = parseGeometryId( xmlStream );
+        String gid = parseGmlId( xmlStream );
         ICRS crs = determineActiveCRS( xmlStream, defaultCRS );
         xmlStream.nextTag();
 
@@ -701,7 +701,7 @@ public class GML2GeometryReader extends AbstractGMLObjectReader implements GMLGe
      */
     public Polygon parsePolygon( XMLStreamReaderWrapper xmlStream, ICRS defaultCRS )
                             throws XMLStreamException {
-        String gid = parseGeometryId( xmlStream );
+        String gid = parseGmlId( xmlStream );
         ICRS crs = determineActiveCRS( xmlStream, defaultCRS );
         xmlStream.nextTag();
 
@@ -763,7 +763,7 @@ public class GML2GeometryReader extends AbstractGMLObjectReader implements GMLGe
      */
     public Ring parseLinearRing( XMLStreamReaderWrapper xmlStream, ICRS defaultCRS )
                             throws XMLStreamException {
-        String gid = parseGeometryId( xmlStream );
+        String gid = parseGmlId( xmlStream );
         ICRS crs = determineActiveCRS( xmlStream, defaultCRS );
         xmlStream.nextTag();
 
@@ -823,7 +823,7 @@ public class GML2GeometryReader extends AbstractGMLObjectReader implements GMLGe
     public Point parsePoint( XMLStreamReaderWrapper xmlStream, ICRS defaultCRS )
                             throws XMLStreamException {
         Point point = null;
-        String gid = parseGeometryId( xmlStream );
+        String gid = parseGmlId( xmlStream );
         ICRS crs = determineActiveCRS( xmlStream, defaultCRS );
         xmlStream.nextTag();
 
@@ -958,7 +958,7 @@ public class GML2GeometryReader extends AbstractGMLObjectReader implements GMLGe
         return activeCRS;
     }
 
-    private String parseGeometryId( XMLStreamReaderWrapper xmlStream ) {
+    private String parseGmlId( XMLStreamReaderWrapper xmlStream ) {
         String gid = xmlStream.getAttributeValue( null, GID );
 
         // Check that the geometry id has the correct form. "gid" and "gml:id" are both based

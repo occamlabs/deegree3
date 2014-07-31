@@ -1,7 +1,6 @@
-//$HeadURL$
 /*----------------------------------------------------------------------------
  This file is part of deegree, http://deegree.org/
- Copyright (C) 2001-2011 by:
+ Copyright (C) 2001-2014 by:
  - Department of Geography, University of Bonn -
  and
  - lat/lon GmbH -
@@ -32,21 +31,31 @@
  http://www.geographie.uni-bonn.de/deegree/
 
  e-mail: info@deegree.org
- ----------------------------------------------------------------------------*/
-package org.deegree.time.position;
+----------------------------------------------------------------------------*/
+package org.deegree.time.primitive.reference;
 
-public class DateAndTime implements TemporalPosition {
+import org.deegree.commons.tom.ReferenceResolver;
+import org.deegree.time.primitive.TimePeriod;
+import org.deegree.time.primitive.TimePositionOrInstant;
 
-    @Override
-    public int compareTo( TemporalPosition o ) {
-        // TODO Auto-generated method stub
-        return 0;
+public class TimePeriodReference extends TimeGeometricPrimitiveReference<TimePeriod> implements TimePeriod {
+
+    public TimePeriodReference( final ReferenceResolver resolver, final String uri, final String baseURL ) {
+        super( resolver, uri, baseURL );
     }
 
     @Override
-    public IndeterminateValue getIndeterminateValue() {
-        // TODO Auto-generated method stub
-        return null;
+    public TimePositionOrInstant getBegin() {
+        return getReferencedObject().getBegin();
     }
 
+    @Override
+    public TimePositionOrInstant getEnd() {
+        return getReferencedObject().getEnd();
+    }
+
+    @Override
+    public Object getLength() {
+        return getReferencedObject().getLength();
+    }
 }

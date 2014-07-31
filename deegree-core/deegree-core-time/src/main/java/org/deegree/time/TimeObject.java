@@ -1,7 +1,6 @@
-//$HeadURL$
 /*----------------------------------------------------------------------------
  This file is part of deegree, http://deegree.org/
- Copyright (C) 2001-2011 by:
+ Copyright (C) 2001-2014 by:
  - Department of Geography, University of Bonn -
  and
  - lat/lon GmbH -
@@ -39,11 +38,10 @@ import org.deegree.commons.tom.gml.GMLObject;
 
 /**
  * Base type for all temporal {@link GMLObject}s.
- * 
- * @author <a href="mailto:schneider@lat-lon.de">Markus Schneider</a>
- * @author last edited by: $Author$
- * 
- * @version $Revision$, $Date$
+ *
+ * @author <a href="mailto:schneider@occamlabs.de">Markus Schneider</a>
+ *
+ * @since 3.4
  */
 public interface TimeObject extends GMLObject {
     // marker interface

@@ -1,7 +1,6 @@
-//$HeadURL$
 /*----------------------------------------------------------------------------
  This file is part of deegree, http://deegree.org/
- Copyright (C) 2001-2011 by:
+ Copyright (C) 2001-2014 by:
  - Department of Geography, University of Bonn -
  and
  - lat/lon GmbH -
@@ -35,84 +34,33 @@
  ----------------------------------------------------------------------------*/
 package org.deegree.time.primitive;
 
-import java.util.List;
-
-import javax.xml.namespace.QName;
-
-import org.deegree.commons.tom.gml.GMLObjectType;
-import org.deegree.commons.tom.gml.GMLStdProps;
-import org.deegree.commons.tom.gml.property.Property;
-import org.deegree.time.position.TemporalPosition;
-
 /**
- * One-dimensional geometric primitive that represents an identifiable extent in time.
- * 
- * @author <a href="mailto:schneider@lat-lon.de">Markus Schneider</a>
- * @author last edited by: $Author$
- * 
- * @version $Revision$, $Date$
+ * One-dimensional {@link TimeGeometricPrimitive}.
+ *
+ * @author <a href="mailto:schneider@occamlabs.de">Markus Schneider</a>
+ *
+ * @since 3.4
  */
-public class TimePeriod implements TimeGeometricPrimitive {
-
-    private final String id;
-
-    private final GMLStdProps gmlProps;
-
-    public TimePeriod( String id, GMLStdProps stdProps ) {
-        this.id = id;
-        this.gmlProps = stdProps;
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public GMLStdProps getGMLProperties() {
-        return gmlProps;
-    }
+public interface TimePeriod extends TimeGeometricPrimitive {
 
     /**
-     * Returns the begin {@link TemporalPosition}.
-     * 
-     * @return temporal position, never <code>null</code>
+     * Returns the beginning of the period.
+     *
+     * @return beginning, never <code>null</code>
      */
-    public TemporalPosition getBeginPosition() {
-        return null;
-    }
+    public TimePositionOrInstant getBegin();
 
     /**
-     * Returns the end {@link TemporalPosition}.
-     * 
-     * @return temporal position, never <code>null</code>
+     * Returns the end of the period.
+     *
+     * @return end, never <code>null</code>
      */
-    public TemporalPosition getEndPosition() {
-        return null;
-    }
+    public TimePositionOrInstant getEnd();
 
-    @Override
-    public List<?> getRelatedTimes() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public String getFrame() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public GMLObjectType getType() {
-        throw new UnsupportedOperationException ("Implement me");
-    }
-
-    @Override
-    public List<Property> getProperties() {
-        throw new UnsupportedOperationException ("Implement me");
-    }
-
-    @Override
-    public List<Property> getProperties( QName propName ) {
-        throw new UnsupportedOperationException ("Implement me");
-    }
+    /**
+     * Returns the length of the period.
+     *
+     * @return length, can be <code>null</code>
+     */
+    public Object getLength();
 }

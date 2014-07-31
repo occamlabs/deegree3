@@ -48,6 +48,9 @@ import static org.apache.xerces.xs.XSTypeDefinition.SIMPLE_TYPE;
 import static org.deegree.commons.tom.primitive.BaseType.BOOLEAN;
 import static org.deegree.commons.xml.CommonNamespaces.XLNNS;
 import static org.deegree.commons.xml.CommonNamespaces.XSINS;
+import static org.deegree.gml.GMLVersion.GML_2;
+import static org.deegree.gml.GMLVersion.GML_30;
+import static org.deegree.gml.GMLVersion.GML_31;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -119,13 +122,13 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Concrete extensions are parsers for a specific category of GML objects.
- * 
+ *
  * @see GMLObjectCategory
  * @see GMLFeatureReader
- * 
+ *
  * @author <a href="mailto:schneider@lat-lon.de">Markus Schneider </a>
  * @author last edited by: $Author:$
- * 
+ *
  * @version $Revision:$, $Date:$
  */
 public abstract class AbstractGMLObjectReader extends XMLAdapter {
@@ -149,7 +152,7 @@ public abstract class AbstractGMLObjectReader extends XMLAdapter {
 
     /**
      * Creates a new {@link AbstractGMLObjectReader} instance.
-     * 
+     *
      * @param gmlStreamReader
      *            GML stream reader, must not be <code>null</code>
      */
@@ -163,9 +166,33 @@ public abstract class AbstractGMLObjectReader extends XMLAdapter {
         this.version = gmlStreamReader.getVersion();
     }
 
+    public String parseGmlId( final XMLStreamReader xmlStream ) throws XMLStreamException {
+        final String gmlId = xmlStream.getAttributeValue( gmlNs, "id" );
+        if ( gmlId == null && isGmlIdRequired() ) {
+            final String msg = "Required attribute gml:id is missing.";
+            throw new XMLStreamException( msg, xmlStream.getLocation() );
+        }
+        if ( gmlId != null ) {
+            checkValidNcName( gmlId );
+        }
+        return gmlId;
+    }
+
+    // required since GML 3.2
+    private boolean isGmlIdRequired() {
+        return version != GML_2 && version != GML_30 || version != GML_31;
+    }
+
+    private void checkValidNcName( final String gmlId ) {
+        if ( gmlId.length() > 0 && !gmlId.matches( "[^\\d][^:]+" ) ) {
+            final String msg = gmlId + " is not a valid GML id. A GML id must not start with a digit and may not contain a separating colon (:).";
+            throw new IllegalArgumentException( msg );
+        }
+    }
+
     /**
      * Returns the object representation for the given property element.
-     * 
+     *
      * @param xmlStream
      *            cursor must point at the <code>START_ELEMENT</code> event of the property, afterwards points at the
      *            corresponding <code>END_ELEMENT</code> event
@@ -206,7 +233,7 @@ public abstract class AbstractGMLObjectReader extends XMLAdapter {
         } else if ( propDecl instanceof ArrayPropertyType ) {
             property = parseArrayProperty( xmlStream, (ArrayPropertyType) propDecl, crs );
         } else {
-            throw new RuntimeException( "Internal error in GMLFeatureReader: property type " + propDecl.getClass()
+            throw new RuntimeException( "Internal error: property type " + propDecl.getClass()
                                         + " not handled." );
         }
 
@@ -655,7 +682,7 @@ public abstract class AbstractGMLObjectReader extends XMLAdapter {
 
     /**
      * Parses / validates the attributes for the current START_ELEMENT event.
-     * 
+     *
      * @param xmlStream
      *            XML stream reader, must point at at START_ELEMENT event (cursor is not moved)
      * @param elDecl
@@ -754,9 +781,9 @@ public abstract class AbstractGMLObjectReader extends XMLAdapter {
      * Returns the feature type with the given name.
      * <p>
      * If no feature type with the given name is defined, an XMLParsingException is thrown.
-     * 
+     *
      * @param xmlStreamReader
-     * 
+     *
      * @param ftName
      *            feature type name to look up
      * @return the feature type with the given name

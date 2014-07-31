@@ -1,7 +1,6 @@
-//$HeadURL$
 /*----------------------------------------------------------------------------
  This file is part of deegree, http://deegree.org/
- Copyright (C) 2001-2011 by:
+ Copyright (C) 2001-2014 by:
  - Department of Geography, University of Bonn -
  and
  - lat/lon GmbH -
@@ -32,27 +31,19 @@
  http://www.geographie.uni-bonn.de/deegree/
 
  e-mail: info@deegree.org
- ----------------------------------------------------------------------------*/
+----------------------------------------------------------------------------*/
 package org.deegree.time.primitive;
 
 import java.util.List;
 
 import org.deegree.time.TimeObject;
 
-/**
- * TODO add class documentation here
- * 
- * @author <a href="mailto:name@company.com">Your Name</a>
- * @author last edited by: $Author$
- * 
- * @version $Revision$, $Date$
- */
 public interface TimePrimitive extends TimeObject {
 
     /**
      * Returns all time objects related to this {@link TimePrimitive}.
-     * 
-     * @return all related time objects, but never <code>null</code>
+     *
+     * @return all related time objects, can be empty, but never <code>null</code>
      */
-    List<?> getRelatedTimes();
+    List<RelatedTime> getRelatedTimes();
 }

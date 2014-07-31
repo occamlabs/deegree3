@@ -34,21 +34,44 @@
  ----------------------------------------------------------------------------*/
 package org.deegree.time.primitive;
 
+import java.util.List;
+
+import org.deegree.commons.tom.gml.property.Property;
 import org.deegree.time.position.TimePosition;
 
 /**
- * Zero-dimensional {@link TimeGeometricPrimitive}.
+ * Standard implementation of {@link TimeInstant}.
  *
  * @author <a href="mailto:schneider@occamlabs.de">Markus Schneider</a>
  *
  * @since 3.4
  */
-public interface TimeInstant extends TimeGeometricPrimitive, TimePositionOrInstant {
+public class GenericTimeInstant extends AbstractTimeGeometricPrimitive implements TimePositionOrInstant, TimeInstant {
+
+    private final TimePosition value;
 
     /**
-     * Returns the {@link TimePosition}.
+     * Creates a new {@link GenericTimeInstant} instance.
      *
-     * @return temporal position, never <code>null</code>
+     * @param id
+     *            gml id, can be <code>null</code>
+     * @param props
+     *            can be empty, but must not be <code>null</code>
+     * @param relatedTimes
+     *            can be empty, but must not be <code>null</code>
+     * @param frame
+     *            time frame, can be <code>null</code>
+     * @param value
+     *            temporal position, must not be <code>null</code>
      */
-    public TimePosition getPosition();
+    public GenericTimeInstant( final String id, final List<Property> props, final List<RelatedTime> relatedTimes,
+                               final String frame, final TimePosition value ) {
+        super( id, props, relatedTimes, frame );
+        this.value = value;
+    }
+
+    @Override
+    public TimePosition getPosition() {
+        return value;
+    }
 }

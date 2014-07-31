@@ -1,7 +1,6 @@
-//$HeadURL$
 /*----------------------------------------------------------------------------
  This file is part of deegree, http://deegree.org/
- Copyright (C) 2001-2011 by:
+ Copyright (C) 2001-2014 by:
  - Department of Geography, University of Bonn -
  and
  - lat/lon GmbH -
@@ -33,28 +32,14 @@
 
  e-mail: info@deegree.org
  ----------------------------------------------------------------------------*/
-package org.deegree.time.position;
+package org.deegree.protocol.wfs.te.xml;
 
-/**
- * {@link TemporalPosition} that identifies an era.
- * 
- * @author <a href="mailto:name@company.com">Your Name</a>
- * @author last edited by: $Author$
- * 
- * @version $Revision$, $Date$
- */
-public class OrdinalPosition implements TemporalPosition {
+public class TemporalityExtension100 {
 
-    @Override
-    public int compareTo( TemporalPosition o ) {
-        // TODO Auto-generated method stub
-        return 0;
-    }
+    /** Namespace binding for WFS Temporal Extension 1.0.0 elements */
+    public static final String WFS_TE_10_NS = "http://www.opengis.net/wfs-te/1.0";
 
-    @Override
-    public IndeterminateValue getIndeterminateValue() {
-        // TODO Auto-generated method stub
-        return null;
-    }
+    /** Namespace binding for FES Temporal Extension 1.0.0 elements */
+    public static final String FES_TE_10_NS = "http://www.opengis.net/fes-te/1.0";
 
 }

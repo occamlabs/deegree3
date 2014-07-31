@@ -1,7 +1,6 @@
-//$HeadURL$
 /*----------------------------------------------------------------------------
  This file is part of deegree, http://deegree.org/
- Copyright (C) 2001-2011 by:
+ Copyright (C) 2001-2014 by:
  - Department of Geography, University of Bonn -
  and
  - lat/lon GmbH -
@@ -33,25 +32,8 @@
 
  e-mail: info@deegree.org
  ----------------------------------------------------------------------------*/
-package org.deegree.time.position;
+package org.deegree.time.primitive;
 
-/**
- * {@link TemporalPosition} that is based on a {@link Number}.
- * 
- * @author <a href="mailto:schneider@lat-lon.de">Markus Schneider</a>
- * @author last edited by: $Author$
- * 
- * @version $Revision$, $Date$
- */
-public class TemporalCoordinate {
-
-    private final Number value;
-
-    public TemporalCoordinate( Number value ) {
-        this.value = value;
-    }
-
-    public Number getValue() {
-        return value;
-    }
+public interface RelatedTime {
+    // placeholder
 }

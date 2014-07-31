@@ -1,7 +1,6 @@
-//$HeadURL$
 /*----------------------------------------------------------------------------
  This file is part of deegree, http://deegree.org/
- Copyright (C) 2001-2011 by:
+ Copyright (C) 2001-2014 by:
  - Department of Geography, University of Bonn -
  and
  - lat/lon GmbH -
@@ -32,19 +31,35 @@
  http://www.geographie.uni-bonn.de/deegree/
 
  e-mail: info@deegree.org
- ----------------------------------------------------------------------------*/
-package org.deegree.time.complex;
+----------------------------------------------------------------------------*/
+package org.deegree.time.primitive.reference;
 
-import org.deegree.time.TimeObject;
+import java.util.List;
 
-/**
- * {@link TimeObject} that is an aggregation of temporal primitives.
- * 
- * @author <a href="mailto:schneider@lat-lon.de">Markus Schneider</a>
- * @author last edited by: $Author$
- * 
- * @version $Revision$, $Date$
- */
-public interface TimeComplex extends TimeObject {
-    // TODO
+import org.deegree.commons.tom.ReferenceResolver;
+import org.deegree.time.position.TimePosition;
+import org.deegree.time.primitive.RelatedTime;
+import org.deegree.time.primitive.TimeInstant;
+
+public class TimeInstantReference extends TimeGeometricPrimitiveReference<TimeInstant> implements TimeInstant {
+
+    public TimeInstantReference( final ReferenceResolver resolver, final String uri, final String baseURL ) {
+        super( resolver, uri, baseURL );
+    }
+
+    @Override
+    public String getFrame() {
+        return getReferencedObject().getFrame();
+    }
+
+    @Override
+    public List<RelatedTime> getRelatedTimes() {
+        return getReferencedObject().getRelatedTimes();
+    }
+
+    @Override
+    public TimePosition getPosition() {
+        return getReferencedObject().getPosition();
+    }
+
 }

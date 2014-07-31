@@ -1,7 +1,6 @@
-//$HeadURL$
 /*----------------------------------------------------------------------------
  This file is part of deegree, http://deegree.org/
- Copyright (C) 2001-2011 by:
+ Copyright (C) 2001-2014 by:
  - Department of Geography, University of Bonn -
  and
  - lat/lon GmbH -
@@ -32,9 +31,37 @@
  http://www.geographie.uni-bonn.de/deegree/
 
  e-mail: info@deegree.org
- ----------------------------------------------------------------------------*/
-package org.deegree.time.position;
+----------------------------------------------------------------------------*/
+package org.deegree.time.primitive;
 
-public class TimeZone {
+import java.util.List;
 
+import org.deegree.commons.tom.gml.property.Property;
+
+abstract class AbstractTimeGeometricPrimitive extends AbstractTimePrimitive implements TimeGeometricPrimitive {
+
+    private final String frame;
+
+    /**
+     * Creates a new {@link AbstractTimeGeometricPrimitive} instance.
+     *
+     * @param id
+     *            gml id, can be <code>null</code>
+     * @param props
+     *            can be empty, but must not be <code>null</code>
+     * @param relatedTimes
+     *            can be empty, but must not be <code>null</code>
+     * @param frame
+     *            time frame, can be <code>null</code>
+     */
+    protected AbstractTimeGeometricPrimitive( final String id, final List<Property> props,
+                                              final List<RelatedTime> relatedTimes, final String frame ) {
+        super( id, props, relatedTimes );
+        this.frame = frame;
+    }
+
+    @Override
+    public String getFrame() {
+        return frame;
+    }
 }

@@ -1,7 +1,6 @@
-//$HeadURL$
 /*----------------------------------------------------------------------------
  This file is part of deegree, http://deegree.org/
- Copyright (C) 2001-2011 by:
+ Copyright (C) 2001-2014 by:
  - Department of Geography, University of Bonn -
  and
  - lat/lon GmbH -
@@ -32,29 +31,30 @@
  http://www.geographie.uni-bonn.de/deegree/
 
  e-mail: info@deegree.org
- ----------------------------------------------------------------------------*/
-package org.deegree.time.position;
+----------------------------------------------------------------------------*/
+package org.deegree.time.primitive.reference;
 
-/**
- * TODO add class documentation here
- * 
- * @author <a href="mailto:name@company.com">Your Name</a>
- * @author last edited by: $Author$
- * 
- * @version $Revision$, $Date$
- */
-public class ClockTime implements TemporalPosition {
+import java.util.List;
 
-    @Override
-    public int compareTo( TemporalPosition o ) {
-        // TODO Auto-generated method stub
-        return 0;
+import org.deegree.commons.tom.ReferenceResolver;
+import org.deegree.commons.tom.gml.GMLReference;
+import org.deegree.time.primitive.RelatedTime;
+import org.deegree.time.primitive.TimeGeometricPrimitive;
+
+public class TimeGeometricPrimitiveReference<T extends TimeGeometricPrimitive> extends GMLReference<T> implements
+                                                                                                      TimeGeometricPrimitive {
+
+    public TimeGeometricPrimitiveReference( final ReferenceResolver resolver, final String uri, final String baseURL ) {
+        super( resolver, uri, baseURL );
     }
 
     @Override
-    public IndeterminateValue getIndeterminateValue() {
-        // TODO Auto-generated method stub
-        return null;
+    public String getFrame() {
+        return getReferencedObject().getFrame();
     }
 
+    @Override
+    public List<RelatedTime> getRelatedTimes() {
+        return getReferencedObject().getRelatedTimes();
+    }
 }
