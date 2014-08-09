@@ -101,17 +101,18 @@ import org.deegree.services.wfs.WebFeatureService;
 import org.deegree.services.wfs.WfsFeatureStoreManager;
 import org.deegree.services.wfs.format.gml.BufferableXMLStreamWriter;
 import org.deegree.services.wfs.format.gml.GmlFormat;
+import org.deegree.services.wfs.query.DynamicFeatureQueryHandler;
 import org.deegree.services.wfs.query.QueryAnalyzer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * Handles {@link GetFeature} and {@link GetFeatureWithLock} requests for the {@link GmlFormat}.
- * 
+ *
  * @author <a href="mailto:schneider@lat-lon.de">Markus Schneider</a>
  * @author <a href="mailto:schmitz@lat-lon.de">Andreas Schmitz</a>
  * @author last edited by: $Author$
- * 
+ *
  * @version $Revision$, $Date$
  */
 public class GmlGetFeatureHandler extends AbstractGmlRequestHandler {
@@ -120,7 +121,7 @@ public class GmlGetFeatureHandler extends AbstractGmlRequestHandler {
 
     /**
      * Creates a new {@link GmlGetFeatureHandler} instance.
-     * 
+     *
      * @param gmlFormat
      *            never <code>null</code>
      */
@@ -130,7 +131,7 @@ public class GmlGetFeatureHandler extends AbstractGmlRequestHandler {
 
     /**
      * Performs the given {@link GetFeature} request.
-     * 
+     *
      * @param request
      *            request to be handled, never <code>null</code>
      * @param response
@@ -420,7 +421,7 @@ public class GmlGetFeatureHandler extends AbstractGmlRequestHandler {
         for ( Map.Entry<FeatureStore, List<Query>> fsToQueries : analyzer.getQueries().entrySet() ) {
             FeatureStore fs = fsToQueries.getKey();
             Query[] queries = fsToQueries.getValue().toArray( new Query[fsToQueries.getValue().size()] );
-            FeatureInputStream rs = fs.query( queries );
+            FeatureInputStream rs = new DynamicFeatureQueryHandler().query( queries, fs, analyzer );
             try {
                 for ( Feature member : rs ) {
                     if ( lock != null && !lock.isLocked( member.getId() ) ) {

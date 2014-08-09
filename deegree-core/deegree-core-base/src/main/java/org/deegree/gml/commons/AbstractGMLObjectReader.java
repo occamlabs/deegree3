@@ -48,6 +48,8 @@ import static org.apache.xerces.xs.XSTypeDefinition.SIMPLE_TYPE;
 import static org.deegree.commons.tom.primitive.BaseType.BOOLEAN;
 import static org.deegree.commons.xml.CommonNamespaces.XLNNS;
 import static org.deegree.commons.xml.CommonNamespaces.XSINS;
+import static org.deegree.commons.xml.stax.XMLStreamUtils.nextElement;
+import static org.deegree.commons.xml.stax.XMLStreamUtils.require;
 import static org.deegree.gml.GMLVersion.GML_2;
 import static org.deegree.gml.GMLVersion.GML_30;
 import static org.deegree.gml.GMLVersion.GML_31;
@@ -122,13 +124,13 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Concrete extensions are parsers for a specific category of GML objects.
- *
+ * 
  * @see GMLObjectCategory
  * @see GMLFeatureReader
- *
+ * 
  * @author <a href="mailto:schneider@lat-lon.de">Markus Schneider </a>
  * @author last edited by: $Author:$
- *
+ * 
  * @version $Revision:$, $Date:$
  */
 public abstract class AbstractGMLObjectReader extends XMLAdapter {
@@ -152,7 +154,7 @@ public abstract class AbstractGMLObjectReader extends XMLAdapter {
 
     /**
      * Creates a new {@link AbstractGMLObjectReader} instance.
-     *
+     * 
      * @param gmlStreamReader
      *            GML stream reader, must not be <code>null</code>
      */
@@ -192,7 +194,7 @@ public abstract class AbstractGMLObjectReader extends XMLAdapter {
 
     /**
      * Returns the object representation for the given property element.
-     *
+     * 
      * @param xmlStream
      *            cursor must point at the <code>START_ELEMENT</code> event of the property, afterwards points at the
      *            corresponding <code>END_ELEMENT</code> event
@@ -233,7 +235,7 @@ public abstract class AbstractGMLObjectReader extends XMLAdapter {
         } else if ( propDecl instanceof ArrayPropertyType ) {
             property = parseArrayProperty( xmlStream, (ArrayPropertyType) propDecl, crs );
         } else {
-            throw new RuntimeException( "Internal error: property type " + propDecl.getClass()
+            throw new RuntimeException( "Internal error in GMLFeatureReader: property type " + propDecl.getClass()
                                         + " not handled." );
         }
 
@@ -371,22 +373,27 @@ public abstract class AbstractGMLObjectReader extends XMLAdapter {
     private Property parseEnvelopeProperty( XMLStreamReaderWrapper xmlStream, EnvelopePropertyType propDecl, ICRS crs )
                             throws NoSuchElementException, XMLStreamException, XMLParsingException {
 
-        QName propName = xmlStream.getName();
-        Map<QName, PrimitiveValue> attrs = parseAttributes( xmlStream, propDecl.getElementDecl() );
-        boolean isNilled = attrs.containsKey( XSI_NIL ) && (Boolean) attrs.get( XSI_NIL ).getValue();
-        Property property = null;
+        final QName propName = xmlStream.getName();
+        final Map<QName, PrimitiveValue> attrs = parseAttributes( xmlStream, propDecl.getElementDecl() );
+        final boolean isNilled = attrs.containsKey( XSI_NIL ) && (Boolean) attrs.get( XSI_NIL ).getValue();
         Envelope env = null;
-        xmlStream.nextTag();
-        if ( xmlStream.getName().equals( new QName( gmlNs, "Null" ) ) ) {
-            // TODO extract
-            XMLStreamUtils.skipElement( xmlStream );
-        } else if ( xmlStream.getName().equals( new QName( gmlNs, "null" ) ) ) {
-            // GML 2 uses "null" instead of "Null"
-            // TODO
-            XMLStreamUtils.skipElement( xmlStream );
-        } else {
-            env = gmlStreamReader.getGeometryReader().parseEnvelope( xmlStream, crs );
+        Property property = null;
+        if ( isNilled ) {
             property = new GenericProperty( propDecl, propName, env, isNilled );
+        } else {
+            nextElement( xmlStream );
+            require( xmlStream, START_ELEMENT );
+            if ( xmlStream.getName().equals( new QName( gmlNs, "Null" ) ) ) {
+                // TODO extract
+                XMLStreamUtils.skipElement( xmlStream );
+            } else if ( xmlStream.getName().equals( new QName( gmlNs, "null" ) ) ) {
+                // GML 2 uses "null" instead of "Null"
+                // TODO
+                XMLStreamUtils.skipElement( xmlStream );
+            } else {
+                env = gmlStreamReader.getGeometryReader().parseEnvelope( xmlStream, crs );
+                property = new GenericProperty( propDecl, propName, env, isNilled );
+            }
         }
         xmlStream.nextTag();
         return property;
@@ -682,7 +689,7 @@ public abstract class AbstractGMLObjectReader extends XMLAdapter {
 
     /**
      * Parses / validates the attributes for the current START_ELEMENT event.
-     *
+     * 
      * @param xmlStream
      *            XML stream reader, must point at at START_ELEMENT event (cursor is not moved)
      * @param elDecl
@@ -781,9 +788,9 @@ public abstract class AbstractGMLObjectReader extends XMLAdapter {
      * Returns the feature type with the given name.
      * <p>
      * If no feature type with the given name is defined, an XMLParsingException is thrown.
-     *
+     * 
      * @param xmlStreamReader
-     *
+     * 
      * @param ftName
      *            feature type name to look up
      * @return the feature type with the given name
