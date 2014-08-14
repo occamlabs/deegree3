@@ -57,7 +57,14 @@
       <artifactId>deegree-featurestore-commons</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>aero.m-click</groupId>
+      <artifactId>wfs-te</artifactId>
+      <version>0.0.1-SNAPSHOT</version>
+    </dependency>  
   </dependencies>
-
 </project>
-

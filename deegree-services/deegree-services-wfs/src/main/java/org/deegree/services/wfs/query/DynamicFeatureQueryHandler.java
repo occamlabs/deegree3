@@ -1,14 +1,21 @@
 package org.deegree.services.wfs.query;
 
+import java.util.Iterator;
+
+import org.deegree.commons.tom.ElementNode;
+import org.deegree.commons.tom.gml.property.Property;
+import org.deegree.feature.Feature;
 import org.deegree.feature.persistence.FeatureStore;
 import org.deegree.feature.persistence.FeatureStoreException;
 import org.deegree.feature.persistence.query.Query;
 import org.deegree.feature.stream.FeatureInputStream;
+import org.deegree.feature.stream.IteratorFeatureInputStream;
+import org.deegree.filter.Filter;
 import org.deegree.filter.FilterEvaluationException;
+import org.deegree.filter.projection.ProjectionClause;
 import org.deegree.protocol.wfs.te.DynamicFeatureQuery;
-
-import aero.m_click.wfs_te.DynamicFeatureQueryAlgorithm;
-import aero.m_click.wfs_te.FeatureSelectionAlgorithm;
+import org.deegree.services.wfs.te.DeegreeDynamicFeatureQueryStrategy;
+import org.deegree.time.primitive.TimeGeometricPrimitive;
 
 public class DynamicFeatureQueryHandler {
 
@@ -33,8 +40,11 @@ public class DynamicFeatureQueryHandler {
                                                     final QueryAnalyzer queryAnalyzer )
                             throws FeatureStoreException, FilterEvaluationException {
         final DynamicFeatureQuery query = (DynamicFeatureQuery) queryAnalyzer.getQuery( queries[0] );
-        final DynamicFeatureQueryAlgorithm queryAlgorithm = new DynamicFeatureQueryAlgorithm();
-        final FeatureSelectionAlgorithm selectorAlgorithm = new FeatureSelectionAlgorithm( store );
-        queryAlgorithm.query( query, selectorAlgorithm );
+        final DeegreeDynamicFeatureQueryStrategy strategy = new DeegreeDynamicFeatureQueryStrategy();
+        final aero.m_click.wfs_te.DynamicFeatureQuery<DynamicFeatureQuery, Filter, ProjectionClause, FeatureStore, Feature, ElementNode, TimeGeometricPrimitive, Property> queryAlgorithm = new aero.m_click.wfs_te.DynamicFeatureQuery<DynamicFeatureQuery, Filter, ProjectionClause, FeatureStore, Feature, ElementNode, TimeGeometricPrimitive, Property>(
+                                                                                                                                                                                                                                                                                                                                                              strategy );
+        final Iterator<Feature> result = queryAlgorithm.query( fs, query );
+        final CloseableFeatureIterator closeableIter = new CloseableFeatureIterator( result, strategy );
+        return new IteratorFeatureInputStream( closeableIter );
     }
 }
