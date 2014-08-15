@@ -61,7 +61,17 @@ public class LaxDuring {
     }
 
     public boolean laxDuring( final TimePeriod t1, final TimePeriod t2 ) {
-        return laxDuring( t1.getBeginPosition(), t2 ) &&  laxDuring( t1.getEndPosition(), t2 );
+        if ( !laxDuring( t1.getBeginPosition(), t2 ) ) {
+            return false;
+        }
+        final TimePosition t1End = t1.getEndPosition();
+        if ( !isEndDeterminate( t2 ) ) {
+            return true;
+        }
+        if ( isIndeterminate( t1End ) ) {
+            return false;
+        }
+        return compare( t1End, t2.getEndPosition() ) <= 0;
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
