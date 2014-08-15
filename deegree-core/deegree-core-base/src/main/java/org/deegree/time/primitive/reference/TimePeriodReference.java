@@ -35,6 +35,7 @@
 package org.deegree.time.primitive.reference;
 
 import org.deegree.commons.tom.ReferenceResolver;
+import org.deegree.time.position.TimePosition;
 import org.deegree.time.primitive.TimePeriod;
 import org.deegree.time.primitive.TimePositionOrInstant;
 
@@ -57,5 +58,15 @@ public class TimePeriodReference extends TimeGeometricPrimitiveReference<TimePer
     @Override
     public Object getLength() {
         return getReferencedObject().getLength();
+    }
+
+    @Override
+    public TimePosition getBeginPosition() {
+        return getReferencedObject().getBeginPosition();
+    }
+
+    @Override
+    public TimePosition getEndPosition() {
+        return getReferencedObject().getEndPosition();
     }
 }

@@ -34,6 +34,8 @@
  ----------------------------------------------------------------------------*/
 package org.deegree.time.primitive;
 
+import org.deegree.time.position.TimePosition;
+
 /**
  * One-dimensional {@link TimeGeometricPrimitive}.
  *
@@ -51,11 +53,25 @@ public interface TimePeriod extends TimeGeometricPrimitive {
     public TimePositionOrInstant getBegin();
 
     /**
+     * Returns the beginning of the period.
+     *
+     * @return beginning, never <code>null</code>
+     */
+    public TimePosition getBeginPosition();
+
+    /**
      * Returns the end of the period.
      *
      * @return end, never <code>null</code>
      */
     public TimePositionOrInstant getEnd();
+
+    /**
+     * Returns the end of the period.
+     *
+     * @return end, never <code>null</code>
+     */
+    public TimePosition getEndPosition();
 
     /**
      * Returns the length of the period.

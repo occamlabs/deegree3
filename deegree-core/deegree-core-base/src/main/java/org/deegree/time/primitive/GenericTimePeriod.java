@@ -37,6 +37,7 @@ package org.deegree.time.primitive;
 import java.util.List;
 
 import org.deegree.commons.tom.gml.property.Property;
+import org.deegree.time.position.TimePosition;
 
 /**
  * Standard implementation of {@link TimePeriod}.
@@ -80,8 +81,24 @@ public class GenericTimePeriod extends AbstractTimeGeometricPrimitive implements
     }
 
     @Override
+    public TimePosition getBeginPosition() {
+        if ( begin instanceof TimePosition ) {
+            return (TimePosition) begin;
+        }
+        return ( (TimeInstant) begin ).getPosition();
+    }
+
+    @Override
     public TimePositionOrInstant getEnd() {
         return end;
+    }
+
+    @Override
+    public TimePosition getEndPosition() {
+        if ( end instanceof TimePosition ) {
+            return (TimePosition) end;
+        }
+        return ( (TimeInstant) end ).getPosition();
     }
 
     @Override

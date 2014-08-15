@@ -1,18 +1,14 @@
 package org.deegree.services.wfs.te;
 
 import static java.lang.Integer.parseInt;
-import static java.lang.Long.MAX_VALUE;
-import static java.lang.Long.MIN_VALUE;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyMap;
 import static javax.xml.stream.XMLOutputFactory.newInstance;
-import static org.deegree.commons.tom.datetime.ISO8601Converter.parseDateTime;
 import static org.deegree.commons.xml.CommonNamespaces.GML3_2_NS;
 import static org.deegree.commons.xml.stax.XMLStreamUtils.nextElement;
 import static org.deegree.gml.GMLInputFactory.createGMLStreamReader;
 import static org.deegree.gml.GMLOutputFactory.createGMLStreamWriter;
 import static org.deegree.gml.GMLVersion.GML_32;
-import static org.deegree.time.position.IndeterminateValue.UNKNOWN;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -36,7 +32,6 @@ import org.apache.xerces.xs.XSSimpleTypeDefinition;
 import org.apache.xerces.xs.XSTerm;
 import org.deegree.commons.tom.ElementNode;
 import org.deegree.commons.tom.TypedObjectNode;
-import org.deegree.commons.tom.datetime.DateTime;
 import org.deegree.commons.tom.genericxml.GenericXMLElement;
 import org.deegree.commons.tom.gml.property.Property;
 import org.deegree.commons.tom.gml.property.PropertyType;
@@ -65,11 +60,9 @@ import org.deegree.gml.reference.GmlXlinkOptions;
 import org.deegree.protocol.wfs.getfeature.TypeName;
 import org.deegree.protocol.wfs.te.DynamicFeatureQuery;
 import org.deegree.time.gml.GmlTimeGeometricPrimitiveReader;
-import org.deegree.time.position.TimePosition;
+import org.deegree.time.operator.AnyInteracts;
+import org.deegree.time.operator.LaxDuring;
 import org.deegree.time.primitive.TimeGeometricPrimitive;
-import org.deegree.time.primitive.TimeInstant;
-import org.deegree.time.primitive.TimePeriod;
-import org.deegree.time.primitive.TimePositionOrInstant;
 
 import aero.m_click.wfs_te.model.Interpretation;
 import aero.m_click.wfs_te.strategy.DynamicFeatureQueryStrategy;
@@ -161,7 +154,7 @@ public class DeegreeDynamicFeatureQueryStrategy
 
     @Override
     public boolean anyInteracts( final TimeGeometricPrimitive a, final TimeGeometricPrimitive b ) {
-        return begin( a ).compareTo( end( b ) ) <= 0 && begin( b ).compareTo( end( a ) ) <= 0;
+        return new AnyInteracts().anyInteracts( a, b );
     }
 
     @Override
@@ -193,7 +186,7 @@ public class DeegreeDynamicFeatureQueryStrategy
 
     @Override
     public boolean laxDuring( final TimeGeometricPrimitive a, final TimeGeometricPrimitive b ) {
-        return begin( b ).compareTo( begin( a ) ) <= 0 && end( a ).compareTo( end( b ) ) <= 0;
+        return new LaxDuring().laxDuring( a, b );
     }
 
     @Override
@@ -405,45 +398,5 @@ public class DeegreeDynamicFeatureQueryStrategy
         } catch ( Exception e ) {
             throw new IllegalArgumentException( "Unable to parse gml:validTime:" + e.getMessage() );
         }
-    }
-
-    private Long begin( final TimeGeometricPrimitive timePrimitive ) {
-        if ( timePrimitive instanceof TimeInstant ) {
-            return valueOf( ( (TimeInstant) timePrimitive ).getPosition().getValue() );
-        }
-        final TimePositionOrInstant begin = ( (TimePeriod) timePrimitive ).getBegin();
-        TimePosition position = null;
-        if ( begin instanceof TimeInstant ) {
-            position = ( (TimeInstant) begin ).getPosition();
-        } else {
-            position = (TimePosition) begin;
-        }
-        if ( position.getIndeterminatePosition() == UNKNOWN ) {
-            return MIN_VALUE;
-        }
-        return valueOf( position.getValue() );
-    }
-
-    private Long end( final TimeGeometricPrimitive timePrimitive ) {
-        if ( timePrimitive instanceof TimeInstant ) {
-            return valueOf( ( (TimeInstant) timePrimitive ).getPosition().getValue() );
-        }
-        final TimePositionOrInstant end = ( (TimePeriod) timePrimitive ).getBegin();
-        TimePosition position = null;
-        if ( end instanceof TimeInstant ) {
-            position = ( (TimeInstant) end ).getPosition();
-        } else {
-            position = (TimePosition) end;
-        }
-        if ( position.getIndeterminatePosition() == UNKNOWN ) {
-            return MAX_VALUE;
-        }
-        return valueOf( position.getValue() );
-    }
-
-    private Long valueOf( final String timeString ) {
-        // TODO support other types than dateTime
-        final DateTime dateTime = parseDateTime( timeString );
-        return dateTime.getTimeInMilliseconds();
     }
 }
