@@ -43,7 +43,7 @@ import javax.xml.stream.XMLStreamReader;
 import org.apache.axiom.om.OMElement;
 import org.deegree.commons.xml.XMLParsingException;
 import org.deegree.gml.GMLStreamReader;
-import org.deegree.time.gml.GmlTimeGeometricPrimitiveReader;
+import org.deegree.time.gml.reader.GmlTimeGeometricPrimitiveReader;
 import org.deegree.time.primitive.TimeGeometricPrimitive;
 
 /**

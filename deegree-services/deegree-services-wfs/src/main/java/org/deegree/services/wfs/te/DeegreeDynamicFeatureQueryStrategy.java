@@ -59,7 +59,7 @@ import org.deegree.gml.GMLStreamWriter;
 import org.deegree.gml.reference.GmlXlinkOptions;
 import org.deegree.protocol.wfs.getfeature.TypeName;
 import org.deegree.protocol.wfs.te.DynamicFeatureQuery;
-import org.deegree.time.gml.GmlTimeGeometricPrimitiveReader;
+import org.deegree.time.gml.reader.GmlTimeGeometricPrimitiveReader;
 import org.deegree.time.operator.AnyInteracts;
 import org.deegree.time.operator.LaxDuring;
 import org.deegree.time.primitive.TimeGeometricPrimitive;

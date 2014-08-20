@@ -32,33 +32,35 @@
 
  e-mail: info@deegree.org
 ----------------------------------------------------------------------------*/
-package org.deegree.time.gml;
+package org.deegree.time.gml.reader;
 
-import static org.deegree.commons.xml.stax.XMLStreamUtils.getAttributeValue;
-import static org.deegree.commons.xml.stax.XMLStreamUtils.nextElement;
 import static org.deegree.commons.xml.stax.XMLStreamUtils.requireStartElement;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
-import org.deegree.commons.tom.gml.property.Property;
 import org.deegree.gml.GMLStreamReader;
-import org.deegree.time.position.TimePosition;
-import org.deegree.time.primitive.GenericTimeInstant;
-import org.deegree.time.primitive.RelatedTime;
+import org.deegree.gml.commons.AbstractGMLObjectReader;
+import org.deegree.time.primitive.TimeGeometricPrimitive;
 import org.deegree.time.primitive.TimeInstant;
+import org.deegree.time.primitive.TimePeriod;
 
-public class GmlTimeInstantReader extends AbstractGmlTimeGeometricPrimitiveReader {
+public class GmlTimeGeometricPrimitiveReader extends AbstractGMLObjectReader {
 
-    public GmlTimeInstantReader( final GMLStreamReader gmlStreamReader ) {
-        super( gmlStreamReader );
+    private static final String TIME_INSTANT = "TimeInstant";
+
+    private static final String TIME_PERIOD = "TimePeriod";
+
+    public GmlTimeGeometricPrimitiveReader( final GMLStreamReader gmlStream ) {
+        super( gmlStream );
     }
 
     /**
-     * Consumes the given <code>gml:TimeInstant</code> element event.
+     * Consumes the given <code>gml:AbstractTimeGeometricPrimitive</code> element event.
      * <ul>
      * <li>Precondition: cursor must point at the <code>START_ELEMENT</code> event
      * <li>Postcondition: cursor points at the corresponding <code>END_ELEMENT</code> event</li>
@@ -66,26 +68,34 @@ public class GmlTimeInstantReader extends AbstractGmlTimeGeometricPrimitiveReade
      *
      * @param xmlStream
      *            must not be <code>null</code>
-     * @return corresponding {@link TimeInstant} object, never <code>null</code>
+     * @return corresponding {@link TimeGeometricPrimitive} object, never <code>null</code>
      * @throws XMLStreamException
      */
-    public TimeInstant read( final XMLStreamReader xmlStream )
+    public TimeGeometricPrimitive read( final XMLStreamReader xmlStream )
                             throws XMLStreamException {
-        final String gmlId = parseGmlId( xmlStream );
-        // <attribute name="frame" type="anyURI" default="#ISO-8601"/>
-        final String frame = getAttributeValue( xmlStream, FRAME );
-        final List<Property> props = readGmlStandardProperties( xmlStream );
-        // <element name="relatedTime" type="gml:RelatedTimeType" minOccurs="0" maxOccurs="unbounded"/>
-        final List<RelatedTime> relatedTimes = readRelatedTimes( xmlStream );
-        // <element name="timePosition" type="gml:TimePositionType">
-        final TimePosition timePosition = readRequiredTimePosition( xmlStream );
-        nextElement( xmlStream );
-        return new GenericTimeInstant( gmlId, props, relatedTimes, frame, timePosition );
+        final List<QName> expectedElements = getQnamesWithGmlNs( TIME_INSTANT, TIME_PERIOD );
+        requireStartElement( xmlStream, expectedElements );
+        if ( TIME_INSTANT.equals( xmlStream.getLocalName() ) ) {
+            return readTimeInstant( xmlStream );
+        }
+        return readTimePeriod( xmlStream );
     }
 
-    private TimePosition readRequiredTimePosition( XMLStreamReader xmlStream )
+    private TimeInstant readTimeInstant( final XMLStreamReader xmlStream )
                             throws XMLStreamException {
-        requireStartElement( xmlStream, new QName( gmlNs, "timePosition" ) );
-        return new GmlTimePositionTypeReader().read( xmlStream );
+        return new GmlTimeInstantReader( gmlStreamReader ).read( xmlStream );
+    }
+
+    private TimePeriod readTimePeriod( final XMLStreamReader xmlStream )
+                            throws XMLStreamException {
+        return new GmlTimePeriodReader( gmlStreamReader ).read( xmlStream );
+    }
+
+    private List<QName> getQnamesWithGmlNs( final String... localNames ) {
+        final List<QName> qNames = new ArrayList<QName>();
+        for ( final String localName : localNames ) {
+            qNames.add( new QName( gmlNs, localName ) );
+        }
+        return qNames;
     }
 }

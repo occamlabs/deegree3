@@ -32,13 +32,12 @@
 
  e-mail: info@deegree.org
 ----------------------------------------------------------------------------*/
-package org.deegree.time.gml;
+package org.deegree.time.gml.reader;
 
 import static javax.xml.stream.XMLStreamConstants.END_ELEMENT;
 import static org.deegree.commons.xml.stax.XMLStreamUtils.require;
 import static org.deegree.commons.xml.stax.XMLStreamUtils.skipStartDocument;
 import static org.deegree.gml.GMLVersion.GML_32;
-import static org.deegree.time.position.IndeterminateValue.BEFORE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -49,42 +48,40 @@ import javax.xml.stream.XMLStreamReader;
 
 import org.deegree.gml.GMLInputFactory;
 import org.deegree.gml.GMLStreamReader;
-import org.deegree.time.position.TimePosition;
+import org.deegree.time.primitive.TimeInstant;
 import org.junit.Test;
 
-public class GmlTimePositionTypeReaderTest {
+public class GmlTimeInstantReaderTest {
 
     @Test
     public void readMinimalExample()
                             throws Exception {
-        final GMLStreamReader reader = getGmlStreamReader( "time_position_minimal.gml" );
+        final GMLStreamReader reader = getGmlStreamReader( "time_instant_minimal.gml" );
         final XMLStreamReader xmlStream = reader.getXMLReader();
-        final TimePosition timePosition = new GmlTimePositionTypeReader().read( xmlStream );
-        assertNotNull( timePosition );
-        assertNull( timePosition.getFrame() );
-        assertNull( timePosition.getCalendarEraName() );
-        assertNull( timePosition.getIndeterminatePosition() );
-        assertEquals( "2001-05-23", timePosition.getValue() );
+        final TimeInstant timeInstant = new GmlTimeInstantReader( reader ).read( xmlStream );
+        assertNotNull( timeInstant );
+        assertEquals( "t11", timeInstant.getId() );
+        assertNull( timeInstant.getFrame() );
+        assertEquals( "2001-05-23", timeInstant.getPosition().getValue() );
         assertOnEndElement( xmlStream );
     }
 
     @Test
     public void readFullExample()
                             throws Exception {
-        final GMLStreamReader reader = getGmlStreamReader( "time_position_full.gml" );
+        final GMLStreamReader reader = getGmlStreamReader( "time_instant_full.gml" );
         final XMLStreamReader xmlStream = reader.getXMLReader();
-        final TimePosition timePosition = new GmlTimePositionTypeReader().read( xmlStream );
-        assertNotNull( timePosition );
-        assertEquals( "http://my.big.org/TRS/calendars/japanese", timePosition.getFrame() );
-        assertEquals( "Meiji", timePosition.getCalendarEraName() );
-        assertEquals( BEFORE, timePosition.getIndeterminatePosition() );
-        assertEquals( "0025-03", timePosition.getValue() );
+        final TimeInstant timeInstant = new GmlTimeInstantReader( reader ).read( xmlStream );
+        assertNotNull( timeInstant );
+        assertEquals( "t11", timeInstant.getId() );
+        assertEquals( "http://my.big.org/TRS/calendars/japanese", timeInstant.getFrame() );
+        assertNotNull( timeInstant.getPosition() );
         assertOnEndElement( xmlStream );
     }
 
     private void assertOnEndElement( final XMLStreamReader xmlStream ) {
         require( xmlStream, END_ELEMENT );
-        assertEquals( "timePosition", xmlStream.getLocalName() );
+        assertEquals( "TimeInstant", xmlStream.getLocalName() );
     }
 
     private GMLStreamReader getGmlStreamReader( final String exampleName )

@@ -32,7 +32,7 @@
 
  e-mail: info@deegree.org
 ----------------------------------------------------------------------------*/
-package org.deegree.time.gml;
+package org.deegree.time.gml.reader;
 
 import static java.util.Collections.emptyList;
 import static org.deegree.commons.xml.stax.XMLStreamUtils.nextElement;

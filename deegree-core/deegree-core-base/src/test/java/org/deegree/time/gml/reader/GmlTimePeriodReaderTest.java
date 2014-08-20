@@ -32,7 +32,7 @@
 
  e-mail: info@deegree.org
 ----------------------------------------------------------------------------*/
-package org.deegree.time.gml;
+package org.deegree.time.gml.reader;
 
 import static javax.xml.stream.XMLStreamConstants.END_ELEMENT;
 import static org.deegree.commons.xml.stax.XMLStreamUtils.require;
@@ -48,40 +48,65 @@ import javax.xml.stream.XMLStreamReader;
 
 import org.deegree.gml.GMLInputFactory;
 import org.deegree.gml.GMLStreamReader;
+import org.deegree.time.position.TimePosition;
 import org.deegree.time.primitive.TimeInstant;
+import org.deegree.time.primitive.TimePeriod;
+import org.deegree.time.primitive.reference.TimeInstantReference;
 import org.junit.Test;
 
-public class GmlTimeInstantReaderTest {
+public class GmlTimePeriodReaderTest {
 
     @Test
     public void readMinimalExample()
                             throws Exception {
-        final GMLStreamReader reader = getGmlStreamReader( "time_instant_minimal.gml" );
+        final GMLStreamReader reader = getGmlStreamReader( "time_period_minimal.gml" );
         final XMLStreamReader xmlStream = reader.getXMLReader();
-        final TimeInstant timeInstant = new GmlTimeInstantReader( reader ).read( xmlStream );
-        assertNotNull( timeInstant );
-        assertEquals( "t11", timeInstant.getId() );
-        assertNull( timeInstant.getFrame() );
-        assertEquals( "2001-05-23", timeInstant.getPosition().getValue() );
+        final TimePeriod timePeriod = new GmlTimePeriodReader( reader ).read( xmlStream );
+        assertNotNull( timePeriod );
+        assertEquals( "p1", timePeriod.getId() );
+        assertNull( timePeriod.getFrame() );
+        final TimePosition begin = (TimePosition) timePeriod.getBegin();
+        assertEquals( "2001-05-23", begin.getValue() );
+        final TimePosition end = (TimePosition) timePeriod.getEnd();
+        assertEquals( "2001-06-23", end.getValue() );
         assertOnEndElement( xmlStream );
     }
 
     @Test
     public void readFullExample()
                             throws Exception {
-        final GMLStreamReader reader = getGmlStreamReader( "time_instant_full.gml" );
+        final GMLStreamReader reader = getGmlStreamReader( "time_period_full.gml" );
         final XMLStreamReader xmlStream = reader.getXMLReader();
-        final TimeInstant timeInstant = new GmlTimeInstantReader( reader ).read( xmlStream );
-        assertNotNull( timeInstant );
-        assertEquals( "t11", timeInstant.getId() );
-        assertEquals( "http://my.big.org/TRS/calendars/japanese", timeInstant.getFrame() );
-        assertNotNull( timeInstant.getPosition() );
+        final TimePeriod timePeriod = new GmlTimePeriodReader( reader ).read( xmlStream );
+        assertNotNull( timePeriod );
+        assertEquals( "p1", timePeriod.getId() );
+        assertNull( timePeriod.getFrame() );
+        final TimeInstant begin = (TimeInstant) timePeriod.getBegin();
+        assertEquals( "2001-05-23", begin.getPosition().getValue() );
+        final TimeInstant end = (TimeInstant) timePeriod.getEnd();
+        assertEquals( "2001-06-23", end.getPosition().getValue() );
+        assertOnEndElement( xmlStream );
+    }
+
+    @Test
+    public void readMixedXlinkExample()
+                            throws Exception {
+        final GMLStreamReader reader = getGmlStreamReader( "time_period_mixed_xlink.gml" );
+        final XMLStreamReader xmlStream = reader.getXMLReader();
+        final TimePeriod timePeriod = new GmlTimePeriodReader( reader ).read( xmlStream );
+        assertNotNull( timePeriod );
+        assertEquals( "p22", timePeriod.getId() );
+        assertNull( timePeriod.getFrame() );
+        final TimeInstantReference begin = (TimeInstantReference) timePeriod.getBegin();
+        assertEquals( "#t11", begin.getURI() );
+        final TimePosition end = (TimePosition) timePeriod.getEnd();
+        assertEquals( "2002-05-23", end.getValue() );
         assertOnEndElement( xmlStream );
     }
 
     private void assertOnEndElement( final XMLStreamReader xmlStream ) {
         require( xmlStream, END_ELEMENT );
-        assertEquals( "TimeInstant", xmlStream.getLocalName() );
+        assertEquals( "TimePeriod", xmlStream.getLocalName() );
     }
 
     private GMLStreamReader getGmlStreamReader( final String exampleName )
