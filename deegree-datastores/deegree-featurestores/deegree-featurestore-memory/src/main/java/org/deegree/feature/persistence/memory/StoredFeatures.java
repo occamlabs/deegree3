@@ -258,9 +258,10 @@ class StoredFeatures {
         }
         fc.add( feature );
         idToObject.put( feature.getId(), feature );
-        if ( feature.getEnvelope() != null ) {
+        final Envelope envelope = getEnvelope( feature );
+        if ( envelope != null ) {
             RTree<Feature> rTree = ftToIndex.get( ft );
-            float[] insertBox = toFloats( feature.getEnvelope() );
+            float[] insertBox = toFloats( envelope );
             if ( rTree == null ) {
                 rTree = new RTree<Feature>( insertBox, 16 );
             }
@@ -290,7 +291,8 @@ class StoredFeatures {
     /**
      * Updates the given {@link Feature} instance and updates the index structures.
      * 
-     * TODO Use a copy of the original feature to avoid modifications on rollback. Difficult part: Consider updating of references.
+     * TODO Use a copy of the original feature to avoid modifications on rollback. Difficult part: Consider updating of
+     * references.
      * 
      * @param feature
      *            feature to be updated, must not be <code>null</code>
@@ -299,7 +301,7 @@ class StoredFeatures {
      */
     void updateFeature( Feature feature, List<ParsedPropertyReplacement> replacementProps )
                             throws FeatureStoreException {
-       
+
         for ( ParsedPropertyReplacement replacement : replacementProps ) {
             Property prop = replacement.getNewValue();
             UpdateAction updateAction = replacement.getUpdateAction();
@@ -500,5 +502,15 @@ class StoredFeatures {
     private float[] toFloats( Envelope env ) {
         return new float[] { (float) env.getMin().get0(), (float) env.getMin().get1(), (float) env.getMax().get0(),
                             (float) env.getMax().get1() };
+    }
+
+    private Envelope getEnvelope( final Feature feature ) {
+        try {
+            return feature.getEnvelope();
+        } catch ( Exception e ) {
+            LOG.warn( "Error retrieving envelope of feature " + feature.getId() + ": " + e.getMessage() );
+            feature.setEnvelope( null );
+        }
+        return null;
     }
 }

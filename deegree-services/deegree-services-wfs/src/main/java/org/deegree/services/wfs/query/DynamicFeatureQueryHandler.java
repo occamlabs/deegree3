@@ -15,9 +15,13 @@ import org.deegree.filter.projection.ProjectionClause;
 import org.deegree.protocol.wfs.te.DynamicFeatureQuery;
 import org.deegree.services.wfs.te.DeegreeDynamicFeatureQueryStrategy;
 import org.deegree.time.primitive.TimeGeometricPrimitive;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DynamicFeatureQueryHandler {
 
+    private static final Logger LOG = LoggerFactory.getLogger( DynamicFeatureQueryHandler.class );    
+    
     public FeatureInputStream query( final Query[] queries, final FeatureStore fs, final QueryAnalyzer queryAnalyzer )
                             throws FeatureStoreException, FilterEvaluationException {
         if ( isDynamicQuery( queries, queryAnalyzer ) ) {
@@ -38,6 +42,7 @@ public class DynamicFeatureQueryHandler {
     private FeatureInputStream performDynamicQuery( final Query[] queries, final FeatureStore fs,
                                                     final QueryAnalyzer queryAnalyzer )
                             throws FeatureStoreException, FilterEvaluationException {
+        LOG.info ("Performing DynamicFeatureQuery");
         final DynamicFeatureQuery query = (DynamicFeatureQuery) queryAnalyzer.getQuery( queries[0] );
         final DeegreeDynamicFeatureQueryStrategy strategy = new DeegreeDynamicFeatureQueryStrategy();
         final aero.m_click.wfs_te.DynamicFeatureQuery<DynamicFeatureQuery, Filter, ProjectionClause, FeatureStore, Feature, ElementNode, TimeGeometricPrimitive, ElementNode> queryAlgorithm = new aero.m_click.wfs_te.DynamicFeatureQuery<DynamicFeatureQuery, Filter, ProjectionClause, FeatureStore, Feature, ElementNode, TimeGeometricPrimitive, ElementNode>(

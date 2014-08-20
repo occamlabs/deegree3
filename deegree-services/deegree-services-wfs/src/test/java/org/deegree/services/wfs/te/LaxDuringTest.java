@@ -1,85 +1,156 @@
 package org.deegree.services.wfs.te;
 
+import static java.util.Collections.emptyList;
+import static org.deegree.time.position.IndeterminateValue.UNKNOWN;
+
+import java.util.List;
+
+import org.deegree.commons.tom.gml.property.Property;
+import org.deegree.time.position.TimePosition;
+import org.deegree.time.primitive.GenericTimeInstant;
+import org.deegree.time.primitive.GenericTimePeriod;
+import org.deegree.time.primitive.RelatedTime;
+import org.deegree.time.primitive.TimeGeometricPrimitive;
+import org.deegree.time.primitive.TimeInstant;
+import org.deegree.time.primitive.TimePeriod;
 import org.junit.Assert;
 import org.junit.Test;
-
-import aero.m_click.wfs_te.model.SimpleMap;
-import aero.m_click.wfs_te.strategy.SimpleStrategy;
 
 public class LaxDuringTest {
     @Test
     public void instantInstant() {
-        assertLaxDuring(SimpleMap.timePrimitive("2014-01-01T00:00:01"), SimpleMap.timePrimitive("2014-01-01T00:00:01"));
-        assertNotLaxDuring(SimpleMap.timePrimitive("2014-01-01T00:00:01"), SimpleMap.timePrimitive("2014-01-01T00:00:02"));
-        assertNotLaxDuring(SimpleMap.timePrimitive("2014-01-01T00:00:02"), SimpleMap.timePrimitive("2014-01-01T00:00:01"));
+        assertLaxDuring( timePrimitive( "2014-01-01T00:00:01" ), timePrimitive( "2014-01-01T00:00:01" ) );
+        assertNotLaxDuring( timePrimitive( "2014-01-01T00:00:01" ), timePrimitive( "2014-01-01T00:00:02" ) );
+        assertNotLaxDuring( timePrimitive( "2014-01-01T00:00:02" ), timePrimitive( "2014-01-01T00:00:01" ) );
     }
+
     @Test
     public void periodInstant() {
-        assertNotLaxDuring(SimpleMap.timePrimitive("2014-01-01T00:00:01", "INDETERMINATE"), SimpleMap.timePrimitive("2014-01-01T00:00:00"));
-        assertNotLaxDuring(SimpleMap.timePrimitive("2014-01-01T00:00:01", "INDETERMINATE"), SimpleMap.timePrimitive("2014-01-01T00:00:01"));
-        assertNotLaxDuring(SimpleMap.timePrimitive("2014-01-01T00:00:01", "INDETERMINATE"), SimpleMap.timePrimitive("2014-01-01T00:00:02"));
-        assertNotLaxDuring(SimpleMap.timePrimitive("2014-01-01T00:00:01", "2014-01-01T00:00:02"), SimpleMap.timePrimitive("2014-01-01T00:00:00"));
-        assertNotLaxDuring(SimpleMap.timePrimitive("2014-01-01T00:00:01", "2014-01-01T00:00:02"), SimpleMap.timePrimitive("2014-01-01T00:00:01"));
-        assertNotLaxDuring(SimpleMap.timePrimitive("2014-01-01T00:00:01", "2014-01-01T00:00:02"), SimpleMap.timePrimitive("2014-01-01T00:00:02"));
-        assertNotLaxDuring(SimpleMap.timePrimitive("2014-01-01T00:00:01", "2014-01-01T00:00:02"), SimpleMap.timePrimitive("2014-01-01T00:00:03"));
+        assertNotLaxDuring( timePrimitive( "2014-01-01T00:00:01", "INDETERMINATE" ),
+                            timePrimitive( "2014-01-01T00:00:00" ) );
+        assertNotLaxDuring( timePrimitive( "2014-01-01T00:00:01", "INDETERMINATE" ),
+                            timePrimitive( "2014-01-01T00:00:01" ) );
+        assertNotLaxDuring( timePrimitive( "2014-01-01T00:00:01", "INDETERMINATE" ),
+                            timePrimitive( "2014-01-01T00:00:02" ) );
+        assertNotLaxDuring( timePrimitive( "2014-01-01T00:00:01", "2014-01-01T00:00:02" ),
+                            timePrimitive( "2014-01-01T00:00:00" ) );
+        assertNotLaxDuring( timePrimitive( "2014-01-01T00:00:01", "2014-01-01T00:00:02" ),
+                            timePrimitive( "2014-01-01T00:00:01" ) );
+        assertNotLaxDuring( timePrimitive( "2014-01-01T00:00:01", "2014-01-01T00:00:02" ),
+                            timePrimitive( "2014-01-01T00:00:02" ) );
+        assertNotLaxDuring( timePrimitive( "2014-01-01T00:00:01", "2014-01-01T00:00:02" ),
+                            timePrimitive( "2014-01-01T00:00:03" ) );
     }
+
     @Test
     public void instantPeriod() {
-        assertNotLaxDuring(SimpleMap.timePrimitive("2014-01-01T00:00:00"), SimpleMap.timePrimitive("2014-01-01T00:00:01", "INDETERMINATE"));
-        assertLaxDuring(SimpleMap.timePrimitive("2014-01-01T00:00:01"), SimpleMap.timePrimitive("2014-01-01T00:00:01", "INDETERMINATE"));
-        assertLaxDuring(SimpleMap.timePrimitive("2014-01-01T00:00:02"), SimpleMap.timePrimitive("2014-01-01T00:00:01", "INDETERMINATE"));
-        assertNotLaxDuring(SimpleMap.timePrimitive("2014-01-01T00:00:00"), SimpleMap.timePrimitive("2014-01-01T00:00:01", "2014-01-01T00:00:02"));
-        assertLaxDuring(SimpleMap.timePrimitive("2014-01-01T00:00:01"), SimpleMap.timePrimitive("2014-01-01T00:00:01", "2014-01-01T00:00:02"));
-        assertNotLaxDuring(SimpleMap.timePrimitive("2014-01-01T00:00:02"), SimpleMap.timePrimitive("2014-01-01T00:00:01", "2014-01-01T00:00:02"));
-        assertNotLaxDuring(SimpleMap.timePrimitive("2014-01-01T00:00:03"), SimpleMap.timePrimitive("2014-01-01T00:00:01", "2014-01-01T00:00:02"));
-        assertNotLaxDuring(SimpleMap.timePrimitive("2014-01-01T00:00:00"), SimpleMap.timePrimitive("2014-01-01T00:00:01", "2014-01-01T00:00:03"));
-        assertLaxDuring(SimpleMap.timePrimitive("2014-01-01T00:00:01"), SimpleMap.timePrimitive("2014-01-01T00:00:01", "2014-01-01T00:00:03"));
-        assertLaxDuring(SimpleMap.timePrimitive("2014-01-01T00:00:02"), SimpleMap.timePrimitive("2014-01-01T00:00:01", "2014-01-01T00:00:03"));
-        assertNotLaxDuring(SimpleMap.timePrimitive("2014-01-01T00:00:03"), SimpleMap.timePrimitive("2014-01-01T00:00:01", "2014-01-01T00:00:03"));
-        assertNotLaxDuring(SimpleMap.timePrimitive("2014-01-01T00:00:04"), SimpleMap.timePrimitive("2014-01-01T00:00:01", "2014-01-01T00:00:03"));
+        assertNotLaxDuring( timePrimitive( "2014-01-01T00:00:00" ),
+                            timePrimitive( "2014-01-01T00:00:01", "INDETERMINATE" ) );
+        assertLaxDuring( timePrimitive( "2014-01-01T00:00:01" ), timePrimitive( "2014-01-01T00:00:01", "INDETERMINATE" ) );
+        assertLaxDuring( timePrimitive( "2014-01-01T00:00:02" ), timePrimitive( "2014-01-01T00:00:01", "INDETERMINATE" ) );
+        assertNotLaxDuring( timePrimitive( "2014-01-01T00:00:00" ),
+                            timePrimitive( "2014-01-01T00:00:01", "2014-01-01T00:00:02" ) );
+        assertLaxDuring( timePrimitive( "2014-01-01T00:00:01" ),
+                         timePrimitive( "2014-01-01T00:00:01", "2014-01-01T00:00:02" ) );
+        assertNotLaxDuring( timePrimitive( "2014-01-01T00:00:02" ),
+                            timePrimitive( "2014-01-01T00:00:01", "2014-01-01T00:00:02" ) );
+        assertNotLaxDuring( timePrimitive( "2014-01-01T00:00:03" ),
+                            timePrimitive( "2014-01-01T00:00:01", "2014-01-01T00:00:02" ) );
+        assertNotLaxDuring( timePrimitive( "2014-01-01T00:00:00" ),
+                            timePrimitive( "2014-01-01T00:00:01", "2014-01-01T00:00:03" ) );
+        assertLaxDuring( timePrimitive( "2014-01-01T00:00:01" ),
+                         timePrimitive( "2014-01-01T00:00:01", "2014-01-01T00:00:03" ) );
+        assertLaxDuring( timePrimitive( "2014-01-01T00:00:02" ),
+                         timePrimitive( "2014-01-01T00:00:01", "2014-01-01T00:00:03" ) );
+        assertNotLaxDuring( timePrimitive( "2014-01-01T00:00:03" ),
+                            timePrimitive( "2014-01-01T00:00:01", "2014-01-01T00:00:03" ) );
+        assertNotLaxDuring( timePrimitive( "2014-01-01T00:00:04" ),
+                            timePrimitive( "2014-01-01T00:00:01", "2014-01-01T00:00:03" ) );
     }
+
     @Test
     public void periodPeriod() {
         // Begins
-        assertLaxDuring(SimpleMap.timePrimitive("2014-01-01T00:00:02", "2014-01-01T00:00:05"), SimpleMap.timePrimitive("2014-01-01T00:00:02", "2014-01-01T00:00:06"));
-        assertLaxDuring(SimpleMap.timePrimitive("2014-01-01T00:00:02", "2014-01-01T00:00:05"), SimpleMap.timePrimitive("2014-01-01T00:00:02", "INDETERMINATE"));
+        assertLaxDuring( timePrimitive( "2014-01-01T00:00:02", "2014-01-01T00:00:05" ),
+                         timePrimitive( "2014-01-01T00:00:02", "2014-01-01T00:00:06" ) );
+        assertLaxDuring( timePrimitive( "2014-01-01T00:00:02", "2014-01-01T00:00:05" ),
+                         timePrimitive( "2014-01-01T00:00:02", "INDETERMINATE" ) );
         // Ends
-        assertLaxDuring(SimpleMap.timePrimitive("2014-01-01T00:00:02", "2014-01-01T00:00:05"), SimpleMap.timePrimitive("2014-01-01T00:00:01", "2014-01-01T00:00:05"));
+        assertLaxDuring( timePrimitive( "2014-01-01T00:00:02", "2014-01-01T00:00:05" ),
+                         timePrimitive( "2014-01-01T00:00:01", "2014-01-01T00:00:05" ) );
         // During
-        assertLaxDuring(SimpleMap.timePrimitive("2014-01-01T00:00:02", "2014-01-01T00:00:05"), SimpleMap.timePrimitive("2014-01-01T00:00:01", "2014-01-01T00:00:06"));
-        assertLaxDuring(SimpleMap.timePrimitive("2014-01-01T00:00:02", "2014-01-01T00:00:05"), SimpleMap.timePrimitive("2014-01-01T00:00:01", "INDETERMINATE"));
+        assertLaxDuring( timePrimitive( "2014-01-01T00:00:02", "2014-01-01T00:00:05" ),
+                         timePrimitive( "2014-01-01T00:00:01", "2014-01-01T00:00:06" ) );
+        assertLaxDuring( timePrimitive( "2014-01-01T00:00:02", "2014-01-01T00:00:05" ),
+                         timePrimitive( "2014-01-01T00:00:01", "INDETERMINATE" ) );
         // TEquals
-        assertLaxDuring(SimpleMap.timePrimitive("2014-01-01T00:00:02", "2014-01-01T00:00:05"), SimpleMap.timePrimitive("2014-01-01T00:00:02", "2014-01-01T00:00:05"));
+        assertLaxDuring( timePrimitive( "2014-01-01T00:00:02", "2014-01-01T00:00:05" ),
+                         timePrimitive( "2014-01-01T00:00:02", "2014-01-01T00:00:05" ) );
         // BegunBy
-        assertNotLaxDuring(SimpleMap.timePrimitive("2014-01-01T00:00:02", "2014-01-01T00:00:05"), SimpleMap.timePrimitive("2014-01-01T00:00:02", "2014-01-01T00:00:03"));
+        assertNotLaxDuring( timePrimitive( "2014-01-01T00:00:02", "2014-01-01T00:00:05" ),
+                            timePrimitive( "2014-01-01T00:00:02", "2014-01-01T00:00:03" ) );
         // EndedBy
-        assertNotLaxDuring(SimpleMap.timePrimitive("2014-01-01T00:00:02", "2014-01-01T00:00:05"), SimpleMap.timePrimitive("2014-01-01T00:00:04", "2014-01-01T00:00:05"));
+        assertNotLaxDuring( timePrimitive( "2014-01-01T00:00:02", "2014-01-01T00:00:05" ),
+                            timePrimitive( "2014-01-01T00:00:04", "2014-01-01T00:00:05" ) );
         // After
-        assertNotLaxDuring(SimpleMap.timePrimitive("2014-01-01T00:00:02", "2014-01-01T00:00:05"), SimpleMap.timePrimitive("2014-01-01T00:00:00", "2014-01-01T00:00:01"));
+        assertNotLaxDuring( timePrimitive( "2014-01-01T00:00:02", "2014-01-01T00:00:05" ),
+                            timePrimitive( "2014-01-01T00:00:00", "2014-01-01T00:00:01" ) );
         // Before
-        assertNotLaxDuring(SimpleMap.timePrimitive("2014-01-01T00:00:02", "2014-01-01T00:00:05"), SimpleMap.timePrimitive("2014-01-01T00:00:06", "2014-01-01T00:00:07"));
-        assertNotLaxDuring(SimpleMap.timePrimitive("2014-01-01T00:00:02", "2014-01-01T00:00:05"), SimpleMap.timePrimitive("2014-01-01T00:00:06", "INDETERMINATE"));
+        assertNotLaxDuring( timePrimitive( "2014-01-01T00:00:02", "2014-01-01T00:00:05" ),
+                            timePrimitive( "2014-01-01T00:00:06", "2014-01-01T00:00:07" ) );
+        assertNotLaxDuring( timePrimitive( "2014-01-01T00:00:02", "2014-01-01T00:00:05" ),
+                            timePrimitive( "2014-01-01T00:00:06", "INDETERMINATE" ) );
         // TContains
-        assertNotLaxDuring(SimpleMap.timePrimitive("2014-01-01T00:00:02", "2014-01-01T00:00:05"), SimpleMap.timePrimitive("2014-01-01T00:00:03", "2014-01-01T00:00:04"));
+        assertNotLaxDuring( timePrimitive( "2014-01-01T00:00:02", "2014-01-01T00:00:05" ),
+                            timePrimitive( "2014-01-01T00:00:03", "2014-01-01T00:00:04" ) );
         // TOverlaps
-        assertNotLaxDuring(SimpleMap.timePrimitive("2014-01-01T00:00:02", "2014-01-01T00:00:05"), SimpleMap.timePrimitive("2014-01-01T00:00:04", "2014-01-01T00:00:06"));
-        assertNotLaxDuring(SimpleMap.timePrimitive("2014-01-01T00:00:02", "2014-01-01T00:00:05"), SimpleMap.timePrimitive("2014-01-01T00:00:04", "INDETERMINATE"));
+        assertNotLaxDuring( timePrimitive( "2014-01-01T00:00:02", "2014-01-01T00:00:05" ),
+                            timePrimitive( "2014-01-01T00:00:04", "2014-01-01T00:00:06" ) );
+        assertNotLaxDuring( timePrimitive( "2014-01-01T00:00:02", "2014-01-01T00:00:05" ),
+                            timePrimitive( "2014-01-01T00:00:04", "INDETERMINATE" ) );
         // OverlappedBy
-        assertNotLaxDuring(SimpleMap.timePrimitive("2014-01-01T00:00:02", "2014-01-01T00:00:05"), SimpleMap.timePrimitive("2014-01-01T00:00:01", "2014-01-01T00:00:03"));
+        assertNotLaxDuring( timePrimitive( "2014-01-01T00:00:02", "2014-01-01T00:00:05" ),
+                            timePrimitive( "2014-01-01T00:00:01", "2014-01-01T00:00:03" ) );
         // Meets
-        assertNotLaxDuring(SimpleMap.timePrimitive("2014-01-01T00:00:02", "2014-01-01T00:00:05"), SimpleMap.timePrimitive("2014-01-01T00:00:05", "2014-01-01T00:00:06"));
-        assertNotLaxDuring(SimpleMap.timePrimitive("2014-01-01T00:00:02", "2014-01-01T00:00:05"), SimpleMap.timePrimitive("2014-01-01T00:00:05", "INDETERMINATE"));
+        assertNotLaxDuring( timePrimitive( "2014-01-01T00:00:02", "2014-01-01T00:00:05" ),
+                            timePrimitive( "2014-01-01T00:00:05", "2014-01-01T00:00:06" ) );
+        assertNotLaxDuring( timePrimitive( "2014-01-01T00:00:02", "2014-01-01T00:00:05" ),
+                            timePrimitive( "2014-01-01T00:00:05", "INDETERMINATE" ) );
         // MetBy
-        assertNotLaxDuring(SimpleMap.timePrimitive("2014-01-01T00:00:02", "2014-01-01T00:00:05"), SimpleMap.timePrimitive("2014-01-01T00:00:01", "2014-01-01T00:00:02"));
+        assertNotLaxDuring( timePrimitive( "2014-01-01T00:00:02", "2014-01-01T00:00:05" ),
+                            timePrimitive( "2014-01-01T00:00:01", "2014-01-01T00:00:02" ) );
     }
-    private void assertLaxDuring(SimpleMap a, SimpleMap b) {
-        Assert.assertTrue(laxDuring(a, b));
+
+    private void assertLaxDuring( TimeGeometricPrimitive a, TimeGeometricPrimitive b ) {
+        Assert.assertTrue( laxDuring( a, b ) );
     }
-    private void assertNotLaxDuring(SimpleMap a, SimpleMap b) {
-        Assert.assertFalse(laxDuring(a, b));
+
+    private void assertNotLaxDuring( TimeGeometricPrimitive a, TimeGeometricPrimitive b ) {
+        Assert.assertFalse( laxDuring( a, b ) );
     }
-    private boolean laxDuring(SimpleMap a, SimpleMap b) {
-        final SimpleStrategy st = new SimpleStrategy();
-        return st.laxDuring(a, b);
+
+    private boolean laxDuring( TimeGeometricPrimitive a, TimeGeometricPrimitive b ) {
+        final DeegreeDynamicFeatureQueryStrategy st = new DeegreeDynamicFeatureQueryStrategy();
+        return st.laxDuring( a, b );
+    }
+
+    private TimeInstant timePrimitive( final String s ) {
+        final List<Property> props = emptyList();
+        final List<RelatedTime> relatedTimes = emptyList();
+        TimePosition pos = null;
+        if ( "INDETERMINATE".equals( s ) ) {
+            pos = new TimePosition( null, null, UNKNOWN, "" );
+        } else {
+            pos = new TimePosition( null, null, null, s );
+        }
+        return new GenericTimeInstant( null, props, relatedTimes, null, pos );
+    }
+
+    private TimePeriod timePrimitive( final String t1, final String t2 ) {
+        final TimeInstant begin = timePrimitive( t1 );
+        final TimeInstant end = timePrimitive( t2 );
+        final List<Property> props = emptyList();
+        final List<RelatedTime> relatedTimes = emptyList();
+        return new GenericTimePeriod( null, props, relatedTimes, null, begin, end );
     }
 }
