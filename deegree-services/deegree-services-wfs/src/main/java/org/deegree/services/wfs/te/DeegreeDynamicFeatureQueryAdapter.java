@@ -65,11 +65,11 @@ import org.deegree.time.operator.LaxDuring;
 import org.deegree.time.primitive.TimeGeometricPrimitive;
 
 import aero.m_click.wfs_te.model.Interpretation;
-import aero.m_click.wfs_te.strategy.DynamicFeatureQueryStrategy;
+import aero.m_click.wfs_te.adapter.DynamicFeatureQueryAdapter;
 
-public class DeegreeDynamicFeatureQueryStrategy
+public class DeegreeDynamicFeatureQueryAdapter
                                                implements
-                                               DynamicFeatureQueryStrategy<DynamicFeatureQuery, Filter, ProjectionClause, FeatureStore, Feature, ElementNode, TimeGeometricPrimitive, ElementNode>,
+                                               DynamicFeatureQueryAdapter<DynamicFeatureQuery, Filter, ProjectionClause, FeatureStore, Feature, ElementNode, TimeGeometricPrimitive, ElementNode>,
                                                Closeable {
 
     private static final String AIXM_51_NS = "http://www.aixm.aero/schema/5.1";

@@ -16,7 +16,7 @@ class Aixm51ExampleDatasetLoader {
 
     Feature load()
                             throws Exception {
-        final URL datasetUrl = DeegreeDynamicFeatureQueryStrategyTest.class.getResource( "aixm/aixm.xml" );
+        final URL datasetUrl = DeegreeDynamicFeatureQueryAdapterTest.class.getResource( "aixm/aixm.xml" );
         final GMLStreamReader gmlReader = createGMLStreamReader( GML_32, datasetUrl );
         final AppSchema schema = loadAixm51AppSchema();
         gmlReader.setApplicationSchema( schema );

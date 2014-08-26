@@ -130,8 +130,8 @@ public class LaxDuringTest {
     }
 
     private boolean laxDuring( TimeGeometricPrimitive a, TimeGeometricPrimitive b ) {
-        final DeegreeDynamicFeatureQueryStrategy st = new DeegreeDynamicFeatureQueryStrategy();
-        return st.laxDuring( a, b );
+        final DeegreeDynamicFeatureQueryAdapter ad = new DeegreeDynamicFeatureQueryAdapter();
+        return ad.laxDuring( a, b );
     }
 
     private TimeInstant timePrimitive( final String s ) {

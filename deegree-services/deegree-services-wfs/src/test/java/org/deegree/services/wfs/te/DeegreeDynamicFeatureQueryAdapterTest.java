@@ -27,7 +27,7 @@ import org.junit.Test;
 
 import aero.m_click.wfs_te.model.Interpretation;
 
-public class DeegreeDynamicFeatureQueryStrategyTest {
+public class DeegreeDynamicFeatureQueryAdapterTest {
 
     private static final QName TIME_SLICE = QName.valueOf( "{http://www.aixm.aero/schema/5.1}timeSlice" );
 
@@ -35,7 +35,7 @@ public class DeegreeDynamicFeatureQueryStrategyTest {
 
     private static final QName GML_IDENTIFIER = QName.valueOf( "{http://www.opengis.net/gml/3.2}identifier" );
 
-    private final static DeegreeDynamicFeatureQueryStrategy strategy = new DeegreeDynamicFeatureQueryStrategy();
+    private final static DeegreeDynamicFeatureQueryAdapter ad = new DeegreeDynamicFeatureQueryAdapter();
 
     private static Feature exampleFeature;
 
@@ -45,7 +45,7 @@ public class DeegreeDynamicFeatureQueryStrategyTest {
     public static void setup()
                             throws Exception {
         exampleFeature = new Aixm51ExampleDatasetLoader().load();
-        timeSlices = toList( strategy.getTimeSlices( exampleFeature ) );
+        timeSlices = toList( ad.getTimeSlices( exampleFeature ) );
     }
 
     @Test
@@ -53,43 +53,43 @@ public class DeegreeDynamicFeatureQueryStrategyTest {
         final FeatureType airspaceFt = exampleFeature.getType();
         final List<Property> props = emptyList();
         final Feature airspace = airspaceFt.newFeature( "NEW", props, null );
-        assertEquals( 0, toList( strategy.getTimeSlices( airspace ) ).size() );
-        final ElementNode timeSlice = toList( strategy.getTimeSlices( exampleFeature ) ).get( 0 );
-        strategy.addTimeSlice( airspace, timeSlice );
-        assertEquals( 1, toList( strategy.getTimeSlices( airspace ) ).size() );
+        assertEquals( 0, toList( ad.getTimeSlices( airspace ) ).size() );
+        final ElementNode timeSlice = toList( ad.getTimeSlices( exampleFeature ) ).get( 0 );
+        ad.addTimeSlice( airspace, timeSlice );
+        assertEquals( 1, toList( ad.getTimeSlices( airspace ) ).size() );
     }
 
     @Test
     public void addTimeSliceNew() {
-        final Feature feature = strategy.copyWithoutTimeSlices( exampleFeature );
+        final Feature feature = ad.copyWithoutTimeSlices( exampleFeature );
         final TimeGeometricPrimitive validTime = null;
         final Interpretation interpretation = BASELINE;
         final Integer sequenceNumber = 10;
         final Integer correctionNumber = 11;
-        final Iterable<ElementNode> nonSpecialProperties = strategy.getNonSpecialProperties( timeSlices.get( 0 ) );
-        strategy.addTimeSlice( feature, validTime, interpretation, sequenceNumber, correctionNumber,
+        final Iterable<ElementNode> nonSpecialProperties = ad.getNonSpecialProperties( timeSlices.get( 0 ) );
+        ad.addTimeSlice( feature, validTime, interpretation, sequenceNumber, correctionNumber,
                                nonSpecialProperties );
     }
 
     @Test
     public void copyWithoutTimeSlices() {
-        final Feature copy = strategy.copyWithoutTimeSlices( exampleFeature );
+        final Feature copy = ad.copyWithoutTimeSlices( exampleFeature );
         assertEquals( exampleFeature.getType(), copy.getType() );
         assertEquals( exampleFeature.getId(), copy.getId() );
         assertEquals( exampleFeature.getProperties().get( 0 ), copy.getProperties().get( 0 ) );
-        assertEquals( 0, toList( strategy.getTimeSlices( copy ) ).size() );
+        assertEquals( 0, toList( ad.getTimeSlices( copy ) ).size() );
     }
 
     @Test
     public void getName() {
         final Property prop = exampleFeature.getProperties().get( 0 );
-        final QName name = strategy.getName( prop );
+        final QName name = ad.getName( prop );
         assertEquals( GML_IDENTIFIER, name );
     }
 
     @Test
     public void getTimeSlices() {
-        final List<ElementNode> timeSlices = toList( strategy.getTimeSlices( exampleFeature ) );
+        final List<ElementNode> timeSlices = toList( ad.getTimeSlices( exampleFeature ) );
         assertEquals( 2, timeSlices.size() );
         for ( final ElementNode timeSlice : timeSlices ) {
             assertEquals( AIRSPACE_TIME_SLICE, timeSlice.getName() );
@@ -98,37 +98,37 @@ public class DeegreeDynamicFeatureQueryStrategyTest {
 
     @Test
     public void getCorrectionNumber() {
-        assertNull( strategy.getCorrectionNumber( timeSlices.get( 0 ) ) );
-        assertEquals( new Integer( 1 ), strategy.getCorrectionNumber( timeSlices.get( 1 ) ) );
+        assertNull( ad.getCorrectionNumber( timeSlices.get( 0 ) ) );
+        assertEquals( new Integer( 1 ), ad.getCorrectionNumber( timeSlices.get( 1 ) ) );
     }
 
     @Test
     public void getInterpretation() {
-        assertEquals( BASELINE, strategy.getInterpretation( timeSlices.get( 0 ) ) );
-        assertEquals( TEMPDELTA, strategy.getInterpretation( timeSlices.get( 1 ) ) );
+        assertEquals( BASELINE, ad.getInterpretation( timeSlices.get( 0 ) ) );
+        assertEquals( TEMPDELTA, ad.getInterpretation( timeSlices.get( 1 ) ) );
     }
 
     @Test
     public void getNonSpecialProperties() {
-        assertEquals( 2, toList( strategy.getNonSpecialProperties( timeSlices.get( 0 ) ) ).size() );
-        assertEquals( 1, toList( strategy.getNonSpecialProperties( timeSlices.get( 1 ) ) ).size() );
+        assertEquals( 2, toList( ad.getNonSpecialProperties( timeSlices.get( 0 ) ) ).size() );
+        assertEquals( 1, toList( ad.getNonSpecialProperties( timeSlices.get( 1 ) ) ).size() );
     }
 
     @Test
     public void getSequenceNumber() {
-        assertEquals( new Integer( 1 ), strategy.getSequenceNumber( timeSlices.get( 0 ) ) );
-        assertEquals( new Integer( 2 ), strategy.getSequenceNumber( timeSlices.get( 1 ) ) );
+        assertEquals( new Integer( 1 ), ad.getSequenceNumber( timeSlices.get( 0 ) ) );
+        assertEquals( new Integer( 2 ), ad.getSequenceNumber( timeSlices.get( 1 ) ) );
     }
 
     @Test
     public void getValidTime() {
-        final TimePeriod validTime1 = (TimePeriod) strategy.getValidTime( timeSlices.get( 0 ) );
+        final TimePeriod validTime1 = (TimePeriod) ad.getValidTime( timeSlices.get( 0 ) );
         final TimePosition begin1 = (TimePosition) validTime1.getBegin();
         assertEquals( "2009-01-01T00:00:00Z", begin1.getValue() );
         final TimePosition end1 = (TimePosition) validTime1.getEnd();
         assertEquals( UNKNOWN, end1.getIndeterminatePosition() );
         assertEquals( "", end1.getValue() );
-        final TimePeriod validTime2 = (TimePeriod) strategy.getValidTime( timeSlices.get( 1 ) );
+        final TimePeriod validTime2 = (TimePeriod) ad.getValidTime( timeSlices.get( 1 ) );
         final TimePosition begin2 = (TimePosition) validTime2.getBegin();
         assertEquals( "2012-07-10T07:00:00Z", begin2.getValue() );
         final TimePosition end2 = (TimePosition) validTime2.getEnd();
@@ -166,13 +166,13 @@ public class DeegreeDynamicFeatureQueryStrategyTest {
     @Test
     public void isTimeSlicePropertyTrue() {
         final PropertyType pt = exampleFeature.getType().getPropertyDeclaration( TIME_SLICE );
-        assertTrue( strategy.isTimeSliceProperty( pt ) );
+        assertTrue( ad.isTimeSliceProperty( pt ) );
     }
 
     @Test
     public void isTimeSlicePropertyFalse() {
         final PropertyType pt = exampleFeature.getType().getPropertyDeclaration( GML_IDENTIFIER );
-        assertFalse( strategy.isTimeSliceProperty( pt ) );
+        assertFalse( ad.isTimeSliceProperty( pt ) );
     }
 
     private static <T> List<T> toList( final Iterable<T> iterable ) {

@@ -122,8 +122,8 @@ public class AnyInteractsTest {
     }
 
     private boolean anyInteracts( TimeGeometricPrimitive a, TimeGeometricPrimitive b ) {
-        final DeegreeDynamicFeatureQueryStrategy st = new DeegreeDynamicFeatureQueryStrategy();
-        return st.anyInteracts( a, b );
+        final DeegreeDynamicFeatureQueryAdapter ad = new DeegreeDynamicFeatureQueryAdapter();
+        return ad.anyInteracts( a, b );
     }
 
     private TimeInstant timePrimitive( final String s ) {
