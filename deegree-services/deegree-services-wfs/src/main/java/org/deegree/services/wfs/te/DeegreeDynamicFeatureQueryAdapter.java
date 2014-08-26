@@ -15,6 +15,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -64,12 +65,13 @@ import org.deegree.time.operator.AnyInteracts;
 import org.deegree.time.operator.LaxDuring;
 import org.deegree.time.primitive.TimeGeometricPrimitive;
 
+import aero.m_click.wfs_te.TimeSliceComparator;
 import aero.m_click.wfs_te.model.Interpretation;
-import aero.m_click.wfs_te.strategy.DynamicFeatureQueryStrategy;
+import aero.m_click.wfs_te.adapter.DynamicFeatureQueryAdapter;
 
-public class DeegreeDynamicFeatureQueryStrategy
+public class DeegreeDynamicFeatureQueryAdapter
                                                implements
-                                               DynamicFeatureQueryStrategy<DynamicFeatureQuery, Filter, ProjectionClause, FeatureStore, Feature, ElementNode, TimeGeometricPrimitive, ElementNode>,
+                                               DynamicFeatureQueryAdapter<DynamicFeatureQuery, Filter, ProjectionClause, FeatureStore, Feature, ElementNode, TimeGeometricPrimitive, ElementNode>,
                                                Closeable {
 
     private static final String AIXM_51_NS = "http://www.aixm.aero/schema/5.1";
@@ -174,14 +176,15 @@ public class DeegreeDynamicFeatureQueryStrategy
     }
 
     @Override
-    public Iterable<ElementNode> getTimeSlices( final Feature feature ) {
+    public Iterator<ElementNode> getSortedTimeSlices( final Feature feature ) {
         final List<ElementNode> timeSlices = new ArrayList<ElementNode>();
         for ( final Property prop : feature.getProperties() ) {
             if ( isTimeSliceProperty( prop ) ) {
                 timeSlices.add( (ElementNode) prop.getChildren().get( 0 ) );
             }
         }
-        return timeSlices;
+        Collections.sort(timeSlices, new TimeSliceComparator<ElementNode>(this));
+        return timeSlices.iterator();
     }
 
     @Override
