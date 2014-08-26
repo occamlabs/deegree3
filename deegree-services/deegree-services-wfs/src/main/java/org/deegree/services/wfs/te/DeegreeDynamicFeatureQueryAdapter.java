@@ -4,6 +4,7 @@ import static java.lang.Integer.parseInt;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyMap;
 import static javax.xml.stream.XMLOutputFactory.newInstance;
+import static org.deegree.commons.tom.primitive.BaseType.STRING;
 import static org.deegree.commons.xml.CommonNamespaces.GML3_2_NS;
 import static org.deegree.commons.xml.stax.XMLStreamUtils.nextElement;
 import static org.deegree.gml.GMLInputFactory.createGMLStreamReader;
@@ -31,6 +32,7 @@ import org.apache.xerces.xs.XSComplexTypeDefinition;
 import org.apache.xerces.xs.XSElementDeclaration;
 import org.apache.xerces.xs.XSSimpleTypeDefinition;
 import org.apache.xerces.xs.XSTerm;
+import org.apache.xerces.xs.XSTypeDefinition;
 import org.deegree.commons.tom.ElementNode;
 import org.deegree.commons.tom.TypedObjectNode;
 import org.deegree.commons.tom.genericxml.GenericXMLElement;
@@ -66,8 +68,8 @@ import org.deegree.time.operator.LaxDuring;
 import org.deegree.time.primitive.TimeGeometricPrimitive;
 
 import aero.m_click.wfs_te.TimeSliceComparator;
-import aero.m_click.wfs_te.model.Interpretation;
 import aero.m_click.wfs_te.adapter.DynamicFeatureQueryAdapter;
+import aero.m_click.wfs_te.model.Interpretation;
 
 public class DeegreeDynamicFeatureQueryAdapter
                                                implements
@@ -114,22 +116,19 @@ public class DeegreeDynamicFeatureQueryAdapter
         XSComplexTypeDefinition timeSliceElType = (XSComplexTypeDefinition) timeSliceElDecl.getTypeDefinition();
         final Map<QName, XSTerm> allowedChildElementDecls2 = schema.getAllowedChildElementDecls( timeSliceElType );
         if ( validTime != null ) {
-            final ElementNode validTimeEl = buildElement( VALID_TIME, validTime, allowedChildElementDecls, schema );
+            final ElementNode validTimeEl = buildSimpleElement( VALID_TIME, validTime, allowedChildElementDecls, schema );
             children.add( validTimeEl );
         }
         if ( interpretation != null ) {
-            final ElementNode interpretationEl = buildElement( INTERPRETATION, interpretation,
-                                                               allowedChildElementDecls2, schema );
+            final ElementNode interpretationEl = buildSimpleElement( INTERPRETATION, interpretation, allowedChildElementDecls2, schema );
             children.add( interpretationEl );
         }
         if ( sequenceNumber != null ) {
-            final ElementNode sequenceNumberEl = buildElement( SEQUENCE_NUMBER, sequenceNumber,
-                                                               allowedChildElementDecls2, schema );
+            final ElementNode sequenceNumberEl = buildSimpleElement( SEQUENCE_NUMBER, sequenceNumber, allowedChildElementDecls2, schema );
             children.add( sequenceNumberEl );
         }
         if ( correctionNumber != null ) {
-            final ElementNode correctionNumberEl = buildElement( CORRECTION_NUMBER, correctionNumber,
-                                                                 allowedChildElementDecls2, schema );
+            final ElementNode correctionNumberEl = buildSimpleElement( CORRECTION_NUMBER, correctionNumber, allowedChildElementDecls2, schema );
             children.add( correctionNumberEl );
         }
         for ( final ElementNode nonSpecialProperty : nonSpecialProperties ) {
@@ -139,19 +138,29 @@ public class DeegreeDynamicFeatureQueryAdapter
         addTimeSlice( feature, timeSlice );
     }
 
-    private ElementNode buildElement( final QName name, final Object value,
+    private ElementNode buildSimpleElement( final QName name, final Object value,
                                       final Map<QName, XSTerm> allowedChildElementDecls, final AppSchema schema ) {
-        XSElementDeclaration elementDecl = null;
-        final XSTerm term = allowedChildElementDecls.get( name );
-        if ( term instanceof XSElementDeclaration ) {
-            elementDecl = (XSElementDeclaration) term;
-        }
         final Map<QName, PrimitiveValue> attrs = emptyMap();
         final List<TypedObjectNode> children = new ArrayList<TypedObjectNode>();
-        final XSSimpleTypeDefinition xsType = (XSSimpleTypeDefinition) elementDecl.getTypeDefinition();
-        final PrimitiveType pt = new PrimitiveType( xsType );
-        children.add( new PrimitiveValue( value.toString(), pt ) );
+        final XSTerm xsTerm = allowedChildElementDecls.get( name );
+        XSElementDeclaration elementDecl = null;
+        if (xsTerm instanceof XSElementDeclaration) {
+            elementDecl = (XSElementDeclaration) xsTerm;
+        }
+        children.add ( buildPrimitiveValue( value, xsTerm ) );
         return new GenericXMLElement( name, elementDecl, attrs, children );
+    }
+
+    private PrimitiveValue buildPrimitiveValue( final Object value, final XSTerm term ) {
+        PrimitiveType pt = new PrimitiveType( STRING );
+        if ( term instanceof XSElementDeclaration ) {
+            final XSElementDeclaration elementDecl = (XSElementDeclaration) term;
+            final XSTypeDefinition typeDefinition = elementDecl.getTypeDefinition();
+            if ( typeDefinition instanceof XSSimpleTypeDefinition ) {
+                pt = new PrimitiveType( (XSSimpleTypeDefinition) typeDefinition );
+            }
+        }
+        return new PrimitiveValue( value.toString(), pt );
     }
 
     @Override
