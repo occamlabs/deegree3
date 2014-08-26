@@ -10,6 +10,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import javax.xml.namespace.QName;
@@ -45,7 +46,7 @@ public class DeegreeDynamicFeatureQueryAdapterTest {
     public static void setup()
                             throws Exception {
         exampleFeature = new Aixm51ExampleDatasetLoader().load();
-        timeSlices = toList( ad.getTimeSlices( exampleFeature ) );
+        timeSlices = toList( ad.getSortedTimeSlices( exampleFeature ) );
     }
 
     @Test
@@ -53,10 +54,10 @@ public class DeegreeDynamicFeatureQueryAdapterTest {
         final FeatureType airspaceFt = exampleFeature.getType();
         final List<Property> props = emptyList();
         final Feature airspace = airspaceFt.newFeature( "NEW", props, null );
-        assertEquals( 0, toList( ad.getTimeSlices( airspace ) ).size() );
-        final ElementNode timeSlice = toList( ad.getTimeSlices( exampleFeature ) ).get( 0 );
+        assertEquals( 0, toList( ad.getSortedTimeSlices( airspace ) ).size() );
+        final ElementNode timeSlice = toList( ad.getSortedTimeSlices( exampleFeature ) ).get( 0 );
         ad.addTimeSlice( airspace, timeSlice );
-        assertEquals( 1, toList( ad.getTimeSlices( airspace ) ).size() );
+        assertEquals( 1, toList( ad.getSortedTimeSlices( airspace ) ).size() );
     }
 
     @Test
@@ -77,7 +78,7 @@ public class DeegreeDynamicFeatureQueryAdapterTest {
         assertEquals( exampleFeature.getType(), copy.getType() );
         assertEquals( exampleFeature.getId(), copy.getId() );
         assertEquals( exampleFeature.getProperties().get( 0 ), copy.getProperties().get( 0 ) );
-        assertEquals( 0, toList( ad.getTimeSlices( copy ) ).size() );
+        assertEquals( 0, toList( ad.getSortedTimeSlices( copy ) ).size() );
     }
 
     @Test
@@ -88,8 +89,8 @@ public class DeegreeDynamicFeatureQueryAdapterTest {
     }
 
     @Test
-    public void getTimeSlices() {
-        final List<ElementNode> timeSlices = toList( ad.getTimeSlices( exampleFeature ) );
+    public void getSortedTimeSlices() {
+        final List<ElementNode> timeSlices = toList( ad.getSortedTimeSlices( exampleFeature ) );
         assertEquals( 2, timeSlices.size() );
         for ( final ElementNode timeSlice : timeSlices ) {
             assertEquals( AIRSPACE_TIME_SLICE, timeSlice.getName() );
@@ -98,41 +99,41 @@ public class DeegreeDynamicFeatureQueryAdapterTest {
 
     @Test
     public void getCorrectionNumber() {
-        assertNull( ad.getCorrectionNumber( timeSlices.get( 0 ) ) );
-        assertEquals( new Integer( 1 ), ad.getCorrectionNumber( timeSlices.get( 1 ) ) );
+        assertEquals( new Integer( 1 ), ad.getCorrectionNumber( timeSlices.get( 0 ) ) );
+        assertNull( ad.getCorrectionNumber( timeSlices.get( 1 ) ) );
     }
 
     @Test
     public void getInterpretation() {
-        assertEquals( BASELINE, ad.getInterpretation( timeSlices.get( 0 ) ) );
-        assertEquals( TEMPDELTA, ad.getInterpretation( timeSlices.get( 1 ) ) );
+        assertEquals( TEMPDELTA, ad.getInterpretation( timeSlices.get( 0 ) ) );
+        assertEquals( BASELINE, ad.getInterpretation( timeSlices.get( 1 ) ) );
     }
 
     @Test
     public void getNonSpecialProperties() {
-        assertEquals( 2, toList( ad.getNonSpecialProperties( timeSlices.get( 0 ) ) ).size() );
-        assertEquals( 1, toList( ad.getNonSpecialProperties( timeSlices.get( 1 ) ) ).size() );
+        assertEquals( 1, toList( ad.getNonSpecialProperties( timeSlices.get( 0 ) ) ).size() );
+        assertEquals( 2, toList( ad.getNonSpecialProperties( timeSlices.get( 1 ) ) ).size() );
     }
 
     @Test
     public void getSequenceNumber() {
-        assertEquals( new Integer( 1 ), ad.getSequenceNumber( timeSlices.get( 0 ) ) );
-        assertEquals( new Integer( 2 ), ad.getSequenceNumber( timeSlices.get( 1 ) ) );
+        assertEquals( new Integer( 2 ), ad.getSequenceNumber( timeSlices.get( 0 ) ) );
+        assertEquals( new Integer( 1 ), ad.getSequenceNumber( timeSlices.get( 1 ) ) );
     }
 
     @Test
     public void getValidTime() {
         final TimePeriod validTime1 = (TimePeriod) ad.getValidTime( timeSlices.get( 0 ) );
         final TimePosition begin1 = (TimePosition) validTime1.getBegin();
-        assertEquals( "2009-01-01T00:00:00Z", begin1.getValue() );
+        assertEquals( "2012-07-10T07:00:00Z", begin1.getValue() );
         final TimePosition end1 = (TimePosition) validTime1.getEnd();
-        assertEquals( UNKNOWN, end1.getIndeterminatePosition() );
-        assertEquals( "", end1.getValue() );
+        assertEquals( "2012-07-10T07:16:00Z", end1.getValue() );
         final TimePeriod validTime2 = (TimePeriod) ad.getValidTime( timeSlices.get( 1 ) );
         final TimePosition begin2 = (TimePosition) validTime2.getBegin();
-        assertEquals( "2012-07-10T07:00:00Z", begin2.getValue() );
+        assertEquals( "2009-01-01T00:00:00Z", begin2.getValue() );
         final TimePosition end2 = (TimePosition) validTime2.getEnd();
-        assertEquals( "2012-07-10T07:16:00Z", end2.getValue() );
+        assertEquals( UNKNOWN, end2.getIndeterminatePosition() );
+        assertEquals( "", end2.getValue() );
     }
 
     @Test
@@ -175,11 +176,15 @@ public class DeegreeDynamicFeatureQueryAdapterTest {
         assertFalse( ad.isTimeSliceProperty( pt ) );
     }
 
-    private static <T> List<T> toList( final Iterable<T> iterable ) {
+    private static <T> List<T> toList( final Iterator<T> iterator ) {
         final List<T> list = new ArrayList<T>();
-        for ( final T entry : iterable ) {
-            list.add( entry );
+        while ( iterator.hasNext() ) {
+            list.add( iterator.next() );
         }
         return list;
+    }
+
+    private static <T> List<T> toList( final Iterable<T> iterable ) {
+        return toList( iterable.iterator() );
     }
 }
