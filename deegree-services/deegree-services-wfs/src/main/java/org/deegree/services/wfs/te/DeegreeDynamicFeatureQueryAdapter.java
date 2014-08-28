@@ -279,9 +279,9 @@ public class DeegreeDynamicFeatureQueryAdapter
     public TimeGeometricPrimitive getDynamicFilterSnapshotTime( final DynamicFeatureQuery query ) {
         final SelectionClause selectionClause = query.getSelectionClause();
         if ( !( selectionClause instanceof DynamicFeatureFilter ) ) {
-            return ( (DynamicFeatureFilter) selectionClause ).getTimeIndicator();
+            return null;
         }
-        return null;
+        return ( (DynamicFeatureFilter) selectionClause ).getTimeIndicator();
     }
 
     @Override
