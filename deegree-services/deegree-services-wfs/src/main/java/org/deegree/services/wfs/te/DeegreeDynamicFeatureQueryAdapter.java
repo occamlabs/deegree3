@@ -72,9 +72,9 @@ import aero.m_click.wfs_te.adapter.DynamicFeatureQueryAdapter;
 import aero.m_click.wfs_te.model.Interpretation;
 
 public class DeegreeDynamicFeatureQueryAdapter
-                                               implements
-                                               DynamicFeatureQueryAdapter<DynamicFeatureQuery, Filter, ProjectionClause, FeatureStore, Feature, ElementNode, TimeGeometricPrimitive, ElementNode>,
-                                               Closeable {
+                                              implements
+                                              DynamicFeatureQueryAdapter<DynamicFeatureQuery, Filter, ProjectionClause, FeatureStore, Feature, ElementNode, TimeGeometricPrimitive, ElementNode>,
+                                              Closeable {
 
     private static final String AIXM_51_NS = "http://www.aixm.aero/schema/5.1";
 
@@ -105,49 +105,52 @@ public class DeegreeDynamicFeatureQueryAdapter
                               final Interpretation interpretation, final Integer sequenceNumber,
                               final Integer correctionNumber, final Iterable<ElementNode> nonSpecialProperties ) {
         final PropertyType timeSlicePt = getTimeSlicePropertyType( feature.getType() );
-        final QName name = timeSlicePt.getName();
         final Map<QName, PrimitiveValue> attrs = emptyMap();
         final List<TypedObjectNode> children = new ArrayList<TypedObjectNode>();
         final XSElementDeclaration xsType = timeSlicePt.getElementDecl();
         final AppSchema schema = feature.getType().getSchema();
         final XSComplexTypeDefinition type = (XSComplexTypeDefinition) xsType.getTypeDefinition();
         final Map<QName, XSTerm> allowedChildElementDecls = schema.getAllowedChildElementDecls( type );
-        XSElementDeclaration timeSliceElDecl = (XSElementDeclaration) allowedChildElementDecls.values().iterator().next();
-        XSComplexTypeDefinition timeSliceElType = (XSComplexTypeDefinition) timeSliceElDecl.getTypeDefinition();
+        final XSElementDeclaration timeSliceElDecl = (XSElementDeclaration) allowedChildElementDecls.values().iterator().next();
+        final XSComplexTypeDefinition timeSliceElType = (XSComplexTypeDefinition) timeSliceElDecl.getTypeDefinition();
         final Map<QName, XSTerm> allowedChildElementDecls2 = schema.getAllowedChildElementDecls( timeSliceElType );
         if ( validTime != null ) {
             final ElementNode validTimeEl = buildSimpleElement( VALID_TIME, validTime, allowedChildElementDecls, schema );
             children.add( validTimeEl );
         }
         if ( interpretation != null ) {
-            final ElementNode interpretationEl = buildSimpleElement( INTERPRETATION, interpretation, allowedChildElementDecls2, schema );
+            final ElementNode interpretationEl = buildSimpleElement( INTERPRETATION, interpretation,
+                                                                     allowedChildElementDecls2, schema );
             children.add( interpretationEl );
         }
         if ( sequenceNumber != null ) {
-            final ElementNode sequenceNumberEl = buildSimpleElement( SEQUENCE_NUMBER, sequenceNumber, allowedChildElementDecls2, schema );
+            final ElementNode sequenceNumberEl = buildSimpleElement( SEQUENCE_NUMBER, sequenceNumber,
+                                                                     allowedChildElementDecls2, schema );
             children.add( sequenceNumberEl );
         }
         if ( correctionNumber != null ) {
-            final ElementNode correctionNumberEl = buildSimpleElement( CORRECTION_NUMBER, correctionNumber, allowedChildElementDecls2, schema );
+            final ElementNode correctionNumberEl = buildSimpleElement( CORRECTION_NUMBER, correctionNumber,
+                                                                       allowedChildElementDecls2, schema );
             children.add( correctionNumberEl );
         }
         for ( final ElementNode nonSpecialProperty : nonSpecialProperties ) {
             children.add( nonSpecialProperty );
         }
-        final ElementNode timeSlice = new GenericXMLElement( name, xsType, attrs, children );
+        final QName name = new QName( timeSliceElDecl.getNamespace(), timeSliceElDecl.getName() );
+        final ElementNode timeSlice = new GenericXMLElement( name, timeSliceElDecl, attrs, children );
         addTimeSlice( feature, timeSlice );
     }
 
     private ElementNode buildSimpleElement( final QName name, final Object value,
-                                      final Map<QName, XSTerm> allowedChildElementDecls, final AppSchema schema ) {
+                                            final Map<QName, XSTerm> allowedChildElementDecls, final AppSchema schema ) {
         final Map<QName, PrimitiveValue> attrs = emptyMap();
         final List<TypedObjectNode> children = new ArrayList<TypedObjectNode>();
         final XSTerm xsTerm = allowedChildElementDecls.get( name );
         XSElementDeclaration elementDecl = null;
-        if (xsTerm instanceof XSElementDeclaration) {
+        if ( xsTerm instanceof XSElementDeclaration ) {
             elementDecl = (XSElementDeclaration) xsTerm;
         }
-        children.add ( buildPrimitiveValue( value, xsTerm ) );
+        children.add( buildPrimitiveValue( value, xsTerm ) );
         return new GenericXMLElement( name, elementDecl, attrs, children );
     }
 
@@ -192,7 +195,7 @@ public class DeegreeDynamicFeatureQueryAdapter
                 timeSlices.add( (ElementNode) prop.getChildren().get( 0 ) );
             }
         }
-        Collections.sort(timeSlices, new TimeSliceComparator<ElementNode>(this));
+        Collections.sort( timeSlices, new TimeSliceComparator<ElementNode>( this ) );
         return timeSlices.iterator();
     }
 
