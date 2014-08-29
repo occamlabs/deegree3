@@ -80,6 +80,7 @@ import org.apache.xerces.xs.XSObjectList;
 import org.apache.xerces.xs.XSParticle;
 import org.apache.xerces.xs.XSTerm;
 import org.apache.xerces.xs.XSTypeDefinition;
+import org.apache.xerces.xs.XSWildcard;
 import org.deegree.commons.tom.gml.property.PropertyType;
 import org.deegree.commons.xml.CommonNamespaces;
 import org.deegree.commons.xml.NamespaceBindings;
@@ -116,10 +117,10 @@ import org.w3c.dom.ls.LSInput;
  * <li>gml?</li>
  * </ul>
  * </p>
- * 
+ *
  * @author <a href="mailto:schneider@lat-lon.de">Markus Schneider </a>
  * @author last edited by: $Author:$
- * 
+ *
  * @version $Revision:$, $Date:$
  */
 public class GMLSchemaInfoSet extends XMLSchemaInfoSet {
@@ -174,7 +175,7 @@ public class GMLSchemaInfoSet extends XMLSchemaInfoSet {
 
     /**
      * Creates a new {@link GMLSchemaInfoSet} instance for the given GML version and using the specified schemas.
-     * 
+     *
      * @param version
      *            gml version of the schema files, can be null (auto-detect GML version)
      * @param schemaUrls
@@ -192,7 +193,7 @@ public class GMLSchemaInfoSet extends XMLSchemaInfoSet {
 
     /**
      * Creates a new {@link GMLSchemaInfoSet} instance for the given GML version and using the specified inputs.
-     * 
+     *
      * @param version
      *            gml version of the schema files, can be null (auto-detect GML version)
      * @param inputs
@@ -308,7 +309,7 @@ public class GMLSchemaInfoSet extends XMLSchemaInfoSet {
 
     /**
      * Determines the GML version of the given {@link XMLSchemaInfoSet} heuristically.
-     * 
+     *
      * @param xmlSchemaInfoSet
      *            XML schema, must not be <code>null</code>
      * @return gml version, never <code>null</code>
@@ -335,7 +336,7 @@ public class GMLSchemaInfoSet extends XMLSchemaInfoSet {
 
     /**
      * Returns the GML version used for the infoset.
-     * 
+     *
      * @return the GML version used for the infoset, never <code>null</code>
      */
     public GMLVersion getVersion() {
@@ -344,7 +345,7 @@ public class GMLSchemaInfoSet extends XMLSchemaInfoSet {
 
     /**
      * Returns whether the given namespace is a GML core namespace.
-     * 
+     *
      * @param ns
      *            namespace to check, may be <code>null</code>
      * @return true, if it is a GML core namespace, false otherwise
@@ -377,7 +378,7 @@ public class GMLSchemaInfoSet extends XMLSchemaInfoSet {
      * <p>
      * This excludes all namespaces that are imported by the GML core schemas.
      * </p>
-     * 
+     *
      * @return all application namespaces, never <code>null</code>
      */
     public synchronized SortedSet<String> getAppNamespaces() {
@@ -401,7 +402,7 @@ public class GMLSchemaInfoSet extends XMLSchemaInfoSet {
      * Returns the element declaration of the abstract object element, i.e.
      * <code>{http://www.opengis.net/gml}_Object</code> (GML 3.0 to 3.1) or
      * <code>{http://www.opengis.net/gml/3.2}AbstractObject</code> (GML 3.2).
-     * 
+     *
      * @return declaration object of the abstract object element, may be <code>null</code> (for GML 2)
      */
     public XSElementDeclaration getAbstractObjectElementDeclaration() {
@@ -411,7 +412,7 @@ public class GMLSchemaInfoSet extends XMLSchemaInfoSet {
     /**
      * Returns the element declaration of the abstract GML element, i.e. <code>{http://www.opengis.net/gml}_GML</code>
      * (GML 3.0 to 3.1) or <code>{http://www.opengis.net/gml/3.2}AbstractGML</code> (GML 3.2).
-     * 
+     *
      * @return declaration object of the abstract GML element, may be <code>null</code> (for GML 2)
      */
     public XSElementDeclaration getAbstractGMLElementDeclaration() {
@@ -422,7 +423,7 @@ public class GMLSchemaInfoSet extends XMLSchemaInfoSet {
      * Returns the element declaration of the abstract feature element, i.e.
      * <code>{http://www.opengis.net/gml}_Feature</code> (GML 2 to 3.1) or
      * <code>{http://www.opengis.net/gml/3.2}AbstractFeature</code> (GML 3.2).
-     * 
+     *
      * @return declaration object of the abstract feature element
      */
     public XSElementDeclaration getAbstractFeatureElementDeclaration() {
@@ -433,7 +434,7 @@ public class GMLSchemaInfoSet extends XMLSchemaInfoSet {
      * Returns the element declaration of the abstract geometry element, i.e.
      * <code>{http://www.opengis.net/gml}_Geometry</code> (GML 2 to 3.1) or
      * <code>{http://www.opengis.net/gml/3.2}AbstractGeometry</code> (GML 3.2).
-     * 
+     *
      * @return declaration object of the abstract geometry element
      */
     public XSElementDeclaration getAbstractGeometryElementDeclaration() {
@@ -444,7 +445,7 @@ public class GMLSchemaInfoSet extends XMLSchemaInfoSet {
      * Returns the element declaration of the abstract time slice element, i.e.
      * <code>{http://www.opengis.net/gml}_TimeSlice</code> (GML 2 to 3.1) or
      * <code>{http://www.opengis.net/gml/3.2}AbstractTimeSlice</code> (GML 3.2).
-     * 
+     *
      * @return declaration object of the abstract time slice element
      */
     public XSElementDeclaration getAbstractTimeSliceElementDeclaration() {
@@ -455,7 +456,7 @@ public class GMLSchemaInfoSet extends XMLSchemaInfoSet {
      * Returns the element declaration of the abstract curve segment element, i.e.
      * <code>{http://www.opengis.net/gml}_CurveSegment</code> (GML 3 to 3.1) or
      * <code>{http://www.opengis.net/gml/3.2}AbstractCurveSegment</code> (GML 3.2).
-     * 
+     *
      * @return declaration object of the abstract curve segment element, may be <code>null</code> (for GML 2)
      */
     public XSElementDeclaration getAbstractCurveSegmentElementDeclaration() {
@@ -466,7 +467,7 @@ public class GMLSchemaInfoSet extends XMLSchemaInfoSet {
      * Returns the element declaration of the abstract surface patch element, i.e.
      * <code>{http://www.opengis.net/gml}_SurfacePatch</code> (GML 3 to 3.1) or
      * <code>{http://www.opengis.net/gml/3.2}AbstractSurfacePatch</code> (GML 3.2).
-     * 
+     *
      * @return element declaration object of the abstract geometry element, may be <code>null</code> (for GML 2)
      */
     public XSElementDeclaration getAbstractSurfacePatchElementDeclaration() {
@@ -516,7 +517,7 @@ public class GMLSchemaInfoSet extends XMLSchemaInfoSet {
      * <code>gml:AbstractFeature</code> element that has a property whose content model extends
      * <code>gml:AbstractFeatureMemberType</code> is a feature collection. See OGC 07-061, section 6.5.
      * </p>
-     * 
+     *
      * @param featureDecl
      *            feature element declaration, must not be <code>null</code>
      * @return true, if the given element declaration is a feature collection, false otherwise
@@ -609,7 +610,7 @@ public class GMLSchemaInfoSet extends XMLSchemaInfoSet {
     /**
      * Checks the given element declaration and returns a {@link ObjectPropertyType} if it defines a GML object property
      * or GML reference property.
-     * 
+     *
      * @param elDecl
      * @param ptName
      * @param minOccurs
@@ -654,7 +655,7 @@ public class GMLSchemaInfoSet extends XMLSchemaInfoSet {
     /**
      * Analyzes the given complex type definition and returns a {@link FeaturePropertyType} if it defines a feature
      * property.
-     * 
+     *
      * @param elementDecl
      * @param typeDef
      * @param minOccurs
@@ -859,7 +860,7 @@ public class GMLSchemaInfoSet extends XMLSchemaInfoSet {
     /**
      * Analyzes the given complex type definition and returns a {@link GeometryPropertyType} if it defines a geometry
      * property.
-     * 
+     *
      * @param elementDecl
      * @param typeDef
      * @param minOccurs
@@ -1070,7 +1071,7 @@ public class GMLSchemaInfoSet extends XMLSchemaInfoSet {
 
     /**
      * Determines the generic GML property type interpretation for the given {@link XSElementDeclaration}.
-     * 
+     *
      * @param elDecl
      *            element declaration, must not be <code>null</code>
      * @return GML property type semantics, or <code>null</code> if the element declaration cannot be interpreted as a
@@ -1110,6 +1111,43 @@ public class GMLSchemaInfoSet extends XMLSchemaInfoSet {
             return new GMLPropertySemantics( elDecl, valueElementDeclFromModelGroup, allowedRepresentation );
         }
         return null;
+    }
+
+    /**
+     * Returns the properties of the given complex type, in order.
+     *
+     * @param type
+     *            complex type definition, must not be <code>null</code>
+     * @return element declarations of the properties, never <code>null</code>
+     * @throws IllegalArgumentException
+     *             if the complex type definition does not follow the requirements to define a sequence of properties
+     */
+    public List<XSElementDeclaration> getProperties( final XSComplexTypeDefinition type ) {
+        final List<XSElementDeclaration> childTerms = new ArrayList<XSElementDeclaration>();
+        addChildElementDecls( type.getParticle(), childTerms );
+        return childTerms;
+    }
+
+    private void addChildElementDecls( final XSParticle particle, final List<XSElementDeclaration> propDecls ) {
+        if ( particle != null ) {
+            final XSTerm term = particle.getTerm();
+            if ( term instanceof XSElementDeclaration ) {
+                propDecls.add( (XSElementDeclaration) term );
+            } else if ( term instanceof XSModelGroup ) {
+                final XSModelGroup modelGroup = (XSModelGroup) term;
+                if ( modelGroup.getCompositor() == COMPOSITOR_SEQUENCE ) {
+                    final XSObjectList particles = modelGroup.getParticles();
+                    for ( int i = 0; i < particles.getLength(); i++ ) {
+                        addChildElementDecls( (XSParticle) particles.item( i ), propDecls );
+                    }
+                } else {
+                    final String msg = "Choice/All composition is not supported in a property list definition.";
+                    throw new IllegalArgumentException( msg );
+                }
+            } else if ( term instanceof XSWildcard ) {
+                throw new IllegalArgumentException( "Wildcards are not possible in a property list definition." );
+            }
+        }
     }
 
     private XSElementDeclaration determineAnnotationDefinedValueElement( XSElementDeclaration elDecl ) {

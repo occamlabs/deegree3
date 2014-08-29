@@ -17,6 +17,8 @@ import java.io.Closeable;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -60,6 +62,7 @@ import org.deegree.filter.te.TransformationClause;
 import org.deegree.gml.GMLStreamReader;
 import org.deegree.gml.GMLStreamWriter;
 import org.deegree.gml.reference.GmlXlinkOptions;
+import org.deegree.gml.schema.GMLSchemaInfoSet;
 import org.deegree.protocol.wfs.getfeature.TypeName;
 import org.deegree.protocol.wfs.te.DynamicFeatureQuery;
 import org.deegree.time.gml.reader.GmlTimeGeometricPrimitiveReader;
@@ -133,12 +136,51 @@ public class DeegreeDynamicFeatureQueryAdapter
                                                                        allowedChildElementDecls2, schema );
             children.add( correctionNumberEl );
         }
-        for ( final ElementNode nonSpecialProperty : nonSpecialProperties ) {
-            children.add( nonSpecialProperty );
-        }
+        final GMLSchemaInfoSet infoSet = feature.getType().getSchema().getGMLSchema();
+        final Map<QName, Integer> propNameToPos = buildPropNameToPos( timeSliceElDecl, infoSet );
+        final List<ElementNode> orderedProperties = orderProperties( nonSpecialProperties, propNameToPos );
+        children.addAll( orderedProperties );
         final QName name = new QName( timeSliceElDecl.getNamespace(), timeSliceElDecl.getName() );
         final ElementNode timeSlice = new GenericXMLElement( name, timeSliceElDecl, attrs, children );
         addTimeSlice( feature, timeSlice );
+    }
+
+    private Map<QName, Integer> buildPropNameToPos( final XSElementDeclaration timeSliceElDecl,
+                                                    final GMLSchemaInfoSet infoSet ) {
+        final Map<QName, Integer> propNameToPos = new HashMap<QName, Integer>();
+        final List<XSElementDeclaration> properties = infoSet.getProperties( (XSComplexTypeDefinition) timeSliceElDecl.getTypeDefinition() );
+        int i = 0;
+        for ( final XSElementDeclaration property : properties ) {
+            final List<XSElementDeclaration> substitutions = infoSet.getSubstitutions( property, null, true, true );
+            for ( XSElementDeclaration xsElementDeclaration : substitutions ) {
+                final QName propName = new QName( xsElementDeclaration.getNamespace(), xsElementDeclaration.getName() );
+                propNameToPos.put( propName, i++ );
+            }
+        }
+        return propNameToPos;
+    }
+
+    private List<ElementNode> orderProperties( final Iterable<ElementNode> unorderedProps,
+                                               final Map<QName, Integer> propNameToPos ) {
+        final List<ElementNode> props = new ArrayList<ElementNode>();
+        for ( final ElementNode prop : unorderedProps ) {
+            props.add( prop );
+        }
+        Collections.sort( props, new Comparator<ElementNode>() {
+            @Override
+            public int compare( final ElementNode a, final ElementNode b ) {
+                final Integer posA = propNameToPos.get( a.getName() );
+                if ( posA == null ) {
+                    throw new IllegalArgumentException( a.getName() + " is not in property list." );
+                }
+                final Integer posB = propNameToPos.get( b.getName() );
+                if ( posB == null ) {
+                    throw new IllegalArgumentException( b.getName() + " is not in property list." );
+                }
+                return posA.compareTo( posB );
+            }
+        } );
+        return props;
     }
 
     private ElementNode buildSimpleElement( final QName name, final Object value,
