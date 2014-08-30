@@ -64,7 +64,7 @@
     <dependency>
       <groupId>aero.m-click</groupId>
       <artifactId>wfs-te</artifactId>
-      <version>0.0.1-SNAPSHOT</version>
+      <version>0.0.1</version>
     </dependency>  
   </dependencies>
 </project>
