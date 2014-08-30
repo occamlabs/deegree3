@@ -42,6 +42,7 @@ import org.deegree.commons.tom.gml.property.Property;
 import org.deegree.commons.tom.gml.property.PropertyType;
 import org.deegree.commons.tom.primitive.PrimitiveType;
 import org.deegree.commons.tom.primitive.PrimitiveValue;
+import org.deegree.commons.xml.stax.XMLStreamReaderWrapper;
 import org.deegree.feature.Feature;
 import org.deegree.feature.persistence.FeatureStore;
 import org.deegree.feature.persistence.query.Query;
@@ -66,6 +67,7 @@ import org.deegree.gml.schema.GMLSchemaInfoSet;
 import org.deegree.protocol.wfs.getfeature.TypeName;
 import org.deegree.protocol.wfs.te.DynamicFeatureQuery;
 import org.deegree.time.gml.reader.GmlTimeGeometricPrimitiveReader;
+import org.deegree.time.gml.writer.GmlTimeGeometricPrimitiveWriter;
 import org.deegree.time.operator.AnyInteracts;
 import org.deegree.time.operator.LaxDuring;
 import org.deegree.time.primitive.TimeGeometricPrimitive;
@@ -118,7 +120,11 @@ public class DeegreeDynamicFeatureQueryAdapter
         final XSComplexTypeDefinition timeSliceElType = (XSComplexTypeDefinition) timeSliceElDecl.getTypeDefinition();
         final Map<QName, XSTerm> allowedChildElementDecls2 = schema.getAllowedChildElementDecls( timeSliceElType );
         if ( validTime != null ) {
-            final ElementNode validTimeEl = buildSimpleElement( VALID_TIME, validTime, allowedChildElementDecls, schema );
+            final XSElementDeclaration validTimeDecl = (XSElementDeclaration) allowedChildElementDecls2.get( new QName(
+                                                                                                                        GML3_2_NS,
+                                                                                                                        "validTime" ) );
+            final ElementNode validTimeEl = buildValidTimeElement( validTime, validTimeDecl,
+                                                                   feature.getType().getSchema() );
             children.add( validTimeEl );
         }
         if ( interpretation != null ) {
@@ -143,6 +149,29 @@ public class DeegreeDynamicFeatureQueryAdapter
         final QName name = new QName( timeSliceElDecl.getNamespace(), timeSliceElDecl.getName() );
         final ElementNode timeSlice = new GenericXMLElement( name, timeSliceElDecl, attrs, children );
         addTimeSlice( feature, timeSlice );
+    }
+
+    private ElementNode buildValidTimeElement( final TimeGeometricPrimitive validTime,
+                                               final XSElementDeclaration elDecl, final AppSchema schema ) {
+        try {
+            final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            final XMLStreamWriter xmlStream = newInstance().createXMLStreamWriter( bos );
+            xmlStream.writeStartElement( "gml", "validTime", GML3_2_NS );
+            xmlStream.writeNamespace( "gml", GML3_2_NS );
+            new GmlTimeGeometricPrimitiveWriter().write( xmlStream, validTime );
+            xmlStream.writeEndElement();
+            xmlStream.close();
+            final InputStream is = new ByteArrayInputStream( bos.toByteArray() );
+            final XMLStreamReader xmlReader = XMLInputFactory.newInstance().createXMLStreamReader( is );
+            final GMLStreamReader gmlReader = createGMLStreamReader( GML_32, xmlReader );
+            gmlReader.setApplicationSchema( schema );
+            return (ElementNode) gmlReader.getFeatureReader().parseGenericXMLElement( new XMLStreamReaderWrapper(
+                                                                                                                  xmlReader,
+                                                                                                                  null ),
+                                                                                      elDecl, null );
+        } catch ( Exception e ) {
+            throw new IllegalArgumentException( "Unable to generate gml:validTime:" + e.getMessage() );
+        }
     }
 
     private Map<QName, Integer> buildPropNameToPos( final XSElementDeclaration timeSliceElDecl,

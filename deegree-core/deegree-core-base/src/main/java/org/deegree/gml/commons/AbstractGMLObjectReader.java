@@ -124,13 +124,13 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Concrete extensions are parsers for a specific category of GML objects.
- * 
+ *
  * @see GMLObjectCategory
  * @see GMLFeatureReader
- * 
+ *
  * @author <a href="mailto:schneider@lat-lon.de">Markus Schneider </a>
  * @author last edited by: $Author:$
- * 
+ *
  * @version $Revision:$, $Date:$
  */
 public abstract class AbstractGMLObjectReader extends XMLAdapter {
@@ -154,7 +154,7 @@ public abstract class AbstractGMLObjectReader extends XMLAdapter {
 
     /**
      * Creates a new {@link AbstractGMLObjectReader} instance.
-     * 
+     *
      * @param gmlStreamReader
      *            GML stream reader, must not be <code>null</code>
      */
@@ -194,7 +194,7 @@ public abstract class AbstractGMLObjectReader extends XMLAdapter {
 
     /**
      * Returns the object representation for the given property element.
-     * 
+     *
      * @param xmlStream
      *            cursor must point at the <code>START_ELEMENT</code> event of the property, afterwards points at the
      *            corresponding <code>END_ELEMENT</code> event
@@ -474,7 +474,7 @@ public abstract class AbstractGMLObjectReader extends XMLAdapter {
      * <li>Postcondition: cursor points at the corresponding <code>END_ELEMENT</code> event</li>
      * </ul>
      */
-    private TypedObjectNode parseGenericXMLElement( XMLStreamReaderWrapper xmlStream, XSElementDeclaration elDecl,
+    public TypedObjectNode parseGenericXMLElement( XMLStreamReaderWrapper xmlStream, XSElementDeclaration elDecl,
                                                     ICRS crs )
                             throws NoSuchElementException, XMLStreamException, XMLParsingException, UnknownCRSException {
 
@@ -689,7 +689,7 @@ public abstract class AbstractGMLObjectReader extends XMLAdapter {
 
     /**
      * Parses / validates the attributes for the current START_ELEMENT event.
-     * 
+     *
      * @param xmlStream
      *            XML stream reader, must point at at START_ELEMENT event (cursor is not moved)
      * @param elDecl
@@ -788,9 +788,9 @@ public abstract class AbstractGMLObjectReader extends XMLAdapter {
      * Returns the feature type with the given name.
      * <p>
      * If no feature type with the given name is defined, an XMLParsingException is thrown.
-     * 
+     *
      * @param xmlStreamReader
-     * 
+     *
      * @param ftName
      *            feature type name to look up
      * @return the feature type with the given name

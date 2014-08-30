@@ -34,29 +34,34 @@
 ----------------------------------------------------------------------------*/
 package org.deegree.time.gml.writer;
 
+import static org.deegree.commons.xml.CommonNamespaces.GML3_2_NS;
+
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
 
 import org.deegree.time.position.TimePosition;
+import org.deegree.time.primitive.TimeInstant;
 
 public class GmlTimeInstantWriter {
 
     private static final String FRAME = "frame";
 
-    private static final String CALENDAR_ERA_NAME = "calendarEraName";
+    private static final String TIME_POSITION = "timePosition";
 
-//    private static final String INDETERMINATE_POSITION = "indeterminatePosition";
+    private static final String gmlNs = GML3_2_NS;
 
-    public void write( final TimePosition timePosition, final XMLStreamWriter writer )
+    private static final String gmlPrefix = "gml";
+
+    public void write( final XMLStreamWriter writer, final TimeInstant timeInstant )
                             throws XMLStreamException {
+        writer.writeStartElement( gmlPrefix, "TimeInstant", gmlNs );
+        writer.writeAttribute( gmlPrefix, gmlNs, "id", timeInstant.getId() );
         // <attribute name="frame" type="anyURI" default="#ISO-8601"/>
-        writeAttributeIfNotNull( FRAME, timePosition.getFrame(), writer );
-        // <attribute name="calendarEraName" type="string"/>
-        writeAttributeIfNotNull( CALENDAR_ERA_NAME, timePosition.getCalendarEraName(), writer );
-        // <attribute name="indeterminatePosition" type="gml:TimeIndeterminateValueType"/>
-        // writeAttributeIfNotNull( INDETERMINATE_POSITION, timePosition.getIndeterminatePosition(), writer );
-        // gml:TimePositionUnion
-        writeCharactersIfNotEmpty( timePosition.getValue(), writer );
+        writeAttributeIfNotNull( FRAME, timeInstant.getFrame(), writer );
+        // <element name="relatedTime" type="gml:RelatedTimeType" minOccurs="0" maxOccurs="unbounded"/>
+        // <element name="timePosition" type="gml:TimePositionType">
+        writeTimePosition( writer, timeInstant.getPosition() );
+        writer.writeEndElement();
     }
 
     private void writeAttributeIfNotNull( final String name, final String value, final XMLStreamWriter writer )
@@ -66,10 +71,11 @@ public class GmlTimeInstantWriter {
         }
     }
 
-    private void writeCharactersIfNotEmpty( final String value, final XMLStreamWriter writer )
+    private void writeTimePosition( final XMLStreamWriter writer, final TimePosition timePosition )
                             throws XMLStreamException {
-        if ( value != null && !value.isEmpty() ) {
-            writer.writeCharacters( value );
-        }
+        writer.writeStartElement( gmlPrefix, TIME_POSITION, gmlNs );
+        new GmlTimePositionTypeWriter().write( timePosition, writer );
+        writer.writeEndElement();
     }
+
 }
