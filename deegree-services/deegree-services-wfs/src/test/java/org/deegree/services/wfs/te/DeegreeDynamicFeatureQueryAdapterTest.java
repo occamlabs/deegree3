@@ -50,18 +50,7 @@ public class DeegreeDynamicFeatureQueryAdapterTest {
     }
 
     @Test
-    public void addTimeSliceExisting() {
-        final FeatureType airspaceFt = exampleFeature.getType();
-        final List<Property> props = emptyList();
-        final Feature airspace = airspaceFt.newFeature( "NEW", props, null );
-        assertEquals( 0, toList( ad.getSortedTimeSlices( airspace ) ).size() );
-        final ElementNode timeSlice = toList( ad.getSortedTimeSlices( exampleFeature ) ).get( 0 );
-        ad.addTimeSlice( airspace, timeSlice );
-        assertEquals( 1, toList( ad.getSortedTimeSlices( airspace ) ).size() );
-    }
-
-    @Test
-    public void addTimeSliceNew() {
+    public void addTimeSlice() {
         final Feature feature = ad.copyWithoutTimeSlices( exampleFeature );
         final TimeGeometricPrimitive validTime = null;
         final Interpretation interpretation = BASELINE;

@@ -97,13 +97,6 @@ public class DeegreeDynamicFeatureQueryAdapter
     private FeatureInputStream features;
 
     @Override
-    public void addTimeSlice( final Feature feature, final ElementNode timeSlice ) {
-        final List<Property> props = feature.getProperties();
-        final Property timeSliceProp = createTimeSliceProperty( feature, timeSlice );
-        props.add( timeSliceProp );
-    }
-
-    @Override
     public void addTimeSlice( final Feature feature, final TimeGeometricPrimitive validTime,
                               final Interpretation interpretation, final Integer sequenceNumber,
                               final Integer correctionNumber, final Iterable<ElementNode> nonSpecialProperties ) {
@@ -142,7 +135,9 @@ public class DeegreeDynamicFeatureQueryAdapter
         children.addAll( orderedProperties );
         final QName name = new QName( timeSliceElDecl.getNamespace(), timeSliceElDecl.getName() );
         final ElementNode timeSlice = new GenericXMLElement( name, timeSliceElDecl, attrs, children );
-        addTimeSlice( feature, timeSlice );
+        final Property timeSliceProp = createTimeSliceProperty( feature, timeSlice );
+        final List<Property> props = feature.getProperties();
+        props.add( timeSliceProp );
     }
 
     private Map<QName, Integer> buildPropNameToPos( final XSElementDeclaration timeSliceElDecl,
