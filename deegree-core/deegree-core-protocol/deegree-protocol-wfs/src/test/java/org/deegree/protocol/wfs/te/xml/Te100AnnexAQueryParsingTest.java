@@ -208,7 +208,7 @@ public class Te100AnnexAQueryParsingTest {
     }
 
     @Test
-    public void readExample10()
+    public void readExampleA10()
                             throws Exception {
         final DynamicFeatureQuery query = parseExample( "example_a10_query.xml" );
         final Filter filter = (Filter) query.getSelectionClause();
