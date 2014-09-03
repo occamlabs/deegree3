@@ -65,7 +65,7 @@ public class Te100AnnexAQueryParsingTest {
     @Test
     public void readExampleA1()
                             throws Exception {
-        final DynamicFeatureQuery query = parseExample( "example_a1.xml" );
+        final DynamicFeatureQuery query = parseExample( "example_a01_query.xml" );
         assertNotNull( query.getSelectionClause() );
         final ProjectionClause[] projections = query.getProjectionClauses();
         assertEquals( 0, projections.length );
@@ -79,7 +79,7 @@ public class Te100AnnexAQueryParsingTest {
     @Test
     public void readExampleA2_1()
                             throws Exception {
-        final DynamicFeatureQuery query = parseExample( "example_a2_1.xml" );
+        final DynamicFeatureQuery query = parseExample( "example_a02_1_query.xml" );
         final DynamicFeatureFilter dynamicFilter = (DynamicFeatureFilter) query.getSelectionClause();
         assertNotNull( dynamicFilter );
         final TimeInstant timeIndicator = (TimeInstant) dynamicFilter.getTimeIndicator();
@@ -100,7 +100,7 @@ public class Te100AnnexAQueryParsingTest {
     @Test
     public void readExampleA2_2()
                             throws Exception {
-        final DynamicFeatureQuery query = parseExample( "example_a2_2.xml" );
+        final DynamicFeatureQuery query = parseExample( "example_a02_2_query.xml" );
         final DynamicFeatureFilter dynamicFilter = (DynamicFeatureFilter) query.getSelectionClause();
         assertNotNull( dynamicFilter );
         assertNull( dynamicFilter.getTimeIndicator() );
@@ -120,7 +120,7 @@ public class Te100AnnexAQueryParsingTest {
     @Test
     public void readExampleA3()
                             throws Exception {
-        final DynamicFeatureQuery query = parseExample( "example_a3.xml" );
+        final DynamicFeatureQuery query = parseExample( "example_a03_query.xml" );
         final Filter filter = (Filter) query.getSelectionClause();
         assertNotNull( filter );
         final ProjectionClause[] projections = query.getProjectionClauses();
@@ -140,7 +140,7 @@ public class Te100AnnexAQueryParsingTest {
     @Test
     public void readExampleA4()
                             throws Exception {
-        final DynamicFeatureQuery query = parseExample( "example_a4.xml" );
+        final DynamicFeatureQuery query = parseExample( "example_a04_query.xml" );
         final Filter filter = (Filter) query.getSelectionClause();
         assertNotNull( filter );
         final ProjectionClause[] projections = query.getProjectionClauses();
@@ -161,20 +161,20 @@ public class Te100AnnexAQueryParsingTest {
     @Test(expected = UnsupportedOperationException.class)
     public void readExampleA5()
                             throws Exception {
-        final DynamicFeatureQuery query = parseExample( "example_a5.xml" );
+        final DynamicFeatureQuery query = parseExample( "example_a05_query.xml" );
     }
 
     // TODO implement temporal operators in filter
     @Test(expected = UnsupportedOperationException.class)
     public void readExampleA6()
                             throws Exception {
-        final DynamicFeatureQuery query = parseExample( "example_a6.xml" );
+        final DynamicFeatureQuery query = parseExample( "example_a06_query.xml" );
     }
 
     @Test
     public void readExampleA7()
                             throws Exception {
-        final DynamicFeatureQuery query = parseExample( "example_a7.xml" );
+        final DynamicFeatureQuery query = parseExample( "example_a07_query.xml" );
         final DynamicFeatureFilter filter = (DynamicFeatureFilter) query.getSelectionClause();
         assertNotNull( filter );
         final ProjectionClause[] projections = query.getProjectionClauses();
@@ -196,7 +196,7 @@ public class Te100AnnexAQueryParsingTest {
     @Test
     public void readExampleA9()
                             throws Exception {
-        final DynamicFeatureQuery query = parseExample( "example_a9.xml" );
+        final DynamicFeatureQuery query = parseExample( "example_a09_query.xml" );
         final DynamicFeatureFilter filter = (DynamicFeatureFilter) query.getSelectionClause();
         assertNotNull( filter );
         final ProjectionClause[] projections = query.getProjectionClauses();
@@ -210,7 +210,7 @@ public class Te100AnnexAQueryParsingTest {
     @Test
     public void readExample10()
                             throws Exception {
-        final DynamicFeatureQuery query = parseExample( "example_a10.xml" );
+        final DynamicFeatureQuery query = parseExample( "example_a10_query.xml" );
         final Filter filter = (Filter) query.getSelectionClause();
         assertNotNull( filter );
         final ProjectionClause[] projections = query.getProjectionClauses();
