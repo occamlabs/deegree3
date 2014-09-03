@@ -70,7 +70,14 @@ import org.deegree.time.gml.reader.GmlTimeGeometricPrimitiveReader;
 import org.deegree.time.gml.writer.GmlTimeGeometricPrimitiveWriter;
 import org.deegree.time.operator.AnyInteracts;
 import org.deegree.time.operator.LaxDuring;
+import org.deegree.time.position.TimePosition;
+import org.deegree.time.primitive.GenericTimeInstant;
+import org.deegree.time.primitive.GenericTimePeriod;
+import org.deegree.time.primitive.RelatedTime;
 import org.deegree.time.primitive.TimeGeometricPrimitive;
+import org.deegree.time.primitive.TimeInstant;
+import org.deegree.time.primitive.TimePeriod;
+import org.deegree.time.primitive.TimePositionOrInstant;
 
 import aero.m_click.wfs_te.TimeSliceComparator;
 import aero.m_click.wfs_te.adapter.DynamicFeatureQueryAdapter;
@@ -151,11 +158,12 @@ public class DeegreeDynamicFeatureQueryAdapter
     private ElementNode buildValidTimeElement( final TimeGeometricPrimitive validTime,
                                                final XSElementDeclaration elDecl, final AppSchema schema ) {
         try {
+            final TimeGeometricPrimitive validTimeWithId = getValidTimeWithId( validTime );
             final ByteArrayOutputStream bos = new ByteArrayOutputStream();
             final XMLStreamWriter xmlStream = newInstance().createXMLStreamWriter( bos );
             xmlStream.writeStartElement( "gml", "validTime", GML3_2_NS );
             xmlStream.writeNamespace( "gml", GML3_2_NS );
-            new GmlTimeGeometricPrimitiveWriter().write( xmlStream, validTime );
+            new GmlTimeGeometricPrimitiveWriter().write( xmlStream, validTimeWithId );
             xmlStream.writeEndElement();
             xmlStream.close();
             final InputStream is = new ByteArrayInputStream( bos.toByteArray() );
@@ -169,6 +177,21 @@ public class DeegreeDynamicFeatureQueryAdapter
         } catch ( Exception e ) {
             throw new IllegalArgumentException( "Unable to generate gml:validTime:" + e.getMessage() );
         }
+    }
+
+    private TimeGeometricPrimitive getValidTimeWithId( final TimeGeometricPrimitive validTime ) {
+        final String id = generateGmlId();
+        final List<Property> props = validTime.getProperties();
+        final List<RelatedTime> relatedTimes = validTime.getRelatedTimes();
+        final String frame = validTime.getFrame();
+        if ( validTime instanceof TimeInstant ) {
+            final TimePosition value = ( (TimeInstant) validTime ).getPosition();
+            return new GenericTimeInstant( id, props, relatedTimes, frame, value );
+        }
+        final TimePeriod period = (TimePeriod) validTime;
+        final TimePositionOrInstant begin = period.getBegin();
+        final TimePositionOrInstant end = period.getEnd();
+        return new GenericTimePeriod( id, props, relatedTimes, frame, begin, end );
     }
 
     private ElementNode buildSimpleElement( final QName name, final Object value,
