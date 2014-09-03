@@ -3,6 +3,7 @@ package org.deegree.services.wfs.te;
 import static java.lang.Integer.parseInt;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyMap;
+import static java.util.UUID.randomUUID;
 import static javax.xml.stream.XMLOutputFactory.newInstance;
 import static org.deegree.commons.tom.primitive.BaseType.STRING;
 import static org.deegree.commons.xml.CommonNamespaces.GML3_2_NS;
@@ -17,6 +18,7 @@ import java.io.Closeable;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -81,6 +83,8 @@ public class DeegreeDynamicFeatureQueryAdapter
 
     private static final String AIXM_51_NS = "http://www.aixm.aero/schema/5.1";
 
+    private static final QName GML_ID = new QName( GML3_2_NS, "id" );
+
     private static final QName VALID_TIME = new QName( GML3_2_NS, "validTime" );
 
     private static final QName INTERPRETATION = new QName( AIXM_51_NS, "interpretation" );
@@ -101,8 +105,6 @@ public class DeegreeDynamicFeatureQueryAdapter
                               final Interpretation interpretation, final Integer sequenceNumber,
                               final Integer correctionNumber, final Iterable<ElementNode> nonSpecialProperties ) {
         final PropertyType timeSlicePt = getTimeSlicePropertyType( feature.getType() );
-        final Map<QName, PrimitiveValue> attrs = emptyMap();
-        final List<TypedObjectNode> children = new ArrayList<TypedObjectNode>();
         final XSElementDeclaration xsType = timeSlicePt.getElementDecl();
         final AppSchema schema = feature.getType().getSchema();
         final XSComplexTypeDefinition type = (XSComplexTypeDefinition) xsType.getTypeDefinition();
@@ -110,6 +112,7 @@ public class DeegreeDynamicFeatureQueryAdapter
         final XSElementDeclaration timeSliceElDecl = (XSElementDeclaration) allowedChildElementDecls.values().iterator().next();
         final XSComplexTypeDefinition timeSliceElType = (XSComplexTypeDefinition) timeSliceElDecl.getTypeDefinition();
         final Map<QName, XSTerm> allowedChildElementDecls2 = schema.getAllowedChildElementDecls( timeSliceElType );
+        final List<TypedObjectNode> children = new ArrayList<TypedObjectNode>();
         if ( validTime != null ) {
             final XSElementDeclaration validTimeDecl = (XSElementDeclaration) allowedChildElementDecls2.get( new QName(
                                                                                                                         GML3_2_NS,
@@ -137,8 +140,12 @@ public class DeegreeDynamicFeatureQueryAdapter
             children.add( nonSpecialProperty );
         }
         final QName name = new QName( timeSliceElDecl.getNamespace(), timeSliceElDecl.getName() );
+        final Map<QName, PrimitiveValue> attrs = new HashMap<QName, PrimitiveValue>();
+        attrs.put( GML_ID, new PrimitiveValue( generateGmlId() ) );
         final ElementNode timeSlice = new GenericXMLElement( name, timeSliceElDecl, attrs, children );
-        addTimeSlice( feature, timeSlice );
+        final Property timeSliceProp = new GenericProperty( timeSlicePt, timeSlice );
+        final List<Property> props = feature.getProperties();
+        props.add( timeSliceProp );
     }
 
     private ElementNode buildValidTimeElement( final TimeGeometricPrimitive validTime,
@@ -162,44 +169,6 @@ public class DeegreeDynamicFeatureQueryAdapter
         } catch ( Exception e ) {
             throw new IllegalArgumentException( "Unable to generate gml:validTime:" + e.getMessage() );
         }
-    }
-
-    private Map<QName, Integer> buildPropNameToPos( final XSElementDeclaration timeSliceElDecl,
-                                                    final GMLSchemaInfoSet infoSet ) {
-        final Map<QName, Integer> propNameToPos = new HashMap<QName, Integer>();
-        final List<XSElementDeclaration> properties = infoSet.getProperties( (XSComplexTypeDefinition) timeSliceElDecl.getTypeDefinition() );
-        int i = 0;
-        for ( final XSElementDeclaration property : properties ) {
-            final List<XSElementDeclaration> substitutions = infoSet.getSubstitutions( property, null, true, true );
-            for ( XSElementDeclaration xsElementDeclaration : substitutions ) {
-                final QName propName = new QName( xsElementDeclaration.getNamespace(), xsElementDeclaration.getName() );
-                propNameToPos.put( propName, i++ );
-            }
-        }
-        return propNameToPos;
-    }
-
-    private List<ElementNode> orderProperties( final Iterable<ElementNode> unorderedProps,
-                                               final Map<QName, Integer> propNameToPos ) {
-        final List<ElementNode> props = new ArrayList<ElementNode>();
-        for ( final ElementNode prop : unorderedProps ) {
-            props.add( prop );
-        }
-        Collections.sort( props, new Comparator<ElementNode>() {
-            @Override
-            public int compare( final ElementNode a, final ElementNode b ) {
-                final Integer posA = propNameToPos.get( a.getName() );
-                if ( posA == null ) {
-                    throw new IllegalArgumentException( a.getName() + " is not in property list." );
-                }
-                final Integer posB = propNameToPos.get( b.getName() );
-                if ( posB == null ) {
-                    throw new IllegalArgumentException( b.getName() + " is not in property list." );
-                }
-                return posA.compareTo( posB );
-            }
-        } );
-        return props;
     }
 
     private ElementNode buildSimpleElement( final QName name, final Object value,
@@ -439,11 +408,6 @@ public class DeegreeDynamicFeatureQueryAdapter
         return (XPathEvaluator<Feature>) evaluator;
     }
 
-    private Property createTimeSliceProperty( final Feature feature, final ElementNode timeSlice ) {
-        final PropertyType pt = getTimeSlicePropertyType( feature.getType() );
-        return new GenericProperty( pt, timeSlice );
-    }
-
     boolean isTimeSliceProperty( final PropertyType pt ) {
         // TODO perform check based on schema, not name
         return pt.getName().getLocalPart().equals( "timeSlice" );
@@ -496,5 +460,9 @@ public class DeegreeDynamicFeatureQueryAdapter
         } catch ( Exception e ) {
             throw new IllegalArgumentException( "Unable to parse gml:validTime:" + e.getMessage() );
         }
+    }
+
+    private String generateGmlId() {
+        return "uuid." + randomUUID();
     }
 }
