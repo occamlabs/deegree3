@@ -1,0 +1,172 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<wfs:FeatureCollection xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd http://www.aixm.aero/schema/5.1 http://localhost:8080/deegree-webservices/services?SERVICE=WFS&amp;VERSION=2.0.0&amp;REQUEST=DescribeFeatureType&amp;OUTPUTFORMAT=application%2Fgml%2Bxml%3B+version%3D3.2&amp;TYPENAME=aixm:VerticalStructure&amp;NAMESPACES=xmlns(aixm,http%3A%2F%2Fwww.aixm.aero%2Fschema%2F5.1)" xmlns:wfs="http://www.opengis.net/wfs/2.0" timeStamp="****-**-**T**:**:**Z" xmlns:gml="http://www.opengis.net/gml/3.2" numberMatched="unknown" numberReturned="0">
+  <!--NOTE: numberReturned attribute should be 'unknown' as well, but this would not validate against the current version of the WFS 2.0 schema (change upcoming). See change request (CR 144): https://portal.opengeospatial.org/files?artifact_id=43925.-->
+  <wfs:member>
+    <aixm:VerticalStructure xmlns:aixm="http://www.aixm.aero/schema/5.1" gml:id="uuid.8c755520-b42b-11e3-a5e2-0800400c9a66">
+      <gml:identifier codeSpace="urn:uuid:">8c755520-b42b-11e3-a5e2-0800400c9a66</gml:identifier>
+      <aixm:featureMetadata>
+        <gmd:MD_Metadata xmlns:gmd="http://www.isotc211.org/2005/gmd">
+          <gmd:characterSet>
+            <gmd:MD_CharacterSetCode codeList="http://www.aixm.aero/schema/5.1/ISO_19139_Schemas/resources/Codelist/gmxCodelists.xml#MD_CharacterSetCode" codeListValue="utf8">utf8</gmd:MD_CharacterSetCode>
+          </gmd:characterSet>
+          <gmd:contact xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#MessageContact"/>
+          <gmd:dateStamp>
+            <gco:DateTime xmlns:gco="http://www.isotc211.org/2005/gco">2014-03-25T12:00:00Z</gco:DateTime>
+          </gmd:dateStamp>
+          <gmd:identificationInfo>
+            <gmd:MD_DataIdentification>
+              <gmd:citation xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#MessageCitation"/>
+              <gmd:abstract>
+                <gco:CharacterString xmlns:gco="http://www.isotc211.org/2005/gco">Donlon sample data; initially created by COMSOFT (www.comsoft.aero); currently maintained by Eurocontrol. This feature demonstrates a canceled decommissioning.</gco:CharacterString>
+              </gmd:abstract>
+              <gmd:pointOfContact xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#MessagePOC"/>
+              <gmd:resourceConstraints xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#MessageConstraints"/>
+              <gmd:language>
+                <gco:CharacterString xmlns:gco="http://www.isotc211.org/2005/gco">eng</gco:CharacterString>
+              </gmd:language>
+              <gmd:topicCategory>
+                <gmd:MD_TopicCategoryCode>transportation</gmd:MD_TopicCategoryCode>
+              </gmd:topicCategory>
+            </gmd:MD_DataIdentification>
+          </gmd:identificationInfo>
+        </gmd:MD_Metadata>
+      </aixm:featureMetadata>
+      <aixm:timeSlice>
+        <aixm:VerticalStructureTimeSlice gml:id="ID_445">
+          <gml:validTime>
+            <gml:TimePeriod gml:id="ID_446">
+              <gml:beginPosition>2012-10-01T05:31:00Z</gml:beginPosition>
+              <gml:endPosition indeterminatePosition="unknown"/>
+            </gml:TimePeriod>
+          </gml:validTime>
+          <aixm:interpretation>PERMDELTA</aixm:interpretation>
+          <aixm:sequenceNumber>1</aixm:sequenceNumber>
+          <aixm:correctionNumber>0</aixm:correctionNumber>
+          <aixm:featureLifetime>
+            <gml:TimePeriod gml:id="ID_447">
+              <gml:beginPosition>2012-10-01T05:31:00Z</gml:beginPosition>
+              <gml:endPosition indeterminatePosition="unknown"/>
+            </gml:TimePeriod>
+          </aixm:featureLifetime>
+          <aixm:name>EADD_CRANE_4</aixm:name>
+          <aixm:type>CRANE</aixm:type>
+          <aixm:lighted>YES</aixm:lighted>
+          <aixm:part>
+            <aixm:VerticalStructurePart gml:id="ID_448">
+              <aixm:verticalExtent uom="FT">85.0</aixm:verticalExtent>
+              <aixm:type>CRANE</aixm:type>
+              <aixm:mobile>NO</aixm:mobile>
+              <aixm:horizontalProjection_location>
+                <!--Inlined geometry 'ID_449'-->
+                <aixm:ElevatedPoint gml:id="ID_449" srsName="urn:ogc:def:crs:EPSG:4326">
+                  <gml:pos>52.372778 -31.943500</gml:pos>
+                  <aixm:elevation uom="FT">858</aixm:elevation>
+                </aixm:ElevatedPoint>
+              </aixm:horizontalProjection_location>
+            </aixm:VerticalStructurePart>
+          </aixm:part>
+          <aixm:annotation>
+            <aixm:Note gml:id="ID_450">
+              <aixm:purpose>WARNING</aixm:purpose>
+              <aixm:translatedNote>
+                <aixm:LinguisticNote gml:id="ID_451">
+                  <aixm:note>located at airport EADD</aixm:note>
+                </aixm:LinguisticNote>
+              </aixm:translatedNote>
+            </aixm:Note>
+          </aixm:annotation>
+          <aixm:annotation>
+            <aixm:Note gml:id="ID_452">
+              <aixm:propertyName>horizontalProjectionlocation
+              </aixm:propertyName>
+              <aixm:purpose>REMARK</aixm:purpose>
+              <aixm:translatedNote>
+                <aixm:LinguisticNote gml:id="ID_453">
+                  <aixm:note>150 FT EAST OF CONTROL TOWER</aixm:note>
+                </aixm:LinguisticNote>
+              </aixm:translatedNote>
+            </aixm:Note>
+          </aixm:annotation>
+          <aixm:annotation>
+            <aixm:Note gml:id="ID_454">
+              <aixm:purpose>REMARK</aixm:purpose>
+              <aixm:translatedNote>
+                <aixm:LinguisticNote gml:id="ID_455">
+                  <aixm:note>85 FT IS A MAXIMUM HEIGHT</aixm:note>
+                </aixm:LinguisticNote>
+              </aixm:translatedNote>
+            </aixm:Note>
+          </aixm:annotation>
+        </aixm:VerticalStructureTimeSlice>
+      </aixm:timeSlice>
+      <aixm:timeSlice>
+        <aixm:VerticalStructureTimeSlice gml:id="ID_456">
+          <gml:validTime>
+            <gml:TimePeriod gml:id="ID_457">
+              <gml:beginPosition>2012-10-30T05:31:00Z</gml:beginPosition>
+              <gml:endPosition indeterminatePosition="unknown"/>
+            </gml:TimePeriod>
+          </gml:validTime>
+          <aixm:interpretation>PERMDELTA</aixm:interpretation>
+          <aixm:sequenceNumber>2</aixm:sequenceNumber>
+          <aixm:correctionNumber>0</aixm:correctionNumber>
+          <aixm:featureLifetime>
+            <gml:TimePeriod gml:id="ID_458">
+              <gml:beginPosition>2012-10-01T05:31:00Z</gml:beginPosition>
+              <gml:endPosition>2012-10-30T05:31:00Z</gml:endPosition>
+            </gml:TimePeriod>
+          </aixm:featureLifetime>
+        </aixm:VerticalStructureTimeSlice>
+      </aixm:timeSlice>
+      <aixm:timeSlice>
+        <aixm:VerticalStructureTimeSlice gml:id="ID_459">
+          <gml:validTime nilReason="inapplicable"/>
+          <aixm:interpretation>PERMDELTA</aixm:interpretation>
+          <aixm:sequenceNumber>2</aixm:sequenceNumber>
+          <aixm:correctionNumber>1</aixm:correctionNumber>
+        </aixm:VerticalStructureTimeSlice>
+      </aixm:timeSlice>
+      <aixm:timeSlice>
+        <aixm:VerticalStructureTimeSlice gml:id="ID_460">
+          <gml:validTime>
+            <gml:TimePeriod gml:id="ID_461">
+              <gml:beginPosition>2012-11-01T15:30:00Z</gml:beginPosition>
+              <gml:endPosition indeterminatePosition="unknown"/>
+            </gml:TimePeriod>
+          </gml:validTime>
+          <aixm:interpretation>PERMDELTA</aixm:interpretation>
+          <aixm:sequenceNumber>3</aixm:sequenceNumber>
+          <aixm:correctionNumber>0</aixm:correctionNumber>
+          <aixm:lightingICAOStandard>YES</aixm:lightingICAOStandard>
+        </aixm:VerticalStructureTimeSlice>
+      </aixm:timeSlice>
+      <aixm:timeSlice>
+        <aixm:VerticalStructureTimeSlice gml:id="ID_462">
+          <gml:validTime nilReason="inapplicable"/>
+          <aixm:interpretation>PERMDELTA</aixm:interpretation>
+          <aixm:sequenceNumber>3</aixm:sequenceNumber>
+          <aixm:correctionNumber>1</aixm:correctionNumber>
+        </aixm:VerticalStructureTimeSlice>
+      </aixm:timeSlice>
+      <aixm:timeSlice>
+        <aixm:VerticalStructureTimeSlice gml:id="ID_463">
+          <gml:validTime>
+            <gml:TimePeriod gml:id="ID_464">
+              <gml:beginPosition>2012-11-30T05:31:00Z</gml:beginPosition>
+              <gml:endPosition indeterminatePosition="unknown"/>
+            </gml:TimePeriod>
+          </gml:validTime>
+          <aixm:interpretation>PERMDELTA</aixm:interpretation>
+          <aixm:sequenceNumber>4</aixm:sequenceNumber>
+          <aixm:correctionNumber>0</aixm:correctionNumber>
+          <aixm:featureLifetime>
+            <gml:TimePeriod gml:id="ID_465">
+              <gml:beginPosition>2012-10-01T05:31:00Z</gml:beginPosition>
+              <gml:endPosition>2012-11-30T05:31:00Z</gml:endPosition>
+            </gml:TimePeriod>
+          </aixm:featureLifetime>
+        </aixm:VerticalStructureTimeSlice>
+      </aixm:timeSlice>
+    </aixm:VerticalStructure>
+  </wfs:member>
+</wfs:FeatureCollection>

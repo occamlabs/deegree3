@@ -200,6 +200,11 @@ public class DeegreeDynamicFeatureQueryAdapter
             }
         } );
         return props;
+=======
+        final Property timeSliceProp = createTimeSliceProperty( feature, timeSlice );
+        final List<Property> props = feature.getProperties();
+        props.add( timeSliceProp );
+>>>>>>> c05de88fb9e0859e46031ae04e3f2d69f88a4a97
     }
 
     private ElementNode buildSimpleElement( final QName name, final Object value,
