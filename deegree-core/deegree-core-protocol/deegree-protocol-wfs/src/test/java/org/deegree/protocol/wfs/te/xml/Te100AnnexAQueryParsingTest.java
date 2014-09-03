@@ -63,7 +63,7 @@ import org.junit.Test;
 public class Te100AnnexAQueryParsingTest {
 
     @Test
-    public void readExampleA1()
+    public void readExampleA01()
                             throws Exception {
         final DynamicFeatureQuery query = parseExample( "example_a01_query.xml" );
         assertNotNull( query.getSelectionClause() );
@@ -77,7 +77,7 @@ public class Te100AnnexAQueryParsingTest {
     }
 
     @Test
-    public void readExampleA2_1()
+    public void readExampleA02_1()
                             throws Exception {
         final DynamicFeatureQuery query = parseExample( "example_a02_1_query.xml" );
         final DynamicFeatureFilter dynamicFilter = (DynamicFeatureFilter) query.getSelectionClause();
@@ -98,7 +98,7 @@ public class Te100AnnexAQueryParsingTest {
     }
 
     @Test
-    public void readExampleA2_2()
+    public void readExampleA02_2()
                             throws Exception {
         final DynamicFeatureQuery query = parseExample( "example_a02_2_query.xml" );
         final DynamicFeatureFilter dynamicFilter = (DynamicFeatureFilter) query.getSelectionClause();
@@ -118,7 +118,7 @@ public class Te100AnnexAQueryParsingTest {
     }
 
     @Test
-    public void readExampleA3()
+    public void readExampleA03()
                             throws Exception {
         final DynamicFeatureQuery query = parseExample( "example_a03_query.xml" );
         final Filter filter = (Filter) query.getSelectionClause();
@@ -138,7 +138,7 @@ public class Te100AnnexAQueryParsingTest {
     }
 
     @Test
-    public void readExampleA4()
+    public void readExampleA04()
                             throws Exception {
         final DynamicFeatureQuery query = parseExample( "example_a04_query.xml" );
         final Filter filter = (Filter) query.getSelectionClause();
@@ -159,20 +159,20 @@ public class Te100AnnexAQueryParsingTest {
 
     // TODO implement temporal operators in filter
     @Test(expected = UnsupportedOperationException.class)
-    public void readExampleA5()
+    public void readExampleA05()
                             throws Exception {
         final DynamicFeatureQuery query = parseExample( "example_a05_query.xml" );
     }
 
     // TODO implement temporal operators in filter
     @Test(expected = UnsupportedOperationException.class)
-    public void readExampleA6()
+    public void readExampleA06()
                             throws Exception {
         final DynamicFeatureQuery query = parseExample( "example_a06_query.xml" );
     }
 
     @Test
-    public void readExampleA7()
+    public void readExampleA07()
                             throws Exception {
         final DynamicFeatureQuery query = parseExample( "example_a07_query.xml" );
         final DynamicFeatureFilter filter = (DynamicFeatureFilter) query.getSelectionClause();
@@ -188,13 +188,13 @@ public class Te100AnnexAQueryParsingTest {
     }
 
     @Test
-    public void readExampleA8()
+    public void readExampleA08()
                             throws Exception {
         // standard WFS Query, not a DynamicFeatureQuery
     }
 
     @Test
-    public void readExampleA9()
+    public void readExampleA09()
                             throws Exception {
         final DynamicFeatureQuery query = parseExample( "example_a09_query.xml" );
         final DynamicFeatureFilter filter = (DynamicFeatureFilter) query.getSelectionClause();
