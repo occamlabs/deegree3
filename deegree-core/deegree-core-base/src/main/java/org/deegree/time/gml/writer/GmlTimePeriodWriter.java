@@ -54,7 +54,7 @@ public class GmlTimePeriodWriter {
 
     public void write( final XMLStreamWriter writer, final TimePeriod timePeriod )
                             throws XMLStreamException {
-        writer.writeStartElement( "TimePeriod", gmlNs, gmlPrefix );
+        writer.writeStartElement( gmlPrefix, "TimePeriod", gmlNs );
         writer.writeAttribute( gmlPrefix, gmlNs, "id", timePeriod.getId() );
         // <attribute name="frame" type="anyURI" default="#ISO-8601"/>
         writeAttributeIfNotNull( FRAME, timePeriod.getFrame(), writer );

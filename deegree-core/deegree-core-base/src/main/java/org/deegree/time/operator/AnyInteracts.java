@@ -11,6 +11,9 @@ import org.deegree.time.primitive.TimePositionOrInstant;
 public class AnyInteracts {
 
     public boolean anyInteracts( final TimeGeometricPrimitive t1, final TimeGeometricPrimitive t2 ) {
+        if ( t1 == null || t2 == null ) {
+            return false;
+        }
         if ( t1 instanceof TimeInstant ) {
             return anyInteracts( ( (TimeInstant) t1 ).getPosition(), t2 );
         } else if ( t2 instanceof TimeInstant ) {
@@ -65,11 +68,11 @@ public class AnyInteracts {
     }
 
     protected boolean isBeginDeterminate( final TimePeriod t ) {
-        return getBegin( t ).getIndeterminatePosition() == null;
+        return t == null || getBegin( t ).getIndeterminatePosition() == null;
     }
 
     protected boolean isEndDeterminate( final TimePeriod t ) {
-        return getEnd( t ).getIndeterminatePosition() == null;
+        return t == null || getEnd( t ).getIndeterminatePosition() == null;
     }
 
     protected TimePosition getBegin( final TimePeriod t ) {

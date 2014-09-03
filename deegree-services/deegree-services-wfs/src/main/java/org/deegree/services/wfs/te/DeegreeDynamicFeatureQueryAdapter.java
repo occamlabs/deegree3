@@ -479,6 +479,9 @@ public class DeegreeDynamicFeatureQueryAdapter
             final GMLStreamReader gmlReader = createGMLStreamReader( GML_32, xmlReader );
             final GmlTimeGeometricPrimitiveReader timeReader = new GmlTimeGeometricPrimitiveReader( gmlReader );
             nextElement( xmlReader );
+            if ( xmlReader.isEndElement() ) {
+                return null;
+            }
             return timeReader.read( xmlReader );
         } catch ( Exception e ) {
             throw new IllegalArgumentException( "Unable to parse gml:validTime:" + e.getMessage() );
