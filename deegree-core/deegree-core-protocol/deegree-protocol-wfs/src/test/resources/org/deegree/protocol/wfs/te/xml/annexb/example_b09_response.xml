@@ -2,7 +2,7 @@
 <wfs:FeatureCollection xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd http://www.aixm.aero/schema/5.1 http://localhost:***/deegree-webservices/services?SERVICE=WFS&amp;VERSION=2.0.0&amp;REQUEST=DescribeFeatureType&amp;OUTPUTFORMAT=application%2Fgml%2Bxml%3B+version%3D3.2&amp;TYPENAME=aixm:VerticalStructure&amp;NAMESPACES=xmlns(aixm,http%3A%2F%2Fwww.aixm.aero%2Fschema%2F5.1)" xmlns:wfs="http://www.opengis.net/wfs/2.0" timeStamp="****-**-**T**:**:**Z" xmlns:gml="http://www.opengis.net/gml/3.2" numberMatched="unknown" numberReturned="0">
   <!--NOTE: numberReturned attribute should be 'unknown' as well, but this would not validate against the current version of the WFS 2.0 schema (change upcoming). See change request (CR 144): https://portal.opengeospatial.org/files?artifact_id=43925.-->
   <wfs:member>
-    <aixm:VerticalStructure xmlns:aixm="http://www.aixm.aero/schema/5.1" gml:id="uuid.8c755520-b42b-11e3-a5e2-0800500c9a66">
+    <aixm:VerticalStructure xmlns:aixm="http://www.aixm.aero/schema/5.1" gml:id="***">
       <gml:identifier codeSpace="urn:uuid:">8c755520-b42b-11e3-a5e2-0800500c9a66</gml:identifier>
       <aixm:featureMetadata>
         <gmd:MD_Metadata xmlns:gmd="http://www.isotc211.org/2005/gmd">
@@ -36,7 +36,7 @@
           <gml:validTime>org.deegree.time.primitive.GenericTimeInstant@***</gml:validTime>
           <aixm:interpretation>SNAPSHOT</aixm:interpretation>
           <aixm:featureLifetime>
-            <gml:TimePeriod gml:id="ID_469">
+            <gml:TimePeriod gml:id="***">
               <gml:beginPosition>2012-10-01T05:31:00Z</gml:beginPosition>
               <gml:endPosition indeterminatePosition="unknown"/>
             </gml:TimePeriod>
@@ -45,9 +45,9 @@
           <aixm:type>CRANE</aixm:type>
           <aixm:lighted>YES</aixm:lighted>
           <aixm:part>
-            <aixm:VerticalStructurePart gml:id="ID_479">
+            <aixm:VerticalStructurePart gml:id="***">
               <aixm:timeInterval>
-                <aixm:Timesheet gml:id="ID_480">
+                <aixm:Timesheet gml:id="***">
                   <aixm:timeReference>UTC</aixm:timeReference>
                   <aixm:day>ANY</aixm:day>
                   <aixm:startTime>04:30</aixm:startTime>
@@ -60,7 +60,7 @@
               <aixm:mobile>YES</aixm:mobile>
               <aixm:horizontalProjection_location>
                 <!--Inlined geometry 'ID_481'-->
-                <aixm:ElevatedPoint gml:id="ID_481" srsName="urn:ogc:def:crs:EPSG:4326">
+                <aixm:ElevatedPoint gml:id="***" srsName="urn:ogc:def:crs:EPSG:4326">
                   <gml:pos>52.372778 -31.942500</gml:pos>
                   <aixm:elevation uom="FT">858</aixm:elevation>
                 </aixm:ElevatedPoint>
