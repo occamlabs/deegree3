@@ -3,6 +3,6 @@
   <!--NOTE: numberReturned attribute should be 'unknown' as well, but this would not validate against the current version of the WFS 2.0 schema (change upcoming). See change request (CR 144): https://portal.opengeospatial.org/files?artifact_id=43925.-->
   <ows:ExceptionReport xmlns:ows="http://www.opengis.net/ows/1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/ows/1.1 http://schemas.opengis.net/ows/1.1.0/owsExceptionReport.xsd" version="2.0.0">
     <ows:Exception exceptionCode="NoApplicableCode">
-      <ows:ExceptionText>Unable to parse gml:validTime:Error in XML document (file 'unknown source', line: 1, column: 1, character offset: 0): Found a 'END_ELEMENT' event, but one of the following elements is required at this position: '{http://www.opengis.net/gml/3.2}TimeInstant,{http://www.opengis.net/gml/3.2}TimePeriod'.</ows:ExceptionText>
+      <ows:ExceptionText>Snapshots for time periods with changes are not yet implemented</ows:ExceptionText>
     </ows:Exception>
   </ows:ExceptionReport>

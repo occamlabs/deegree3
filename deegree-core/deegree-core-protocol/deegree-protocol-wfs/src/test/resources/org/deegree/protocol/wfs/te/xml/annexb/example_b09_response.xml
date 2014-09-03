@@ -32,8 +32,12 @@
         </gmd:MD_Metadata>
       </aixm:featureMetadata>
       <aixm:timeSlice>
-        <aixm:VerticalStructureTimeSlice>
-          <gml:validTime>org.deegree.time.primitive.GenericTimeInstant@***</gml:validTime>
+        <aixm:VerticalStructureTimeSlice gml:id="***">
+          <gml:validTime>
+            <gml:TimeInstant gml:id="***">
+              <gml:timePosition>2012-10-11T16:30:01.857Z</gml:timePosition>
+            </gml:TimeInstant>
+          </gml:validTime>
           <aixm:interpretation>SNAPSHOT</aixm:interpretation>
           <aixm:featureLifetime>
             <gml:TimePeriod gml:id="***">
