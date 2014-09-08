@@ -41,16 +41,18 @@
  ----------------------------------------------------------------------------*/
 package org.deegree.services.wms.controller.capabilities;
 
+import static java.lang.Double.NEGATIVE_INFINITY;
+import static java.lang.Double.POSITIVE_INFINITY;
 import static org.deegree.commons.xml.CommonNamespaces.WMSNS;
 import static org.deegree.commons.xml.CommonNamespaces.XLNNS;
 import static org.deegree.commons.xml.XMLAdapter.writeElement;
+import static org.deegree.services.wms.controller.capabilities.Capabilities130XMLAdapter.writeDimensions;
 import static org.deegree.services.wms.controller.capabilities.WmsCapabilities130SpatialMetadataWriter.writeSrsAndEnvelope;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import javax.xml.namespace.QName;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
 
@@ -60,12 +62,11 @@ import org.deegree.commons.tom.ows.LanguageString;
 import org.deegree.commons.utils.DoublePair;
 import org.deegree.commons.utils.Pair;
 import org.deegree.commons.utils.StringPair;
-import org.deegree.commons.utils.StringUtils;
 import org.deegree.geometry.metadata.SpatialMetadata;
+import org.deegree.layer.Layer;
 import org.deegree.layer.metadata.LayerMetadata;
 import org.deegree.rendering.r2d.legends.Legends;
 import org.deegree.services.metadata.OWSMetadataProvider;
-import org.deegree.services.wms.controller.WMSController;
 import org.deegree.style.se.unevaluated.Style;
 import org.deegree.theme.Theme;
 import org.deegree.theme.Themes;
@@ -80,158 +81,142 @@ import org.deegree.theme.Themes;
  */
 class WmsCapabilities130ThemeWriter {
 
-    private WMSController controller;
+    private final Capabilities130XMLAdapter capWriter;
 
-    private Capabilities130XMLAdapter capWriter;
+    private final String mdUrlTemplate;
 
-    private String getUrl;
+    private final OWSMetadataProvider metadata;
 
-    private OWSMetadataProvider metadata;
-
-    WmsCapabilities130ThemeWriter( WMSController controller, Capabilities130XMLAdapter capWriter, String getUrl,
-                                   OWSMetadataProvider metadata ) {
-        this.controller = controller;
+    WmsCapabilities130ThemeWriter( final Capabilities130XMLAdapter capWriter, final OWSMetadataProvider metadata,
+                                   final String mdUrlTemplate ) {
         this.capWriter = capWriter;
-        this.getUrl = getUrl;
         this.metadata = metadata;
+        this.mdUrlTemplate = mdUrlTemplate;
     }
 
-    void writeTheme( XMLStreamWriter writer, Theme theme )
+    void writeTheme( final XMLStreamWriter writer, final Theme theme )
                             throws XMLStreamException {
-        LayerMetadata md = theme.getMetadata();
-        // TODO think about a push approach instead of a pull approach
-        LayerMetadata lmd = null;
-        for ( org.deegree.layer.Layer l : Themes.getAllLayers( theme ) ) {
-            if ( lmd == null ) {
-                lmd = l.getMetadata();
-            } else {
-                lmd.merge( l.getMetadata() );
-            }
-        }
-        md.merge( lmd );
-
+        final LayerMetadataMerger metadataMerger = new LayerMetadataMerger( metadata, mdUrlTemplate );
+        final LayerMetadata layerTreeMetadata = metadataMerger.getLayerTreeMetadata( theme );
+        final DatasetMetadata md = metadataMerger.getDatasetMetadata( theme, layerTreeMetadata );
         writer.writeStartElement( WMSNS, "Layer" );
-
-        if ( md.isQueryable() && md.getName() != null ) {
-            writer.writeAttribute( "queryable", "1" );
-        }
-        if ( md.getCascaded() != 0 ) {
-            writer.writeAttribute( "cascaded", md.getCascaded() + "" );
-        }
-
-        writeThemeMetadata( writer, md, lmd );
-
-        SpatialMetadata smd = md.getSpatialMetadata();
-        writeSrsAndEnvelope( writer, smd.getCoordinateSystems(), smd.getEnvelope() );
-        Capabilities130XMLAdapter.writeDimensions( writer, md.getDimensions() );
-
-        writeMetadataUrls( writer, theme );
-        writeThemeStyles( md, writer );
-        writeThemeScaleDenominators( md, theme, writer );
-
-        for ( Theme t : theme.getThemes() ) {
-            writeTheme( writer, t );
+        // <attribute name="queryable" type="boolean" default="0"/>
+        writeQueryable( writer, theme );
+        // <attribute name="cascaded" type="nonNegativeInteger"/>
+        writeCascaded( writer, theme.getMetadata().getCascaded() );
+        // <element ref="wms:Name" minOccurs="0"/>
+        writeName( writer, theme );
+        // <element ref="wms:Title"/>
+        writeElement( writer, WMSNS, "Title", md.getTitle( null ).getString() );
+        // <element ref="wms:Abstract" minOccurs="0"/>
+        writeAbstract( writer, md );
+        // <element ref="wms:KeywordList" minOccurs="0"/>
+        writeKeywordList( writer, md.getKeywords() );
+        // <element ref="wms:CRS" minOccurs="0" maxOccurs="unbounded"/>
+        // <element ref="wms:EX_GeographicBoundingBox" minOccurs="0"/>
+        // <element ref="wms:BoundingBox" minOccurs="0" maxOccurs="unbounded"/>
+        writeCrsAndBoundingBoxes( writer, layerTreeMetadata );
+        // <element ref="wms:Dimension" minOccurs="0" maxOccurs="unbounded"/>
+        writeDimensions( writer, layerTreeMetadata.getDimensions() );
+        // <element ref="wms:AuthorityURL" minOccurs="0" maxOccurs="unbounded"/>
+        writeAuthorityUrls( writer, md );
+        // <element ref="wms:Identifier" minOccurs="0" maxOccurs="unbounded"/>
+        writeIdentifiers( writer, md );
+        // <element ref="wms:MetadataURL" minOccurs="0" maxOccurs="unbounded"/>
+        writeMetadataUrl( writer, md.getUrl() );
+        // <element ref="wms:Style" minOccurs="0" maxOccurs="unbounded"/>
+        writeStyles( writer, theme.getMetadata() );
+        // <element ref="wms:MinScaleDenominator" minOccurs="0"/>
+        // <element ref="wms:MaxScaleDenominator" minOccurs="0"/>
+        writeScaleDenominators( writer, theme );
+        // <element ref="wms:Layer" minOccurs="0" maxOccurs="unbounded"/>
+        for ( final Theme subTheme : theme.getThemes() ) {
+            writeTheme( writer, subTheme );
         }
         writer.writeEndElement();
     }
 
-    private static void writeThemeMetadata( XMLStreamWriter writer, LayerMetadata md, LayerMetadata lmd )
+    private void writeQueryable( final XMLStreamWriter writer, final Theme theme )
                             throws XMLStreamException {
-        if ( md.getName() != null ) {
-            writeElement( writer, WMSNS, "Name", md.getName() );
+        if ( theme.getMetadata().isQueryable() && theme.getMetadata().getName() != null ) {
+            writer.writeAttribute( "queryable", "1" );
         }
-        writeElement( writer, WMSNS, "Title", md.getDescription().getTitles().get( 0 ).getString() );
-        List<LanguageString> abs = md.getDescription().getAbstracts();
-        if ( lmd != null && ( abs == null || abs.isEmpty() ) ) {
-            abs = lmd.getDescription().getAbstracts();
-        }
-        if ( abs != null && !abs.isEmpty() ) {
-            writeElement( writer, WMSNS, "Abstract", abs.get( 0 ).getString() );
-        }
-        writeKeywords( writer, md, lmd );
     }
 
-    private static void writeKeywords( XMLStreamWriter writer, LayerMetadata md, LayerMetadata lmd )
+    private void writeCascaded( final XMLStreamWriter writer, final int cascaded )
                             throws XMLStreamException {
-        List<Pair<List<LanguageString>, CodeType>> kws = md.getDescription().getKeywords();
-        if ( lmd != null && ( kws == null || kws.isEmpty() || kws.get( 0 ).first.isEmpty() ) ) {
-            kws = lmd.getDescription().getKeywords();
+        if ( cascaded > 0 ) {
+            writer.writeAttribute( "cascaded", cascaded + "" );
         }
-        if ( kws != null && !kws.isEmpty() && !kws.get( 0 ).first.isEmpty() ) {
+    }
+
+    private void writeName( final XMLStreamWriter writer, final Theme theme )
+                            throws XMLStreamException {
+        if ( theme.getMetadata().getName() != null ) {
+            writeElement( writer, WMSNS, "Name", theme.getMetadata().getName() );
+        }
+    }
+
+    private void writeAbstract( final XMLStreamWriter writer, final DatasetMetadata md )
+                            throws XMLStreamException {
+        final LanguageString abstractString = md.getAbstract( null );
+        if ( abstractString != null ) {
+            writeElement( writer, WMSNS, "Abstract", abstractString.getString() );
+        }
+    }
+
+    private void writeKeywordList( final XMLStreamWriter writer,
+                                   final List<Pair<List<LanguageString>, CodeType>> keywordList )
+                            throws XMLStreamException {
+        if ( keywordList != null && !keywordList.isEmpty() ) {
             writer.writeStartElement( WMSNS, "KeywordList" );
-            for ( LanguageString ls : kws.get( 0 ).first ) {
-                writeElement( writer, WMSNS, "Keyword", ls.getString() );
+            // <element ref="wms:Keyword" minOccurs="0" maxOccurs="unbounded"/>
+            for ( final Pair<List<LanguageString>, CodeType> keywords : keywordList ) {
+                for ( final LanguageString keyword : keywords.first ) {
+                    writeElement( writer, WMSNS, "Keyword", keyword.getString() );
+                }
             }
             writer.writeEndElement();
         }
     }
 
-    private void writeMetadataUrls( XMLStreamWriter writer, Theme theme )
+    private void writeCrsAndBoundingBoxes( final XMLStreamWriter writer, final LayerMetadata md )
                             throws XMLStreamException {
-        String id = null, name = null;
-
-        inner: for ( org.deegree.layer.Layer l : theme.getLayers() ) {
-            if ( l.getMetadata().getName() != null ) {
-                name = l.getMetadata().getName();
-            }
-            if ( l.getMetadata().getMetadataId() != null ) {
-                id = l.getMetadata().getMetadataId();
-                break inner;
-            }
-        }
-
-        writeMetadataFromProvider( writer, name );
-
-        if ( controller.getMetadataURLTemplate() != null ) {
-            String mdurlTemplate = controller.getMetadataURLTemplate();
-            if ( mdurlTemplate.isEmpty() ) {
-                mdurlTemplate = getUrl;
-                if ( !( mdurlTemplate.endsWith( "?" ) || mdurlTemplate.endsWith( "&" ) ) ) {
-                    mdurlTemplate += "?";
-                }
-                mdurlTemplate += "service=CSW&request=GetRecordById&version=2.0.2&outputSchema=http%3A//www.isotc211.org/2005/gmd&elementSetName=full&id=${metadataSetId}";
-            }
-
-            if ( id != null ) {
-                writeMetadataUrl( writer, StringUtils.replaceAll( mdurlTemplate, "${metadataSetId}", id ) );
-            }
+        final SpatialMetadata smd = md.getSpatialMetadata();
+        if ( smd != null ) {
+            writeSrsAndEnvelope( writer, smd.getCoordinateSystems(), smd.getEnvelope() );
         }
     }
 
-    // please note that this does NOT support writing of description metadata at the moment!
-    private void writeMetadataFromProvider( XMLStreamWriter writer, String name )
+    private void writeAuthorityUrls( final XMLStreamWriter writer, final DatasetMetadata md )
                             throws XMLStreamException {
-        if ( name == null || metadata == null ) {
+        if ( metadata == null ) {
             return;
         }
-
-        Map<String, String> auths = metadata.getExternalMetadataAuthorities();
-        DatasetMetadata md = metadata.getDatasetMetadata( new QName( name ) );
-
-        if ( md != null ) {
-            for ( StringPair ext : md.getExternalUrls() ) {
-                String url = auths.get( ext.first );
-                writer.writeStartElement( WMSNS, "AuthorityURL" );
-                writer.writeAttribute( "name", ext.first );
-                writer.writeStartElement( WMSNS, "OnlineResource" );
-                writer.writeAttribute( XLNNS, "type", "simple" );
-                writer.writeAttribute( XLNNS, "href", url );
-                writer.writeEndElement();
-                writer.writeEndElement();
-            }
-            for ( StringPair ext : md.getExternalUrls() ) {
-                writer.writeStartElement( WMSNS, "Identifier" );
-                writer.writeAttribute( "authority", ext.first );
-                writer.writeCharacters( ext.second );
-                writer.writeEndElement();
-            }
-
-            String url = md.getUrl();
-            writeMetadataUrl( writer, url );
+        final Map<String, String> auths = metadata.getExternalMetadataAuthorities();
+        for ( final StringPair extUrls : md.getExternalUrls() ) {
+            final String url = auths.get( extUrls.first );
+            writer.writeStartElement( WMSNS, "AuthorityURL" );
+            writer.writeAttribute( "name", extUrls.first );
+            writer.writeStartElement( WMSNS, "OnlineResource" );
+            writer.writeAttribute( XLNNS, "type", "simple" );
+            writer.writeAttribute( XLNNS, "href", url );
+            writer.writeEndElement();
+            writer.writeEndElement();
         }
     }
 
-    private void writeMetadataUrl( XMLStreamWriter writer, String url )
+    private void writeIdentifiers( final XMLStreamWriter writer, final DatasetMetadata md )
+                            throws XMLStreamException {
+        for ( final StringPair extUrl : md.getExternalUrls() ) {
+            writer.writeStartElement( WMSNS, "Identifier" );
+            writer.writeAttribute( "authority", extUrl.first );
+            writer.writeCharacters( extUrl.second );
+            writer.writeEndElement();
+        }
+    }
+
+    private void writeMetadataUrl( final XMLStreamWriter writer, final String url )
                             throws XMLStreamException {
         if ( url == null ) {
             return;
@@ -246,10 +231,10 @@ class WmsCapabilities130ThemeWriter {
         writer.writeEndElement();
     }
 
-    private void writeThemeStyles( LayerMetadata md, XMLStreamWriter writer )
+    private void writeStyles( final XMLStreamWriter writer, final LayerMetadata md )
                             throws XMLStreamException {
-        Map<String, Style> legends = md.getLegendStyles();
-        for ( Entry<String, Style> e : md.getStyles().entrySet() ) {
+        final Map<String, Style> legends = md.getLegendStyles();
+        for ( final Entry<String, Style> e : md.getStyles().entrySet() ) {
             if ( e.getKey() == null || e.getKey().isEmpty() ) {
                 continue;
             }
@@ -262,22 +247,36 @@ class WmsCapabilities130ThemeWriter {
         }
     }
 
-    private void writeThemeScaleDenominators( LayerMetadata md, Theme theme, XMLStreamWriter writer )
+    private void writeScaleDenominators( final XMLStreamWriter writer, final Theme theme )
                             throws XMLStreamException {
-        DoublePair hint = md.getScaleDenominators();
-        // use layers' settings only if not set for theme
-        if ( hint.first.isInfinite() && hint.second.isInfinite() ) {
-            hint = new DoublePair( hint.second, hint.first );
-            for ( org.deegree.layer.Layer l : theme.getLayers() ) {
-                hint.first = Math.min( l.getMetadata().getScaleDenominators().first, hint.first );
-                hint.second = Math.max( l.getMetadata().getScaleDenominators().second, hint.second );
+        Double min = POSITIVE_INFINITY;
+        Double max = NEGATIVE_INFINITY;
+        if ( theme.getMetadata() != null && theme.getMetadata().getScaleDenominators() != null ) {
+            final DoublePair themeScales = theme.getMetadata().getScaleDenominators();
+            if ( !themeScales.first.isInfinite() ) {
+                min = themeScales.first;
+            }
+            if ( !themeScales.second.isInfinite() ) {
+                max = themeScales.second;
             }
         }
-        if ( !hint.first.isInfinite() ) {
-            writeElement( writer, WMSNS, "MinScaleDenominator", hint.first + "" );
+        final List<Layer> layers = Themes.getAllLayers( theme );
+        if ( layers != null ) {
+            for ( final Layer layer : layers ) {
+                if ( layer.getMetadata() != null ) {
+                    final DoublePair layerScales = layer.getMetadata().getScaleDenominators();
+                    if ( layerScales != null ) {
+                        min = Math.min( min, layerScales.first );
+                        max = Math.max( max, layerScales.second );
+                    }
+                }
+            }
         }
-        if ( !hint.second.isInfinite() ) {
-            writeElement( writer, WMSNS, "MaxScaleDenominator", hint.second + "" );
+        if ( !min.isInfinite() ) {
+            writeElement( writer, WMSNS, "MinScaleDenominator", min + "" );
+        }
+        if ( !max.isInfinite() ) {
+            writeElement( writer, WMSNS, "MaxScaleDenominator", max + "" );
         }
     }
 
