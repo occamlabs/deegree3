@@ -65,6 +65,7 @@ import org.deegree.layer.metadata.LayerMetadata;
 import org.deegree.services.metadata.OWSMetadataProvider;
 import org.deegree.services.wms.MapService;
 import org.deegree.services.wms.controller.WMSController;
+import org.deegree.services.wms.controller.capabilities.theme.WmsCapabilities130ThemeWriter;
 import org.deegree.style.se.unevaluated.Style;
 import org.deegree.theme.Theme;
 import org.deegree.theme.Themes;
@@ -232,7 +233,7 @@ public class Capabilities130XMLAdapter {
         }
     }
 
-    static void writeDimensions( XMLStreamWriter writer, Map<String, Dimension<?>> dims )
+    public static void writeDimensions( XMLStreamWriter writer, Map<String, Dimension<?>> dims )
                             throws XMLStreamException {
         for ( Entry<String, Dimension<?>> entry : dims.entrySet() ) {
             writer.writeStartElement( WMSNS, "Dimension" );
@@ -258,7 +259,7 @@ public class Capabilities130XMLAdapter {
         }
     }
 
-    void writeStyle( XMLStreamWriter writer, String name, String title, Pair<Integer, Integer> legendSize,
+    public void writeStyle( XMLStreamWriter writer, String name, String title, Pair<Integer, Integer> legendSize,
                      String layerName, Style style )
                             throws XMLStreamException {
         writer.writeStartElement( WMSNS, "Style" );
