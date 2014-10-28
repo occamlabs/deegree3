@@ -88,10 +88,37 @@ class DatasetMetadataMerger {
             keywords.addAll( layerMetadata.getKeywords() );
         }
         final List<String> metadataUrls = new ArrayList<String>();
+        if ( providerMetadata.getMetadataUrls() != null ) {
+            metadataUrls.addAll( providerMetadata.getMetadataUrls() );
+        }
+        if ( layerMetadata.getMetadataUrls() != null ) {
+            metadataUrls.addAll( layerMetadata.getMetadataUrls() );
+        }
         final List<ExternalIdentifier> externalIds = new ArrayList<ExternalIdentifier>();
+        if ( providerMetadata.getExternalIds() != null ) {
+            externalIds.addAll( providerMetadata.getExternalIds() );
+        }
+        if ( layerMetadata.getExternalIds() != null ) {
+            externalIds.addAll( layerMetadata.getExternalIds() );
+        }
         final List<UrlWithFormat> dataUrls = new ArrayList<UrlWithFormat>();
+        if ( providerMetadata.getDataUrls() != null ) {
+            dataUrls.addAll( providerMetadata.getDataUrls() );
+        }
+        if ( layerMetadata.getDataUrls() != null ) {
+            dataUrls.addAll( layerMetadata.getDataUrls() );
+        }
         final List<UrlWithFormat> featureListUrls = new ArrayList<UrlWithFormat>();
-        final Attribution attribution = null;
+        if ( providerMetadata.getFeatureListUrls() != null ) {
+            featureListUrls.addAll( providerMetadata.getFeatureListUrls() );
+        }
+        if ( layerMetadata.getDataUrls() != null ) {
+            featureListUrls.addAll( layerMetadata.getFeatureListUrls() );
+        }
+        Attribution attribution = providerMetadata.getAttribution();
+        if ( attribution == null ) {
+            attribution = layerMetadata.getAttribution();
+        }
         return new DatasetMetadata( name, titles, abstracts, keywords, metadataUrls, externalIds, dataUrls,
                                     featureListUrls, attribution );
     }
