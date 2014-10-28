@@ -56,12 +56,13 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
 
 import org.deegree.commons.ows.metadata.DatasetMetadata;
+import org.deegree.commons.ows.metadata.layer.Attribution;
 import org.deegree.commons.ows.metadata.layer.ExternalIdentifier;
+import org.deegree.commons.ows.metadata.layer.LogoUrl;
 import org.deegree.commons.tom.ows.CodeType;
 import org.deegree.commons.tom.ows.LanguageString;
 import org.deegree.commons.utils.DoublePair;
 import org.deegree.commons.utils.Pair;
-import org.deegree.commons.utils.StringPair;
 import org.deegree.geometry.metadata.SpatialMetadata;
 import org.deegree.layer.Layer;
 import org.deegree.layer.metadata.LayerMetadata;
@@ -179,6 +180,8 @@ public class WmsCapabilities130ThemeWriter {
         writeCrsAndBoundingBoxes( writer, layerMetadata.getSpatialMetadata() );
         // <element ref="wms:Dimension" minOccurs="0" maxOccurs="unbounded"/>
         writeDimensions( writer, layerMetadata.getDimensions() );
+        // <element ref="wms:Attribution" minOccurs="0"/>
+        writeAttribution( writer, datasetMetadata.getAttribution() );
         // <element ref="wms:AuthorityURL" minOccurs="0" maxOccurs="unbounded"/>
         writeAuthorityUrls( writer, authorityNameToUrl );
         // <element ref="wms:Identifier" minOccurs="0" maxOccurs="unbounded"/>
@@ -260,6 +263,45 @@ public class WmsCapabilities130ThemeWriter {
         }
     }
 
+    private void writeAttribution( final XMLStreamWriter writer, final Attribution attribution )
+                            throws XMLStreamException {
+        if ( attribution != null ) {
+            writer.writeStartElement( WMSNS, "Attribution" );
+            if ( attribution.getTitle() != null ) {
+                writer.writeStartElement( WMSNS, "Title" );
+                writer.writeCharacters( attribution.getTitle() );
+                writer.writeEndElement();
+            }
+            if ( attribution.getUrl() != null ) {
+                writer.writeEmptyElement( WMSNS, "OnlineResource" );
+                writer.writeAttribute( XLNNS, "type", "simple" );
+                writer.writeAttribute( XLNNS, "href", attribution.getUrl() );
+            }
+            if ( attribution.getLogoUrl() != null ) {
+                final LogoUrl logoUrl = attribution.getLogoUrl();
+                writer.writeStartElement( WMSNS, "LogoURL" );
+                if ( logoUrl.getWidth() != null ) {
+                    writer.writeAttribute( "width", "" + logoUrl.getWidth() );
+                }
+                if ( logoUrl.getHeight() != null ) {
+                    writer.writeAttribute( "height", "" + logoUrl.getHeight() );
+                }
+                if ( logoUrl.getFormat() != null ) {
+                    writer.writeStartElement( WMSNS, "Format" );
+                    writer.writeCharacters( logoUrl.getFormat() );
+                    writer.writeEndElement();
+                }
+                if ( logoUrl.getUrl() != null ) {
+                    writer.writeEmptyElement( WMSNS, "OnlineResource" );
+                    writer.writeAttribute( XLNNS, "type", "simple" );
+                    writer.writeAttribute( XLNNS, "href", logoUrl.getUrl() );
+                }
+                writer.writeEndElement();
+            }
+            writer.writeEndElement();
+        }
+    }
+
     private void writeAuthorityUrls( final XMLStreamWriter writer, final Map<String, String> authorityNameToUrl )
                             throws XMLStreamException {
         if ( authorityNameToUrl != null ) {
@@ -277,7 +319,7 @@ public class WmsCapabilities130ThemeWriter {
 
     private void writeIdentifiers( final XMLStreamWriter writer, final List<ExternalIdentifier> ids )
                             throws XMLStreamException {
-        if (ids == null) {
+        if ( ids == null ) {
             return;
         }
         for ( final ExternalIdentifier id : ids ) {
