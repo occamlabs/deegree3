@@ -46,23 +46,25 @@ import java.util.List;
 import javax.xml.namespace.QName;
 
 import org.deegree.commons.ows.metadata.DatasetMetadata;
+import org.deegree.commons.ows.metadata.layer.Attribution;
+import org.deegree.commons.ows.metadata.layer.ExternalIdentifier;
+import org.deegree.commons.ows.metadata.layer.UrlWithFormat;
 import org.deegree.commons.tom.ows.CodeType;
 import org.deegree.commons.tom.ows.LanguageString;
 import org.deegree.commons.utils.Pair;
-import org.deegree.commons.utils.StringPair;
 
 /**
  * Merges {@link DatasetMetadata} instances.
- * 
+ *
  * @author <a href="mailto:schneider@occamlabs.de">Markus Schneider</a>
- * 
+ *
  * @since 3.3
  */
 class DatasetMetadataMerger {
 
     /**
      * Merges two {@link DatasetMetadata} instances.
-     * 
+     *
      * @param providerMetadata
      *            metadata from provider (takes precedence), can be <code>null</code>
      * @param layerMetadata
@@ -85,15 +87,13 @@ class DatasetMetadataMerger {
         if ( layerMetadata.getKeywords() != null ) {
             keywords.addAll( layerMetadata.getKeywords() );
         }
-        final String url = providerMetadata.getUrl() != null ? providerMetadata.getUrl() : layerMetadata.getUrl();
-        final List<StringPair> externalUrls = new ArrayList<StringPair>();
-        if ( providerMetadata.getExternalUrls() != null ) {
-            externalUrls.addAll( providerMetadata.getExternalUrls() );
-        }
-        if ( layerMetadata.getExternalUrls() != null ) {
-            externalUrls.addAll( layerMetadata.getExternalUrls() );
-        }
-        return new DatasetMetadata( name, titles, abstracts, keywords, url, externalUrls );
+        final List<String> metadataUrls = new ArrayList<String>();
+        final List<ExternalIdentifier> externalIds = new ArrayList<ExternalIdentifier>();
+        final List<UrlWithFormat> dataUrls = new ArrayList<UrlWithFormat>();
+        final List<UrlWithFormat> featureListUrls = new ArrayList<UrlWithFormat>();
+        final Attribution attribution = null;
+        return new DatasetMetadata( name, titles, abstracts, keywords, metadataUrls, externalIds, dataUrls,
+                                    featureListUrls, attribution );
     }
 
     private List<LanguageString> merge( final List<LanguageString> first, final List<LanguageString> second ) {
