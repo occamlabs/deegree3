@@ -99,7 +99,7 @@ class DatasetMetadataFactory {
         }
         final List<ExternalIdentifier> externalIds = new ArrayList<ExternalIdentifier>();
         if ( metadataSetId != null ) {
-            externalIds.add( new ExternalIdentifier( metadataSetId, null, null ) );
+            externalIds.add( new ExternalIdentifier( metadataSetId, null) );
         }
         final List<UrlWithFormat> dataUrls = null;
         final List<UrlWithFormat> featureListUrls = null;

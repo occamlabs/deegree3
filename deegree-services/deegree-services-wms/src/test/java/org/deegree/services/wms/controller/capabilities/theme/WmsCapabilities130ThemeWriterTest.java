@@ -51,6 +51,7 @@ import static org.junit.Assert.assertArrayEquals;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -122,13 +123,14 @@ public class WmsCapabilities130ThemeWriterTest {
         final LayerMetadata layerMetadata = createLayerMetadata();
         final DatasetMetadata datasetMetadata = createDatasetMetadata();
         final DoublePair scaleDenominators = new DoublePair( 0.0, 999999.9 );
-        final Map<String, String> authorityNameToUrl = emptyMap();
+        final Map<String, String> authorityNameToUrl = createAuthorityNameToUrlMap();
         themeWriter.writeTheme( writer, layerMetadata, datasetMetadata, authorityNameToUrl, scaleDenominators, null );
         writer.writeEndElement();
         writer.flush();
         bos.close();
         final InputStream is = WmsCapabilities130ThemeWriterTest.class.getResourceAsStream( "wms130_layer_full.xml" );
         final byte[] expected = IOUtils.readBytesAndClose( is, -1 );
+        System.out.println( new String( bos.toByteArray() ) );
         assertArrayEquals( expected, bos.toByteArray() );
     }
 
@@ -161,13 +163,20 @@ public class WmsCapabilities130ThemeWriterTest {
         keywords.add( keywords1 );
         final List<String> metadataUrls = singletonList( "http://www.url.net" );
         final List<ExternalIdentifier> externalIds = new ArrayList<ExternalIdentifier>();
-        externalIds.add( new ExternalIdentifier( "extid1", "authority1", "http://www.authority1.com/url1" ) );
-        externalIds.add( new ExternalIdentifier( "extid2", "authority2", "http://www.authority2.com/url2" ) );
+        externalIds.add( new ExternalIdentifier( "extid1", "authority1" ) );
+        externalIds.add( new ExternalIdentifier( "extid2", "authority2" ) );
         final List<UrlWithFormat> dataUrls = null;
         final List<UrlWithFormat> featureListUrls = null;
         final Attribution attribution = null;
         return new DatasetMetadata( name, titles, abstracts, keywords, metadataUrls, externalIds, dataUrls,
                                     featureListUrls, attribution );
+    }
+
+    private Map<String, String> createAuthorityNameToUrlMap() {
+        final Map<String, String> authorityNameToUrl = new LinkedHashMap<String, String>();
+        authorityNameToUrl.put( "authority1", "http://whatever.authority1.com" );
+        authorityNameToUrl.put( "authority2", "http://whatever.authority2.com" );
+        return authorityNameToUrl;
     }
 
     private LayerMetadata createLayerMetadataMinimal() {
