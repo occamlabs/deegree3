@@ -72,7 +72,7 @@ public class StandardThemeProvider implements ThemeProvider {
 
     private static final Logger LOG = getLogger( StandardThemeProvider.class );
 
-    private static final URL SCHEMA_URL = StandardThemeProvider.class.getResource( "/META-INF/schemas/themes/3.4.0/themes.xsd" );
+    private static final URL SCHEMA_URL = StandardThemeProvider.class.getResource( "/META-INF/schemas/themes/3.3.13/themes.xsd" );
 
     private DeegreeWorkspace workspace;
 
